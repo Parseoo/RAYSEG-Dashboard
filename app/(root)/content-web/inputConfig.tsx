@@ -26,3 +26,19 @@ export const inputsServiceItem: InputFieldConfig[] = [
         type: 'text', id: 'serviceDescription', label: 'Breve descripción', placeholder: 'Breve descripción...'
     }
 ];
+
+export const inputsLocation: InputFieldConfig[] = [
+     {
+        type: 'select', id: 'typeProperty', label: 'Tipo de propiedad', placeholder: 'Seleccionar', group: 1, options: [
+            { label: 'Departamento', value: 'departamento' },
+            { label: 'Casa', value: 'casa' },
+        ]
+    },
+     {
+        type: 'text',
+        id: 'direccion',
+        label: 'Dirección a fijar en el mapa',
+        placeholder: 'Ej: Calle 123, Interior 4B',
+        group: 1
+    },
+]
