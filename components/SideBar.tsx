@@ -56,7 +56,7 @@ const menuItems: MenuItem[] = [
       { href: '/content-web/home', path: '/content-web/home', icon: Home, label: 'Home' },
       { href: '/content-web/services', path: '/content-web/servicios', icon: Briefcase, label: 'Servicios' },
       { href: '/content-web/locations', path: '/content-web/localizacion', icon: MapPinned, label: 'Localización' },
-      { href: '/content-web/nosotros', path: '/content-web/nosotros', icon: Users, label: 'Sobre Nosotros' },
+      { href: '/content-web/about-us', path: '/content-web/about-us', icon: Users, label: 'Sobre Nosotros' },
       { href: '/content-web/footer', path: '/content-web/footer', icon: PanelBottom, label: 'Footer' },
       { href: '/content-web/aviso', path: '/content-web/aviso', icon: FileKey, label: 'Aviso de Privacidad' },
       { href: '/content-web/terminos', path: '/content-web/terminos', icon: ScrollText, label: 'Terminos y Condiciones' },

@@ -24,7 +24,6 @@ const AddProperty = () => {
               <h1 className='font-[700] text-2xl'>Agregar Propiedad</h1>
               <p className='text-md text-gray-500'>Carga rápida en secciones: datos básicos, ubicación, detalles y medios</p>
             </div>
-
           </div>
           <div className='flex gap-3'>
             <AddDataProperty />

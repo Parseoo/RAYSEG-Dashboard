@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { CloudUpload, Eye, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { CloudUpload, Eye, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import Image from 'next/image';
 
@@ -91,7 +91,7 @@ export const AddMultimediaProperty = () => {
               onClick={() => setOpenModal(false)}
               className="absolute top-3 right-3 bg-white rounded-full p-2 shadow"
             >
-              ✕
+              <X />
             </button>
 
             {/* Imagen grande */}
