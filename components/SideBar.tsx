@@ -86,6 +86,23 @@ export const SideBar = () => {
     }));
   };
 
+  React.useEffect(() => {
+    menuItems.forEach(item => {
+      if ('children' in item && item.children) {
+        // Check if any child matches the current path
+        const isChildActive = item.children.some(child => child.path === path);
+
+        if (isChildActive) {
+          setOpenMenus(prev => {
+            // Only update if not already open to avoid unnecessary re-renders
+            if (prev[item.label]) return prev;
+            return { ...prev, [item.label]: true };
+          });
+        }
+      }
+    });
+  }, [path]);
+
   const isActive = (itemPath?: string) => {
     if (!itemPath) return false;
     if (path === itemPath) return true;

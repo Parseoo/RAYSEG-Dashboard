@@ -16,13 +16,14 @@ interface SearchItem {
 export type InputFieldConfig = {
     type: 'text' | 'select' | 'url' | 'email' | 'number' | 'tel' | 'textarea' | 'checkbox' | 'date';
     id: string;
-    label: string;
+    label?: string;
     placeholder?: string;
     className?: string;
     group?: string | number;
     options?: { label: string; value: string }[];
     required?: boolean;
     rows?: number;
+    icon?: React.ElementType;
 };
 
 interface InputFieldProps {
@@ -38,14 +39,10 @@ interface DynamicInputsProps {
 // Componente para renderizar un input individual
 export const InputField = React.memo(({ input, withBgWhite = false }: InputFieldProps) => {
     const bgClass = withBgWhite ? 'bg-white' : '';
+    const Icon = input.icon;
 
-    return (
-        <div className='flex flex-col gap-2 flex-1'>
-            <label htmlFor={input.id} className='text-sm font-medium text-gray-700'>
-                {input.label}
-                {input.required && <span className='text-red-500 ml-1'>*</span>}
-            </label>
-
+    const renderInput = () => (
+        <>
             {input.type === 'select' ? (
                 <Select>
                     <SelectTrigger className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all ${bgClass} ${input.className || ''}`} id={input.id}>
@@ -75,6 +72,33 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                     required={input.required}
                     className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all ${bgClass} ${input.className || ''}`}
                 />
+            )}
+        </>
+    );
+
+    return (
+        <div className='flex flex-col gap-2 flex-1'>
+            {Icon ? (
+                <div className="flex items-start gap-3">
+                    <div className="bg-blue-50 p-2.5 rounded-md shadow-sm mt-1">
+                        <Icon size={20} />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1.5">
+                        <label htmlFor={input.id} className='text-sm font-medium text-gray-700'>
+                            {input.label}
+                            {input.required && <span className='text-red-500 ml-1'>*</span>}
+                        </label>
+                        {renderInput()}
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <label htmlFor={input.id} className='text-sm font-medium text-gray-700'>
+                        {input.label}
+                        {input.required && <span className='text-red-500 ml-1'>*</span>}
+                    </label>
+                    {renderInput()}
+                </>
             )}
         </div>
     );
@@ -138,7 +162,7 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
                 type={type || 'text'}
                 placeholder={title}
                 value={value}
-                onChange={onChange} // добавляем обработчик изменений
+                onChange={onChange} 
                 className={cn(
                     width ? `pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none w-${width}`
                         : `w-full pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none`
