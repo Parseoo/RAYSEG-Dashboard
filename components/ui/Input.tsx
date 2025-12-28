@@ -22,6 +22,7 @@ export type InputFieldConfig = {
     group?: string | number;
     options?: { label: string; value: string }[];
     required?: boolean;
+    rows?: number;
 };
 
 interface InputFieldProps {
@@ -63,6 +64,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                     id={input.id}
                     placeholder={input.placeholder}
                     required={input.required}
+                    rows={input.rows}
                     className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all min-h-[100px] resize-y ${bgClass} ${input.className || ''}`}
                 />
             ) : (

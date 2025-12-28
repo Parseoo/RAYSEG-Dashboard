@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react";
-import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
+import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import { DynamicInputs } from "@/components/ui/Input";
 import Image from "next/image";
@@ -69,7 +69,7 @@ export const AddServices = () => {
                             onClick={(e) => e.stopPropagation()}>
                             <button
                                 onClick={() => setOpenModal(false)}>
-                                ✕
+                               <X />
                             </button>
 
                             <img
