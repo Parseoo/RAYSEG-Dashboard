@@ -1,0 +1,42 @@
+"use client"
+
+import { DynamicInputs } from '@/components/ui/Input';
+import React from 'react';
+import { inputsFooterSection, inputsSocialMedia, inputsTextFooter } from '../inputConfig';
+
+
+export const AddFooter = () => {
+    return (
+        <>
+            <div className=' w-full max-h-max rounded-lg p-5 border'>
+                <h1 className='font-[500] text-lg'>Información de Contacto</h1>
+                <p className='text-md text-gray-500'>Información como teléfono, correo y dirección que aparecerá en el sitio web.</p>
+
+                <div className="mt-4">
+                    <DynamicInputs inputs={inputsFooterSection} withBgWhite={true} />
+                </div>
+            </div>
+            <div className='flex gap-3'>
+                <div className='w-full max-h-max rounded-lg p-5 border'>
+                    <h1 className='font-[500] text-lg'>Redes Sociales</h1>
+                    <p className='text-md text-gray-500'>Enlaces sociales que se mostrarán en el sitio web.</p>
+
+                    <div className="mt-4">
+                        <DynamicInputs inputs={inputsSocialMedia} withBgWhite={true} />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-5">Este número se usará para el botón flotante de WhatsApp en la web.</p>
+                    <p className='text-sm text-gray-500 mt-1'>Las redes sociales son opcionales. Solo los campos que completes se mostrarán en la web.</p>
+                </div>
+            </div>
+            <div className='w-full max-h-max rounded-lg p-5 border'>
+                <h1 className='font-[500] text-lg'>Texto de pie de página (footer)</h1>
+                <p className="text-sm font-normal text-gray-600 mt-1">Texto informativo o descriptivo que se mostrará en la parte inferior del sitio web.</p>
+
+                    <div className="mt-4">
+                        <DynamicInputs inputs={inputsTextFooter} withBgWhite={true} />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-5">Este texto aparecerá en el footer de la web sobre los datos de contacto.</p>
+            </div>
+        </>
+    )
+}

@@ -1,6 +1,7 @@
 import { InputFieldConfig } from "@/components/ui/Input";
+import { Facebook, Instagram, Linkedin, Phone } from "lucide-react";
 
-// Configuración de los inputs
+// Configuración de los inputs para la sección de home/banner
 export const inputsBannerConfiguration: InputFieldConfig[] = [
     {
         type: 'text',
@@ -31,6 +32,7 @@ export const inputsIntroductoryContent: InputFieldConfig[] = [
     }
 ];
 
+// Configuración de los inputs para cada ítem de servicios
 export const inputsServicesSection: InputFieldConfig[] = [
     {
         type: 'text',
@@ -50,6 +52,7 @@ export const inputsServiceItem: InputFieldConfig[] = [
     }
 ];
 
+// Configuración de los inputs para la sección de localización
 export const inputsLocation: InputFieldConfig[] = [
     {
         type: 'select', id: 'typeProperty', label: 'Tipo de propiedad', placeholder: 'Seleccionar', group: 1, options: [
@@ -66,6 +69,7 @@ export const inputsLocation: InputFieldConfig[] = [
     },
 ];
 
+// Configuración de los inputs para la sección "Quiénes Somos"
 export const inputsAboutUsSection: InputFieldConfig[] = [
     {
         type: 'text',
@@ -100,4 +104,79 @@ export const inputsAboutUsSection: InputFieldConfig[] = [
         placeholder: 'Nuestra visión es...',
         rows: 4
     }
-]
+];
+
+// Configuración de los inputs para el footer
+export const inputsFooterSection: InputFieldConfig[] = [
+    {
+        type: 'text',
+        id: 'address',
+        label: 'Dirección física (opcional)',
+        placeholder: 'Calle 123, Ciudad, País',
+    },
+    {
+        type: 'number',
+        id: 'phone',
+        label: 'Teléfono principal',
+        placeholder: '+52 123 456 7890',
+        group: 2,
+    },
+    {
+        type: 'number',
+        id: 'phoneSecondary',
+        label: 'Teléfono secundario (opcional)',
+        placeholder: '+52 123 456 7890',
+        group: 2,
+    },
+    {
+        type: 'email',
+        id: 'email',
+        label: 'Correo electrónico',
+        placeholder: 'contacto@rayseg.com',
+        group: 3,
+    },
+    {
+        type: 'text',
+        id: 'businessHours',
+        label: 'Horario de atención',
+        placeholder: 'Lunes a Viernes: 9:00 AM – 18:00 PM | Sábado: 9:00 AM – 14:00 PM',
+        group: 3,
+    }
+];
+
+export const inputsSocialMedia: InputFieldConfig[] = [
+    {
+        type: 'url',
+        id: 'facebook',
+        placeholder: 'https://facebook.com/rayseg',
+        icon: Facebook
+    },
+    {
+        type: 'url',
+        id: 'instagram',
+        placeholder: 'https://instagram.com/rayseg',
+        icon: Instagram
+    },
+    {
+        type: 'url',
+        id: 'linkedin',
+        placeholder: 'https://linkedin.com/rayseg',
+        icon: Linkedin
+    },
+    {
+        type: 'url',
+        id: 'whatsapp',
+        placeholder: 'https://wa.me/5211234567890',
+        icon: Phone
+    }
+];
+
+export const inputsTextFooter: InputFieldConfig[] = [
+    {
+        type: 'textarea',
+        id: 'textFooter',
+        label: 'Descripción breve de la inmobiliaria para el footer de la web',
+        placeholder: 'Texto informativo o descriptivo que se mostrará en la parte inferior del sitio web.',
+        rows: 4
+    }
+];
