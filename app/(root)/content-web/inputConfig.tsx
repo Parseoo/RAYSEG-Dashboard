@@ -180,3 +180,19 @@ export const inputsTextFooter: InputFieldConfig[] = [
         rows: 4
     }
 ];
+
+export const inputsPrivacyNotice: InputFieldConfig[] = [
+    {
+        type: 'text',
+        id: 'titlePrivacy',
+        label: 'Titulo de la página',
+        placeholder: 'Aviso de Privacidad',
+    },
+    {
+        type: 'textarea',
+        id: 'textContent',
+        label: 'Contenido del aviso',
+        placeholder: 'AVISO DE PRIVACIDAD. De acuerdo con lo establecido',
+        rows: 4
+    }
+]

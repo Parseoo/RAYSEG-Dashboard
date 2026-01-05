@@ -48,4 +48,4 @@ const ContentWebFooterPage = () => {
     )
 }
 
-export default ContentWebFooterPage
+export default ContentWebFooterPage;
