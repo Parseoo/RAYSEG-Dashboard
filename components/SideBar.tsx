@@ -58,7 +58,7 @@ const menuItems: MenuItem[] = [
       { href: '/content-web/locations', path: '/content-web/localizacion', icon: MapPinned, label: 'Localización' },
       { href: '/content-web/about-us', path: '/content-web/about-us', icon: Users, label: 'Sobre Nosotros' },
       { href: '/content-web/footer', path: '/content-web/footer', icon: PanelBottom, label: 'Footer' },
-      { href: '/content-web/aviso', path: '/content-web/aviso', icon: FileKey, label: 'Aviso de Privacidad' },
+      { href: '/content-web/legal-pages', path: '/content-web/legal-pages', icon: FileKey, label: 'Paginas Legales' },
       { href: '/content-web/terminos', path: '/content-web/terminos', icon: ScrollText, label: 'Terminos y Condiciones' },
 
     ]
