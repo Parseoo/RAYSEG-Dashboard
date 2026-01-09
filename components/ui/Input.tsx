@@ -24,6 +24,7 @@ export type InputFieldConfig = {
     required?: boolean;
     rows?: number;
     icon?: React.ElementType;
+    iconLayout?: 'default' | 'inline';
 };
 
 interface InputFieldProps {
@@ -40,6 +41,7 @@ interface DynamicInputsProps {
 export const InputField = React.memo(({ input, withBgWhite = false }: InputFieldProps) => {
     const bgClass = withBgWhite ? 'bg-white' : '';
     const Icon = input.icon;
+    const isInlineIcon = input.iconLayout === 'inline';
 
     const renderInput = () => (
         <>
@@ -78,7 +80,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
 
     return (
         <div className='flex flex-col gap-2 flex-1'>
-            {Icon ? (
+            {Icon && !isInlineIcon ? (
                 <div className="flex items-start gap-3">
                     <div className="bg-blue-50 p-2.5 rounded-md shadow-sm mt-1">
                         <Icon size={20} />
@@ -93,8 +95,9 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                 </div>
             ) : (
                 <>
-                    <label htmlFor={input.id} className='text-sm font-medium text-gray-700'>
+                    <label htmlFor={input.id} className='text-sm font-medium text-gray-700 flex items-center gap-2'>
                         {input.label}
+                        {isInlineIcon && Icon && <Icon size={18} className="text-blue-500" />}
                         {input.required && <span className='text-red-500 ml-1'>*</span>}
                     </label>
                     {renderInput()}
@@ -162,7 +165,7 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
                 type={type || 'text'}
                 placeholder={title}
                 value={value}
-                onChange={onChange} 
+                onChange={onChange}
                 className={cn(
                     width ? `pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none w-${width}`
                         : `w-full pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none`

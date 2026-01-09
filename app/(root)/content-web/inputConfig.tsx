@@ -1,5 +1,6 @@
 import { InputFieldConfig } from "@/components/ui/Input";
 import { Facebook, Instagram, Linkedin, Phone } from "lucide-react";
+import { inputsAddContact } from '../agents/add-agent/inputs.data';
 
 // Configuración de los inputs para la sección de home/banner
 export const inputsBannerConfiguration: InputFieldConfig[] = [
@@ -195,4 +196,20 @@ export const inputsPrivacyNotice: InputFieldConfig[] = [
         placeholder: 'AVISO DE PRIVACIDAD. De acuerdo con lo establecido',
         rows: 4
     }
-]
+];
+
+export const inputsAddTermsConditions: InputFieldConfig[] = [
+    {
+        type: 'text',
+        id: 'titlePrivacy',
+        label: 'Titulo del documento',
+        placeholder: 'Términos y condiciones de uso',
+    },
+    {
+        type: 'textarea',
+        id: 'textContent',
+        label: 'Contenido del documento',
+        placeholder: 'TERMINOS Y CONDICIONES',
+        rows: 4
+    }
+];
