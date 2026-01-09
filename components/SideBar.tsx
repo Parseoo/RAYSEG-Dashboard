@@ -19,7 +19,6 @@ import {
   MapPinned,
   PanelBottom,
   FileKey,
-  ScrollText,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -59,8 +58,6 @@ const menuItems: MenuItem[] = [
       { href: '/content-web/about-us', path: '/content-web/about-us', icon: Users, label: 'Sobre Nosotros' },
       { href: '/content-web/footer', path: '/content-web/footer', icon: PanelBottom, label: 'Footer' },
       { href: '/content-web/legal-pages', path: '/content-web/legal-pages', icon: FileKey, label: 'Paginas Legales' },
-      { href: '/content-web/terminos', path: '/content-web/terminos', icon: ScrollText, label: 'Terminos y Condiciones' },
-
     ]
   },
   {
