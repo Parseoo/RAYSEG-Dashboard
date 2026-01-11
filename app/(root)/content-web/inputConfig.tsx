@@ -116,14 +116,14 @@ export const inputsFooterSection: InputFieldConfig[] = [
         placeholder: 'Calle 123, Ciudad, País',
     },
     {
-        type: 'number',
+        type: 'tel',
         id: 'phone',
         label: 'Teléfono principal',
         placeholder: '+52 123 456 7890',
         group: 2,
     },
     {
-        type: 'number',
+        type: 'tel',
         id: 'phoneSecondary',
         label: 'Teléfono secundario (opcional)',
         placeholder: '+52 123 456 7890',

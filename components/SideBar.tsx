@@ -65,8 +65,8 @@ const menuItems: MenuItem[] = [
     label: 'Configuración',
     path: '/settings',
     children: [
-      { href: '/settings/myprofile', path: '/settings/myprofile', icon: Home, label: 'Mi Perfil' },
-      { href: '/settings/users', path: '/settings/users', icon: Home, label: 'Usuarios y Permisos' },
+      { href: '/settings/my-profile', path: '/settings/my-profile', icon: Home, label: 'Mi Perfil' },
+      { href: '/settings/users-permissions', path: '/settings/permissions', icon: Home, label: 'Usuarios y Permisos' },
     ]
   },
 ]
