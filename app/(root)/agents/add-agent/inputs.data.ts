@@ -48,14 +48,14 @@ export const inputsAddContact: InputFieldConfig[] = [
         group: 1
     },
     {
-        type: 'number',
+        type: 'tel',
         id: 'telefono',
         label: 'Teléfono',
         placeholder: '5512345678',
         group: 1
     },
     {
-        type: 'number',
+        type: 'tel',
         id: 'whatsapp',
         label: 'WhatsApp',
         placeholder: '5512345678',

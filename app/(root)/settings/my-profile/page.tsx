@@ -1,5 +1,6 @@
 import React from "react";
 import MyProfile from "@/components/Settings/MyProfile";
+import AccountSettings from "./account";
 
 const page = () => {
   return (

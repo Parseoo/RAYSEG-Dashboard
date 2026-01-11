@@ -8,7 +8,7 @@ import { inputsFooterSection, inputsSocialMedia, inputsTextFooter } from '../inp
 export const AddFooter = () => {
     return (
         <>
-            <div className=' w-full max-h-max rounded-lg p-5 border'>
+            <div className='w-full max-h-max rounded-lg p-5 border'>
                 <h1 className='font-[500] text-lg'>Información de Contacto</h1>
                 <p className='text-md text-gray-500'>Información como teléfono, correo y dirección que aparecerá en el sitio web.</p>
 
