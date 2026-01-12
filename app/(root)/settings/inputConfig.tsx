@@ -55,3 +55,27 @@ export const inputsAccount: InputFieldConfig[] = [
     },
 ];
 
+export const inputsSecurity: InputFieldConfig[] = [
+    {
+        type: 'password',
+        id: 'currentPassword',
+        label: 'Contraseña actual',
+        placeholder: '********',
+        group: 1
+    },
+    {
+        type: 'password',
+        id: 'newPassword',
+        label: 'Nueva contraseña',
+        placeholder: '********',
+        group: 1
+    },
+    {
+        type: 'password',
+        id: 'confirmNewPassword',
+        label: 'Confirmar nueva contraseña',
+        placeholder: '********',
+        group: 1
+    },
+];
+

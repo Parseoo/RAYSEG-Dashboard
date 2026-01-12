@@ -14,7 +14,7 @@ interface SearchItem {
 }
 
 export type InputFieldConfig = {
-    type: 'text' | 'select' | 'url' | 'email' | 'number' | 'tel' | 'textarea' | 'checkbox' | 'date';
+    type: 'text' | 'select' | 'url' | 'email' | 'number' | 'tel' | 'textarea' | 'checkbox' | 'date' | 'password';
     id: string;
     label?: string;
     placeholder?: string;
