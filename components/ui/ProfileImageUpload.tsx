@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
-import { Camera } from 'lucide-react';
 
 interface ProfileImageUploadProps {
     currentImage?: string;
@@ -26,25 +25,32 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     };
 
     return (
-        <div className="flex items-center gap-4">
-            <div className="relative w-10 h-10 overflow-hidden bg-neutral-secondary-medium rounded-full shrink-0">
+        <div className="flex items-start gap-4">
+            {/* Circle Avatar */}
+            <div className="relative w-24 h-24 overflow-hidden bg-neutral-secondary-medium rounded-full shrink-0">
                 <Image
                     className="object-cover"
                     src={preview}
                     alt="Profile picture"
                     fill
-                    sizes="40px"
+                    sizes="96px"
                 />
             </div>
-            <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                aria-label="Cambiar foto de perfil"
-            >
-                <Camera size={16} />
-                <span>Cambiar foto</span>
-            </button>
+
+            {/* Button and Help Text */}
+            <div className="flex flex-col gap-1 mt-5">
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-primary_color text-white w-[270px] h-[30px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium"
+                    aria-label="Cambiar foto de perfil">
+                    Agregar foto
+                </button>
+                <p className="text-sm text-gray-500 mt-2">
+                    Recomendado: 400x400px, JPG o PNG, máximo 2 MB.
+                </p>
+            </div>
+
             <input
                 type="file"
                 ref={fileInputRef}

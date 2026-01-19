@@ -1,10 +1,10 @@
 import React from 'react';
-import Clients from '@/app/(root)/clients/ClientsList';
+import ClientsList from '@/app/(root)/clients/ClientsList';
 
 const ClientsPage = () => {
     return (
         <div>
-            <Clients data={[]} isLoading={false} />
+            <ClientsList data={[]} isLoading={false} />
         </div>
     )
 }

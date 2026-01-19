@@ -93,30 +93,32 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         { label: 'Inicio', href: '/' },
         { label: 'Propiedades', href: '/property', active: true }
       ]} />
-      <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>
+      <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
         <div className='w-full h-full'>
-          <div className='flex items-center justify-between mb-3'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
             <div>
-              <h1 className='text-black font-[700] text-2xl'>Propiedades</h1>
-              <p className='text-md text-gray-500'>Listado principal de propiedades</p>
+              <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
+              <p className='text-sm sm:text-md text-gray-500'>Listado principal de propiedades</p>
             </div>
-            <div className='flex items-center gap-4'>
-              <SlidersHorizontal />
-              <Link href="/property/add-property">
+            <div className='flex items-center gap-2 sm:gap-4'>
+              <button className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
+                <SlidersHorizontal className='w-5 h-5' />
+              </button>
+              <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
                 <button type='button'
-                  className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
-                  <Plus size={20} /> Agregar Propiedad
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  <Plus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Propiedad</span><span className='sm:hidden'>Agregar</span>
                 </button>
               </Link>
             </div>
           </div>
 
           <div>
-            <ul className='flex gap-3 w-full mb-5'>
-              <li className='w-[25%]'><Search title='Buscar por dirección, CP, etc.' className='w-full pl-10 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
-              <li>
+            <ul className='flex flex-col sm:flex-row gap-3 w-full mb-5'>
+              <li className='w-full sm:w-[25%]'><Search title='Buscar por dirección, CP, etc.' className='w-full pl-10 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Tipo de Propiedad" />
                   </SelectTrigger>
                   <SelectContent>
@@ -126,9 +128,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </li>
-               <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Estados" />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,9 +138,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </li>
-              <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Operación" />
                   </SelectTrigger>
                   <SelectContent>
@@ -148,9 +150,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </li>
-              <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Estatus" />
                   </SelectTrigger>
                   <SelectContent>
@@ -160,9 +162,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </li>
-              <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Publicación Web" />
                   </SelectTrigger>
                   <SelectContent>
@@ -172,8 +174,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </li>
-              <li>
-                <input type="checkbox" placeholder='Destacada' />Destacada
+              <li className='flex items-center gap-2'>
+                <input type="checkbox" className='w-4 h-4' />
+                <span className='text-sm text-gray-700'>Destacada</span>
               </li>
             </ul>
           </div>

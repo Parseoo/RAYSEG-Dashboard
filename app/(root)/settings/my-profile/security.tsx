@@ -5,8 +5,6 @@ import { inputsSecurity } from '../inputConfig'
 import { DynamicInputs } from '@/components/ui/Input'
 
 export const SecuritySettings = () => {
-    const [password, setPassword] = useState('')
-    const [isEditing, setIsEditing] = useState(false)
 
     return (
         <>

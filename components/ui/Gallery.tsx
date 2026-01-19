@@ -30,20 +30,21 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
   if (!isOpen) return null;
 
   return (
-    <div className='fixed cursor-default inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4' onClick={e => onOverlayClose(e)}>
+    <div className='fixed cursor-default inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4' onClick={e => onOverlayClose(e)}>
       <div className='bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto'>
-        <div className='flex justify-between items-center p-4 border-b'>
-          <h2 className='text-xl font-bold'>Изображения</h2>
+        <div className='flex justify-between items-center p-3 sm:p-4 border-b sticky top-0 bg-white z-10'>
+          <h2 className='text-lg sm:text-xl font-bold'>Galería de Imágenes</h2>
           <button
             onClick={onClose}
-            className='text-gray-500 hover:text-gray-700'
+            className='text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded transition-colors'
+            aria-label='Cerrar galería'
           >
-            <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+            <svg className='w-5 h-5 sm:w-6 sm:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12'></path>
             </svg>
           </button>
         </div>
-        <div className='p-4 grid grid-cols-2 md:grid-cols-3 gap-4'>
+        <div className='p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4'>
           {images.map((image: any, index: any) => (
             <Image
               key={index}
@@ -51,7 +52,7 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
               alt={`Image ${index + 1}`}
               width={200}
               height={200}
-              className='w-full h-48 object-cover rounded-lg'
+              className='w-full h-32 sm:h-48 object-cover rounded-lg'
             />
           ))}
         </div>

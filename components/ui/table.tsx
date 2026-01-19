@@ -55,13 +55,13 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
             </table>
 
             {/* Paginación */}
-            <div className='flex items-center justify-between mt-6 pt-4 border-t border-gray-200'>
-                <div className='text-sm text-gray-600'>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-200'>
+                <div className='text-xs sm:text-sm text-gray-600'>
                     Mostrando {totalItems > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, totalItems)} de {totalItems} registros
                 </div>
-                <div className='flex items-center gap-4'>
+                <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto'>
                     <div className='flex items-center gap-2'>
-                        <span className='text-sm text-gray-600'>Por página:</span>
+                        <span className='text-xs sm:text-sm text-gray-600 whitespace-nowrap'>Por página:</span>
                         <Select value={itemsPerPage.toString()} onValueChange={(value) => {
                             setItemsPerPage(Number(value))
                             setCurrentPage(1)}}>
@@ -75,7 +75,7 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex items-center gap-2 justify-center sm:justify-start'>
                         <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}
                             className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
                             <ChevronLeft size={16} className='text-gray-700' />
