@@ -4,7 +4,7 @@ import { agents, home, property_list, clients } from '@/lib/link';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ChartColumn,
   Building2,
@@ -19,6 +19,7 @@ import {
   MapPinned,
   PanelBottom,
   FileKey,
+  X,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -41,7 +42,7 @@ type MenuItemGroup = MenuItemBase & {
 type MenuItem = MenuItemLink | MenuItemGroup
 
 
-const menuItems: MenuItem[] = [
+export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
@@ -71,8 +72,8 @@ const menuItems: MenuItem[] = [
   },
 ]
 
-
-export const SideBar = () => {
+// Componente para renderizar el menú (reutilizable)
+const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const path = usePathname()
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
@@ -83,15 +84,13 @@ export const SideBar = () => {
     }));
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     menuItems.forEach(item => {
       if ('children' in item && item.children) {
-        // Check if any child matches the current path
         const isChildActive = item.children.some(child => child.path === path);
 
         if (isChildActive) {
           setOpenMenus(prev => {
-            // Only update if not already open to avoid unnecessary re-renders
             if (prev[item.label]) return prev;
             return { ...prev, [item.label]: true };
           });
@@ -111,83 +110,131 @@ export const SideBar = () => {
   };
 
   return (
-    <nav className='hidden bg-white lg:block w-[250px] h-screen pr-4 pl-4 text-second_text_color'>
-      <ul className='mr-auto ml-auto max-w-[220px]'>
-        {menuItems.map((item) => {
-          const hasChildren = 'children' in item && item.children && item.children.length > 0;
-          const itemPath = 'path' in item ? item.path : undefined;
-          const isItemActive = isActive(itemPath);
-          const isOpen = openMenus[item.label] || false;
+    <ul className='mr-auto ml-auto max-w-[220px] w-full'>
+      {menuItems.map((item) => {
+        const hasChildren = 'children' in item && item.children && item.children.length > 0;
+        const itemPath = 'path' in item ? item.path : undefined;
+        const isItemActive = isActive(itemPath);
+        const isOpen = openMenus[item.label] || false;
 
-          const Icon = item.icon;
+        const Icon = item.icon;
 
-          return (
-            <li key={item.label} className='mb-1'>
-              <div className='flex flex-col'>
-                <div
+        return (
+          <li key={item.label} className='mb-1'>
+            <div className='flex flex-col'>
+              <div
+                className={cn(
+                  'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
+                  isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
+                )}
+                onClick={() => hasChildren && toggleMenu(item.label)}
+              >
+                <Icon
                   className={cn(
-                    'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
-                    isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
+                    'w-6 h-6 text-gray-700 group-hover:brightness-0 group-hover:invert transition-all duration-300',
+                    isItemActive && 'brightness-0 invert'
                   )}
-                  onClick={() => hasChildren && toggleMenu(item.label)}
-                >
-                  <Icon
-                    className={cn(
-                      'w-6 h-6 text-gray-700 group-hover:brightness-0 group-hover:invert transition-all duration-300',
-                      isItemActive && 'brightness-0 invert'
+                />
+                {hasChildren ? (
+                  <span className='flex-1'>{item.label}</span>
+                ) : (
+                  <Link href={item.href!} className='flex-1' onClick={onLinkClick}>
+                    {item.label}
+                  </Link>
+                )}
+                {hasChildren && (
+                  <span className='ml-auto'>
+                    {isOpen ? (
+                      <ChevronDown className='w-4 h-4' />
+                    ) : (
+                      <ChevronRight className='w-4 h-4' />
                     )}
-                  />
-                  {hasChildren ? (
-                    <span className='flex-1'>{item.label}</span>
-                  ) : (
-                    <Link href={item.href!} className='flex-1'>
-                      {item.label}
-                    </Link>
-                  )}
-                  {hasChildren && (
-                    <span className='ml-auto'>
-                      {isOpen ? (
-                        <ChevronDown className='w-4 h-4' />
-                      ) : (
-                        <ChevronRight className='w-4 h-4' />
-                      )}
-                    </span>
-                  )}
-                </div>
-                {hasChildren && isOpen && (
-                  <ul className='ml-4 mt-1 space-y-1'>
-                    {item.children?.map((child) => {
-                      const isChildActive = path === child.path;
-                      const ChildIcon = child.icon;
-                      return (
-                        <li key={child.href ?? child.label}>
-                          <Link
-                            href={child.href!}
-                            className={cn(
-                              'flex items-center px-5 py-2 gap-2 rounded-lg transition-all',
-                              isChildActive
-                                ? 'bg-property_purple text-white'
-                                : 'hover:bg-gray-100 text-gray-700'
-                            )}
-                          >
-                            <ChildIcon
-                              className={cn(
-                                'w-5 h-5',
-                                isChildActive && 'brightness-0 invert'
-                              )}
-                            />
-                            <span>{child.label}</span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  </span>
                 )}
               </div>
-            </li>
-          );
-        })}
-      </ul>
+              {hasChildren && isOpen && (
+                <ul className='ml-4 mt-1 space-y-1'>
+                  {item.children?.map((child) => {
+                    const isChildActive = path === child.path;
+                    const ChildIcon = child.icon;
+                    return (
+                      <li key={child.href ?? child.label}>
+                        <Link
+                          href={child.href!}
+                          className={cn(
+                            'flex items-center px-5 py-2 gap-2 rounded-lg transition-all',
+                            isChildActive
+                              ? 'bg-property_purple text-white'
+                              : 'hover:bg-gray-100 text-gray-700'
+                          )}
+                          onClick={onLinkClick}
+                        >
+                          <ChildIcon
+                            className={cn(
+                              'w-5 h-5',
+                              isChildActive && 'brightness-0 invert'
+                            )}
+                          />
+                          <span>{child.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
+export const SideBar = () => {
+  return (
+    <nav className='hidden bg-white lg:block w-[250px] h-screen pr-4 pl-4 text-second_text_color overflow-y-auto'>
+      <MenuContent />
     </nav>
   )
 }
+
+// Componente para el menú móvil
+export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
+        onClick={onClose}
+      />
+      {/* Sidebar */}
+      <nav className='fixed left-0 top-0 h-screen w-[280px] bg-white z-50 shadow-xl lg:hidden overflow-y-auto'>
+        <div className='flex items-center justify-between p-4 border-b'>
+          <h2 className='text-lg font-semibold'>Menú</h2>
+          <button
+            onClick={onClose}
+            className='p-2 rounded-lg hover:bg-gray-100 transition-colors'
+          >
+            <X className='w-5 h-5' />
+          </button>
+        </div>
+        <div className='p-4 text-second_text_color'>
+          <MenuContent onLinkClick={onClose} />
+        </div>
+      </nav>
+    </>
+  );
+};

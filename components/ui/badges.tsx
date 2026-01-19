@@ -18,12 +18,13 @@ const variantClasses: Record<Variant, string> = {
 }
 
 export const defaultStatusMap: Record<string, Variant> = {
-  Activo: 'green',
-  Active: 'green',
+  Activo: 'emerald',
+  Active: 'emerald',
   Venta: 'teal',
   Alquiler: 'blue',
   Pendiente: 'yellow',
   Cancelado: 'red',
+  Inactivo: 'gray',
 }
 
 // Mapa de estatus de propiedad (Disponible, Vendido, Reservado)

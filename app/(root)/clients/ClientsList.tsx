@@ -109,30 +109,32 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
         { label: 'Clientes', href: '/clients', active: true }
       ]} />
       <ClientsCard />
-      <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>
+      <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
         <div className='w-full h-full'>
-          <div className='flex items-center justify-between mb-3'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
             <div>
-              <h1 className='text-black font-[700] text-2xl'>Listado de clientes</h1>
-              <p className='text-md text-gray-500'>Filtra por estado, tipo, interés y agente</p>
+              <h1 className='text-black font-[700] text-xl sm:text-2xl'>Listado de clientes</h1>
+              <p className='text-sm sm:text-md text-gray-500'>Filtra por estado, tipo, interés y agente</p>
             </div>
-            <div className='flex items-center gap-4'>
-              <SlidersHorizontal />
-              <Link href='/clients/add-client'>
+            <div className='flex items-center gap-2 sm:gap-4'>
+              <button className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
+                <SlidersHorizontal className='w-5 h-5' />
+              </button>
+              <Link href='/clients/add-client' className='flex-1 sm:flex-initial'>
                 <button type='button'
-                  className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
-                  <UserPlus size={20} /> Agregar Cliente
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Cliente</span><span className='sm:hidden'>Agregar</span>
                 </button>
               </Link>
             </div>
           </div>
 
           <div>
-            <ul className='flex gap-5 w-full mb-3'>
-              <li className='w-full'><Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='w-full pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
-              <li>
+            <ul className='flex flex-col sm:flex-row gap-3 w-full mb-3'>
+              <li className='w-full'><Search title='Buscar por nombre, correo, teléfono, RFC o CURP' className='w-full pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className='w-[180px]'>
+                  <SelectTrigger className='w-full sm:w-[180px]'>
                     <SelectValue placeholder='Estado' />
                   </SelectTrigger>
                   <SelectContent>
@@ -142,9 +144,9 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
                   </SelectContent>
                 </Select>
               </li>
-              <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className='w-[180px]'>
+                  <SelectTrigger className='w-full sm:w-[180px]'>
                     <SelectValue placeholder='Tipo de cliente' />
                   </SelectTrigger>
                   <SelectContent>
@@ -154,9 +156,9 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
                   </SelectContent>
                 </Select>
               </li>
-              <li>
+              <li className='w-full sm:w-auto'>
                 <Select>
-                  <SelectTrigger className='w-[180px]'>
+                  <SelectTrigger className='w-full sm:w-[180px]'>
                     <SelectValue placeholder='Agente' />
                   </SelectTrigger>
                   <SelectContent>
@@ -176,4 +178,4 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
   )
 }
 
-export default ClientsList
+export default ClientsList;

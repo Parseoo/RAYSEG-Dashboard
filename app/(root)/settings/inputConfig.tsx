@@ -19,7 +19,7 @@ export const inputsProfile: InputFieldConfig[] = [
         type: 'tel',
         id: 'phone',
         label: 'Teléfono',
-        placeholder: 'Asesor Inmobiliario',
+        placeholder: '+52 1 234 567 8900',
         group: 2
     },
     {
@@ -79,3 +79,85 @@ export const inputsSecurity: InputFieldConfig[] = [
     },
 ];
 
+// Inputs para user permissions
+export const inputsUserPermissions: InputFieldConfig[] = [
+    {
+        type: 'text',
+        id: 'name',
+        label: 'Nombre(s)',
+        placeholder: 'Nombre del agente',
+        group: 1
+    },
+    {
+        type: 'text',
+        id: 'lastName',
+        label: 'Apellidos',
+        placeholder: 'Apellidos del agente',
+        group: 1
+    },
+    {
+        type: 'email',
+        id: 'correo',
+        label: 'Correo electrónico',
+        placeholder: 'agente@rayseg.com',
+        group: 2
+    },
+    {
+        type: 'tel',
+        id: 'phone',
+        label: 'Teléfono',
+        placeholder: '+52 1 234 567 8900',
+        group: 2
+    },
+    {
+        type: 'select',
+        id: 'rol',
+        label: 'Rol',
+        placeholder: 'Seleccione una opción',
+        group: 3,
+        options: [
+            { label: 'Agente Inmobiliario', value: 'compra' },
+            { label: 'Asesor de Ventas', value: 'venta' },
+            { label: 'Asesor de Renta', value: 'renta' },
+            { label: 'Administrador/a', value: 'administrador' },
+            { label: 'Gerente / Dueño', value: 'gerente' }
+        ]
+    },
+    {
+        type: 'select',
+        id: 'estatus',
+        label: 'Estatus',
+        placeholder: 'Seleccione el estatus',
+        group: 3,
+        options: [
+            { label: 'Activo', value: 'activo' },
+            { label: 'Inactivo', value: 'inactivo' },
+            { label: 'En capacitación', value: 'encapacitacion' }
+        ]
+    },
+    {
+        type: 'textarea',
+        id: 'notas_internas',
+        label: 'Notas internas',
+        placeholder: 'Información adicional sobre este usuario (zona de atención, tipo de propiedades, etc).',
+        group: 4
+    },
+];
+
+// Inputs para establecer la contraseña de la cuenta de usuario
+export const inputsPassword: InputFieldConfig[] = [
+    {
+        type: 'password',
+        id: 'currentPassword',
+        label: 'Contraseña actual',
+        placeholder: '********',
+        group: 1
+    },
+    {
+        type: 'password',
+        id: 'confirmNewPassword',
+        label: 'Confirmar nueva contraseña',
+        placeholder: '********',
+        group: 1
+    },
+];

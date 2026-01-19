@@ -3,7 +3,6 @@ import { Save } from 'lucide-react';
 import React from 'react';
 import { AddFooter } from './addFooter';
 
-
 const ContentWebFooterPage = () => {
     return (
         <>

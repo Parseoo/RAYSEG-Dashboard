@@ -12,9 +12,9 @@ export const Dashboard = () => {
   return (
     <>
     <div className=''>
-        <h1 className='text-black font-[700] text-3xl'>Dashboard</h1>
+        <h1 className='text-black font-[700] text-2xl sm:text-3xl mb-4 sm:mb-6'>Dashboard</h1>
         <Info />
-        <div className='flex w-full'>
+        <div className='flex flex-col lg:flex-row w-full gap-4 lg:gap-6 mt-4 lg:mt-6'>
           <TotalRevenue />
           <PropertyReferrals />
         </div> 
