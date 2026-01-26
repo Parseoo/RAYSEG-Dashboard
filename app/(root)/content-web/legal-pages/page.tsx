@@ -13,7 +13,7 @@ const ContentWebPrivacyNoticePage = () => {
         <>
             <Breadcrumb items={[
                 { label: 'Contenido Web', href: '/content-web' },
-                { label: 'Paginas Legales', href: '/content-web/legal-pages', active: true }
+                { label: 'Páginas Legales', href: '/content-web/legal-pages', active: true }
             ]} />
 
             <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>

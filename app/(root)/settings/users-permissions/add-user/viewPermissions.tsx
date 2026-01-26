@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Switch } from '@/components/ui/Switch';
 
@@ -206,7 +206,13 @@ const permissionSections: PermissionSection[] = [
     }
 ];
 
-function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnabled: boolean, onToggle: (id: string) => void }) {
+function PermissionCard({ section, enabledSections, isReadOnly }: {
+    section: PermissionSection,
+    enabledSections: Record<string, boolean>,
+    isReadOnly: boolean
+}) {
+    const isEnabled = enabledSections[section.id] || false;
+
     return (
         <div className={`p-5 border rounded-xl transition-all ${isEnabled ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
@@ -214,12 +220,13 @@ function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnab
                     <h3 className="font-semibold text-gray-800 text-base mb-1">{section.title}</h3>
                     <p className="text-sm text-gray-500">{section.description}</p>
                 </div>
-                <div className="flex-shrink-0">
+                <div className={`flex-shrink-0 ${isReadOnly ? 'opacity-60' : ''}`}>
                     <Switch
                         checked={isEnabled}
-                        onChange={() => onToggle(section.id)}
+                        onChange={() => { }}
                         onLabel={section.onLabel || "Habilitado"}
                         offLabel={section.offLabel || "Deshabilitado"}
+                        disabled={isReadOnly}
                     />
                 </div>
             </div>
@@ -231,20 +238,26 @@ function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnab
                         <Checkbox
                             key={action.id}
                             label={action.label}
-                            disabled={!isEnabled}
+                            disabled={true}
+                            checked={isEnabled}
                         />
                     ))}
                 </div>
 
                 {section.subActions && (
                     <div className="mt-4 pt-4 border-t border-slate-100">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Publicación web</p>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                            {section.id === 'propiedades' ? 'Publicación web' :
+                                section.id === 'contratos' ? 'Acciones adicionales' :
+                                    'Acciones adicionales'}
+                        </p>
                         <div className="flex flex-wrap gap-x-6 gap-y-3">
                             {section.subActions.map((action: any) => (
                                 <Checkbox
                                     key={action.id}
                                     label={action.label}
-                                    disabled={!isEnabled}
+                                    disabled={true}
+                                    checked={isEnabled}
                                 />
                             ))}
                         </div>
@@ -268,13 +281,19 @@ function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnab
     );
 }
 
-function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }) {
-    const [enabledSections, setEnabledSections] = useState<Record<string, boolean>>({
+interface ViewPermissionsProps {
+    userPermissions?: Record<string, boolean>;
+    isReadOnly?: boolean;
+}
+
+export function ViewPermissions({ userPermissions = {}, isReadOnly = true }: ViewPermissionsProps) {
+    // Valores por defecto basados en permisos del usuario o valores predeterminados
+    const defaultEnabledSections: Record<string, boolean> = {
         'reportes': true,
         'propiedades': true,
         'imagenes-propiedades': true,
         'clientes': true,
-        'agentes': true,
+        'agentes': false,
         'contratos': true,
         'leads-contacto': true,
         'contenido-web-home': false,
@@ -285,21 +304,16 @@ function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }
         'contenido-web-legal': false,
         'mi-perfil': true,
         'ajustes-usuarios': false
-    });
-
-    const toggleSection = (id: string) => {
-        setEnabledSections(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
     };
+
+    const enabledSections = { ...defaultEnabledSections, ...userPermissions };
 
     return (
         <div className='bg-white w-full max-h-max rounded-lg p-5 sm:p-6 shadow-md border border-slate-200'>
             <div className='w-full h-full'>
                 <div className="mb-6">
                     <h1 className='font-bold text-xl text-gray-800 mb-2'>Permisos por pantalla</h1>
-                    <p className='text-sm text-gray-500'>Define los permisos de este usuario de forma individual. Cada bloque corresponde a una pantalla o sección específica del Dashboard.</p>
+                    <p className='text-sm text-gray-500'>Vista de los permisos asignados a este usuario. Los permisos no se pueden modificar desde esta vista.</p>
                 </div>
 
                 <div className='space-y-4'>
@@ -312,8 +326,8 @@ function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }
                                 )}
                                 <PermissionCard
                                     section={section}
-                                    isEnabled={enabledSections[section.id]}
-                                    onToggle={toggleSection}
+                                    enabledSections={enabledSections}
+                                    isReadOnly={isReadOnly}
                                 />
                             </React.Fragment>
                         );
@@ -321,7 +335,7 @@ function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default AddPermissions;
+export default ViewPermissions;
