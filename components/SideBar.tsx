@@ -20,6 +20,7 @@ import {
   PanelBottom,
   FileKey,
   X,
+  FileText,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -47,6 +48,7 @@ export const menuItems: MenuItem[] = [
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
   { href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
+  { href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
 
   {
     icon: LayoutTemplate,
@@ -54,8 +56,8 @@ export const menuItems: MenuItem[] = [
     path: '/content-web',
     children: [
       { href: '/content-web/home', path: '/content-web/home', icon: Home, label: 'Home' },
-      { href: '/content-web/services', path: '/content-web/servicios', icon: Briefcase, label: 'Servicios' },
-      { href: '/content-web/locations', path: '/content-web/localizacion', icon: MapPinned, label: 'Localización' },
+      { href: '/content-web/services', path: '/content-web/services', icon: Briefcase, label: 'Servicios' },
+      { href: '/content-web/locations', path: '/content-web/locations', icon: MapPinned, label: 'Localización' },
       { href: '/content-web/about-us', path: '/content-web/about-us', icon: Users, label: 'Sobre Nosotros' },
       { href: '/content-web/footer', path: '/content-web/footer', icon: PanelBottom, label: 'Footer' },
       { href: '/content-web/legal-pages', path: '/content-web/legal-pages', icon: FileKey, label: 'Paginas Legales' },
@@ -67,7 +69,7 @@ export const menuItems: MenuItem[] = [
     path: '/settings',
     children: [
       { href: '/settings/my-profile', path: '/settings/my-profile', icon: Home, label: 'Mi Perfil' },
-      { href: '/settings/users-permissions', path: '/settings/permissions', icon: Home, label: 'Usuarios y Permisos' },
+      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: Home, label: 'Usuarios y Permisos' },
     ]
   },
 ]
@@ -102,15 +104,17 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const isActive = (itemPath?: string) => {
     if (!itemPath) return false;
     if (path === itemPath) return true;
+    // Verificar si la ruta actual empieza con el path del item (para subrutas)
+    if (path.startsWith(itemPath) && itemPath !== '/') return true;
     const item = menuItems.find(m => 'path' in m && m.path === itemPath) as MenuItemGroup | undefined;
     if (item && 'children' in item && item.children) {
-      return item.children.some(child => path === child.path);
+      return item.children.some(child => path === child.path || path.startsWith(child.path + '/'));
     }
     return false;
   };
 
   return (
-    <ul className='mr-auto ml-auto max-w-[220px] w-full'>
+    <ul className='mr-auto ml-auto max-w-[220px] w-full pb-8'>
       {menuItems.map((item) => {
         const hasChildren = 'children' in item && item.children && item.children.length > 0;
         const itemPath = 'path' in item ? item.path : undefined;
@@ -131,7 +135,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
               >
                 <Icon
                   className={cn(
-                    'w-6 h-6 text-gray-700 group-hover:brightness-0 group-hover:invert transition-all duration-300',
+                    'w-6 h-6 text-gray-700 transition-all duration-300',
                     isItemActive && 'brightness-0 invert'
                   )}
                 />
@@ -155,7 +159,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
               {hasChildren && isOpen && (
                 <ul className='ml-4 mt-1 space-y-1'>
                   {item.children?.map((child) => {
-                    const isChildActive = path === child.path;
+                    const isChildActive = path === child.path || path.startsWith(child.path + '/');
                     const ChildIcon = child.icon;
                     return (
                       <li key={child.href ?? child.label}>
@@ -171,7 +175,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                         >
                           <ChildIcon
                             className={cn(
-                              'w-5 h-5',
+                              'w-5 h-5 text-gray-700 transition-all duration-300',
                               isChildActive && 'brightness-0 invert'
                             )}
                           />
@@ -192,8 +196,10 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
 export const SideBar = () => {
   return (
-    <nav className='hidden bg-white lg:block w-[250px] h-screen pr-4 pl-4 text-second_text_color overflow-y-auto'>
-      <MenuContent />
+    <nav className='hidden bg-white lg:flex flex-col w-[250px] h-screen pr-4 pl-4 text-second_text_color'>
+      <div className='flex-1 overflow-y-auto pt-4 pb-6'>
+        <MenuContent />
+      </div>
     </nav>
   )
 }
@@ -221,8 +227,8 @@ export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
         onClick={onClose}
       />
       {/* Sidebar */}
-      <nav className='fixed left-0 top-0 h-screen w-[280px] bg-white z-50 shadow-xl lg:hidden overflow-y-auto'>
-        <div className='flex items-center justify-between p-4 border-b'>
+      <nav className='fixed left-0 top-0 h-screen w-[280px] bg-white z-50 shadow-xl lg:hidden flex flex-col'>
+        <div className='flex items-center justify-between p-4 border-b flex-shrink-0'>
           <h2 className='text-lg font-semibold'>Menú</h2>
           <button
             onClick={onClose}
@@ -231,7 +237,7 @@ export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
             <X className='w-5 h-5' />
           </button>
         </div>
-        <div className='p-4 text-second_text_color'>
+        <div className='flex-1 overflow-y-auto pt-4 pb-6 px-4 text-second_text_color'>
           <MenuContent onLinkClick={onClose} />
         </div>
       </nav>

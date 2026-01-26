@@ -73,9 +73,11 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       <td className='py-4 px-4 text-sm text-gray-700'>{row.createdAt || '-'}</td>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Eye size={16} className='text-gray-600' />
-          </button>
+          <Link href={`/property/${row.id || index}`}>
+            <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
+              <Eye size={16} className='text-gray-600' />
+            </button>
+          </Link>
           <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
             <Pencil size={16} className='text-gray-600' />
           </button>
