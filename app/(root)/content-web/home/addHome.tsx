@@ -12,7 +12,7 @@ export const AddHome = () => {
 
     return (
         <>
-            <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+            <div className='w-full max-h-max rounded-lg p-5 border'>
                 <h1 className='font-[500] text-lg'>Banner Principal</h1>
                 <p className='text-md text-gray-500'>Configura el banner de inicio: texto e imágen destacada.</p>
 
@@ -101,7 +101,7 @@ export const AddHome = () => {
              
             </div>
 
-            <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+            <div className='w-full max-h-max rounded-lg p-5 border'>
                 <h1 className='font-[500] text-lg'>Contenido introductorio</h1>
                 <p className='text-md text-gray-500'>Texto breve que aparece debajo de la ección de propiedades para explicar la propuesta de valor.</p>
                 <div className='mt-4'>

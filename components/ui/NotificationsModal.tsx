@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon, AlertTriangle } from 'lucide-react';
+import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon } from 'lucide-react';
 import { Tag } from './badges';
 
 interface Notification {

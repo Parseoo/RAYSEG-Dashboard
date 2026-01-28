@@ -81,9 +81,6 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
           <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Eye size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
             <Pencil size={16} className='text-gray-600' />
           </button>
           <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>

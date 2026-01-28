@@ -19,7 +19,7 @@ export const AddServices = () => {
 
     return (
         <>
-            <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+            <div className='-full max-h-max rounded-lg p-5 border'>
                 <h1 className='font-[500] text-lg'>Encabezado de la sección de servicios</h1>
                 <p className='text-md text-gray-500'>Fotos a mostrar en la sección de servicios.</p>
                 <div className='mt-4'>

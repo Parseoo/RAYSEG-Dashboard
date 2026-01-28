@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef } from 'react';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import Image from 'next/image';
@@ -42,7 +42,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
 
     const handleLogout = () => {
         logout();
-        router.push('/auth');
+        router.push('/sing-in');
         onClose();
     };
 
@@ -60,15 +60,10 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
             <div className="p-4 bg-slate-50 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                     <div className="relative">
-                        <div className="bg-black w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
-                            {/* Aquí iría la imagen del usuario si existe */}
-                            <Image 
-                                src="/user.svg" 
-                                alt={user?.name || 'Usuario'} 
-                                width={56} 
-                                height={56}
-                                className="object-cover"
-                            />
+                        <div className="bg-black w-14 h-14 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <span className="text-white text-xl font-bold">
+                                {user?.name?.charAt(0) || 'U'}
+                            </span>
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">

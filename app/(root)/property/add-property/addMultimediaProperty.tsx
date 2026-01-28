@@ -15,7 +15,7 @@ export const AddMultimediaProperty = () => {
   const [openModal, setOpenModal] = useState(false);
 
   return (
-    <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+    <div className='w-full max-h-max rounded-lg p-5 border'>
       <div className='flex justify-between items-center mb-2'>
         <h1 className='font-[500] text-lg'>Galería</h1>
         <h3>3 imágenes cargadas</h3>
