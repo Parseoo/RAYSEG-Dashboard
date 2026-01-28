@@ -19,7 +19,7 @@ const inputs: InputFieldConfig[] = [
 export const AddLocationProperty = () => {
     return (
         <>
-            <div className='bg-slate-100 w-full max-h-max rounded-lg p-5 mb-5'>
+            <div className='w-full max-h-max rounded-lg p-5 mb-5 border'>
                 <h1 className='font-[500] text-lg'>Ubicación</h1>
                 <p className='text-md text-gray-500'>Dirección exacta para mapas y reportes.</p>
                 <div className='mt-4'>

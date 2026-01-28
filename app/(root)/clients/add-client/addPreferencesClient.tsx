@@ -131,7 +131,7 @@ export const AddPreferencesClient = () => {
             <div className='bg-white w-full max-h-max rounded-lg'>
                 <div className='w-full h-full'>
                     <div className='flex gap-3'>
-                        <div className='bg-slate-100 w-full max-h-max rounded-lg p-5 mb-5'>
+                        <div className='w-full max-h-max rounded-lg p-5 mb-5 border'>
                             <h1 className='font-[500] text-lg'>Preferencias de operación</h1>
                             <p className='text-md text-gray-500'>Configura que busca o que ofrece este cliente en el mercado inmobiliario.</p>
                             <div className='mt-4'>

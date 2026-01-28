@@ -100,7 +100,7 @@ export const AddLocations = () => {
     }
 
     return (
-        <div className="bg-slate-100 w-full rounded-lg p-5">
+        <div className="w-full rounded-lg p-5 border">
             <h1 className="font-[500] text-lg">Vista previa del mapa</h1>
             <p className="text-md text-gray-500">
                 Visualización de las propiedades según su ubicación registrada.

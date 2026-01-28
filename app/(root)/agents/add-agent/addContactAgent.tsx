@@ -10,7 +10,7 @@ export const AddContactAgent = () => {
             <div className='bg-white w-full max-h-max rounded-lg'>
                 <div className='w-full h-full'>
                     <div className='flex gap-3'>
-                        <div className='bg-slate-100 w-full max-h-max rounded-lg p-5 mb-5'>
+                        <div className='w-full max-h-max rounded-lg p-5 mb-5 border'>
                             <h1 className='font-[500] text-lg'>Datos de Contacto</h1>
                             <p className='text-md text-gray-500 mt-2'>Datos para comunicación y envió de notificaciones.</p>
                             <div className='mt-4 flex flex-col gap-4'>

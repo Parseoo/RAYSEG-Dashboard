@@ -12,7 +12,7 @@ export const AddAboutUs = () => {
 
     return (
         <>
-            <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+            <div className='w-full max-h-max rounded-lg p-5 border'>
                 <h1 className='font-[500] text-lg'>Información General</h1>
                 <p className='text-md text-gray-500'>  Datos principales que describen quiénes somos y nuestra identidad.</p>
 
@@ -22,7 +22,7 @@ export const AddAboutUs = () => {
             </div>
 
             <div className='flex gap-3'>
-                <div className='bg-slate-100 w-full max-h-max rounded-lg p-5'>
+                <div className='w-full max-h-max rounded-lg p-5 border'>
                     <div className='flex justify-between items-center mb-2'>
                         <h1 className='font-[500] text-lg'>Imágenes Corporativas</h1>
                         <h3>3 imágenes cargadas</h3>
