@@ -1,14 +1,17 @@
 "use client"
 
 import React from 'react';
-import { Save } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 import AddDataClient from './addDataContract';
 import AddNotesClient from './addNotesContract';
 import AddContactClient from './addContactContract';
 import AddPreferencesClient from './addPreferencesContract';
 import Breadcrumb from '@/components/ui/breadcrumb';
+import { useRouter } from 'next/navigation';
 
 const AddClient = () => {
+  const router = useRouter();
+
   return (
     <>
       <Breadcrumb items={[
@@ -29,13 +32,16 @@ const AddClient = () => {
           <AddPreferencesClient />
           <AddNotesClient />
           <div className='flex gap-4 justify-end'>
-            <button type='button'
-              className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
-              Guardar borrador
+            <button 
+              type='button'
+              onClick={() => router.push('/contracts')}
+              className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium'
+            >
+              <X size={20} /> Cancelar
             </button>
             <button type='button'
-              className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
-              <Save size={20} /> Guardar Cliente
+              className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium'>
+              <Save size={20} /> Guardar Contrato
             </button>
           </div>
         </div>

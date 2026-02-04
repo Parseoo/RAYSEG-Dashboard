@@ -52,7 +52,6 @@ export interface RegisterForm {
 }
 
 export interface LoginForm {
-  identifier: string
   email: string 
   password: string
 }

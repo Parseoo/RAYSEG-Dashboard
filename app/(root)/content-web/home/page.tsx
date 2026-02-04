@@ -1,9 +1,14 @@
+"use client"
+
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { ArrowUpToLine, Save, Info } from 'lucide-react';
+import { ArrowUpToLine, Save, Info, X } from 'lucide-react';
 import React from 'react';
 import { AddHome } from './addHome';
+import { useRouter } from 'next/navigation';
 
 const ContentWebHomePage = () => {
+  const router = useRouter();
+
   return (
     <>
       <Breadcrumb items={[
@@ -37,13 +42,14 @@ const ContentWebHomePage = () => {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                className="bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
-                <Save size={20} /> Guardar borrador
+                onClick={() => router.push('/content-web')}
+                className="bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium">
+                <X size={20} /> Cancelar
               </button>
 
               <button
                 type="button"
-                className="bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
+                className="bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium">
                 <ArrowUpToLine size={20} /> Publicar
               </button>
             </div>

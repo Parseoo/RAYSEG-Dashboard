@@ -149,7 +149,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-slate-100 rounded-lg transition-all"
                         aria-label="Cerrar"
                     >
                         <X className="w-5 h-5 text-gray-500" />
@@ -164,13 +164,13 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                                 key={f.id}
                                 onClick={() => setFilter(f.id)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === f.id
-                                    ? 'bg-blue-50 text-blue-600 border-2 border-blue-500'
-                                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                                    ? 'bg-blue-50 text-blue-600 border-2 border-primary_color'
+                                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200'
                                     }`}
                             >
                                 {f.label}
                                 {f.id === 'unread' && unreadCount > 0 && (
-                                    <span className="ml-2 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                    <span className="ml-2 bg-primary_color text-white text-xs px-1.5 py-0.5 rounded-full">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -240,7 +240,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={markAllAsRead}
-                        className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                        className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-slate-50 transition-all"
                     >
                         Marcar todas como leídas
                     </button>
@@ -249,7 +249,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                             // Navegar al centro de notificaciones
                             onClose();
                         }}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        className="flex-1 px-4 py-2 bg-primary_color text-white rounded-lg font-medium hover:opacity-90 transition-all"
                     >
                         Ver centro de notificaciones
                     </button>
