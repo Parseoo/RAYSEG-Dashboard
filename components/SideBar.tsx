@@ -48,7 +48,7 @@ export const menuItems: MenuItem[] = [
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
   { href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
-  { href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
+  //{ href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
 
   {
     icon: LayoutTemplate,
@@ -126,27 +126,21 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         return (
           <li key={item.label} className='mb-1'>
             <div className='flex flex-col'>
-              <div
-                className={cn(
-                  'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
-                  isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
-                )}
-                onClick={() => hasChildren && toggleMenu(item.label)}
-              >
-                <Icon
+              {hasChildren ? (
+                <div
                   className={cn(
-                    'w-6 h-6 text-gray-700 transition-all duration-300',
-                    isItemActive && 'brightness-0 invert'
+                    'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
+                    isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
                   )}
-                />
-                {hasChildren ? (
+                  onClick={() => toggleMenu(item.label)}
+                >
+                  <Icon
+                    className={cn(
+                      'w-6 h-6 text-gray-700 transition-all duration-300',
+                      isItemActive && 'brightness-0 invert'
+                    )}
+                  />
                   <span className='flex-1'>{item.label}</span>
-                ) : (
-                  <Link href={item.href!} className='flex-1' onClick={onLinkClick}>
-                    {item.label}
-                  </Link>
-                )}
-                {hasChildren && (
                   <span className='ml-auto'>
                     {isOpen ? (
                       <ChevronDown className='w-4 h-4' />
@@ -154,8 +148,25 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                       <ChevronRight className='w-4 h-4' />
                     )}
                   </span>
-                )}
-              </div>
+                </div>
+              ) : (
+                <Link
+                  href={item.href!}
+                  onClick={onLinkClick}
+                  className={cn(
+                    'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
+                    isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'w-6 h-6 text-gray-700 transition-all duration-300',
+                      isItemActive && 'brightness-0 invert'
+                    )}
+                  />
+                  <span className='flex-1'>{item.label}</span>
+                </Link>
+              )}
               {hasChildren && isOpen && (
                 <ul className='ml-4 mt-1 space-y-1'>
                   {item.children?.map((child) => {

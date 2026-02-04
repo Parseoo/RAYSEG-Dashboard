@@ -1,15 +1,18 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, CalendarPlus } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { typeOptions, statusOptions, responsibleOptions } from '../../../components/selectClients.data';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table } from '../../../components/ui/table';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
+import FilterSidebar from '@/components/ui/FilterSidebar';
+import DeleteModal from '@/components/ui/DeleteModal';
+import Tooltip from '@/components/ui/Tooltip';
 
 const headers = [
   'Agente',
@@ -23,6 +26,12 @@ const headers = [
 ];
 
 function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: any | null }>({
+    isOpen: false,
+    item: null
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const propertiesData = [
     {
@@ -42,6 +51,20 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
   ]
 
   const tableData = (data && data.length > 0) ? data : propertiesData;
+
+  const handleDeleteClick = (item: any) => {
+    setDeleteModal({ isOpen: true, item });
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    // Aquí iría la lógica para eliminar el agente
+    setTimeout(() => {
+      console.log('Eliminando agente:', deleteModal.item);
+      setIsDeleting(false);
+      setDeleteModal({ isOpen: false, item: null });
+    }, 1500);
+  };
 
   const renderRow = (row: any, index: number) => (
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
@@ -80,12 +103,24 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       </td>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Pencil size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
-            <Trash2 size={16} className='text-white' />
-          </button>
+          <Tooltip content="Ver detalle">
+            <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <Eye size={16} className='text-gray-600' />
+            </button>
+          </Tooltip>
+          <Tooltip content="Editar">
+            <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <Pencil size={16} className='text-gray-600' />
+            </button>
+          </Tooltip>
+          <Tooltip content="Eliminar">
+            <button
+              onClick={() => handleDeleteClick(row)}
+              className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
+            >
+              <Trash2 size={16} className='text-white' />
+            </button>
+          </Tooltip>
         </div>
       </td>
     </tr>
@@ -103,8 +138,15 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Listado de agentes</h1>
               <p className='text-sm sm:text-md text-gray-500'>Gestión de agentes inmobiliarios</p>
             </div>
+          </div>
+
+          <div className='mb-5 flex flex-col sm:flex-row sm:items-center'>
+            <Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='w-full sm:w-auto sm:min-w-[420px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' />
             <div className='flex items-center gap-2 sm:gap-4'>
-              <button className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+              >
                 <SlidersHorizontal className='w-5 h-5' />
               </button>
               <Link href='/agents/add-agent' className='flex-1 sm:flex-initial'>
@@ -115,39 +157,62 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
               </Link>
             </div>
           </div>
-
-          <div>
-            <ul className='flex flex-col sm:flex-row gap-3 w-full mb-3'>
-              <li className='w-full'><Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='w-full pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className='w-full sm:w-[180px]'>
-                    <SelectValue placeholder='Estatus' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className='w-full sm:w-[180px]'>
-                    <SelectValue placeholder='Rol' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {responsibleOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-            </ul>
-          </div>
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
         </div>
       </div>
+
+      {/* Filter Sidebar */}
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        title="Filtrar Agentes"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estatus</label>
+            <Select>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Seleccionar estatus' />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rol del Agente</label>
+            <Select>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Seleccionar rol' />
+              </SelectTrigger>
+              <SelectContent>
+                {responsibleOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FilterSidebar>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, item: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Agente"
+        itemName={deleteModal.item?.name || ''}
+        itemDetails={deleteModal.item ? [
+          { label: 'Email', value: deleteModal.item.email || '-' },
+          { label: 'Rol', value: deleteModal.item.type || '-' },
+          { label: 'Propiedades activas', value: deleteModal.item.propertiesActive || '-' },
+          { label: 'Estatus', value: deleteModal.item.statusLabel || '-' }
+        ] : []}
+        isDeleting={isDeleting}
+      />
     </>
   )
 }
