@@ -1,13 +1,38 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import Breadcrumb from "@/components/ui/breadcrumb"
 import { Save } from 'lucide-react';
 import { AddInformationPersonal } from './addInformationPersonal';
 import AddPermissions from './addPermissions';
 import AddPassword from './addPassword';
+import { RegisterForm } from '@/lib/@type';
+import { RegisterApi } from '@/lib/api/auth/auth-api';
+import router from 'next/router';
 
 const AddUser = () => {
+    const [agent, setAgent] = useState<RegisterForm>({
+        email: '',
+        name: '',
+        paternal_last_name: '',
+        maternal_last_name: '',
+        password: '',
+        password_confirm: '',
+        role: ''
+    });
+
+
+    const handleSaveAgent = async () => {
+        try {
+            const response = await RegisterApi(agent);
+            console.log('Usuario creado:', response.data);
+            router.push('/settings/users-permissions'); // Redirigir a la lista
+        } catch (error) {
+            console.error('Error al crear usuario:', error);
+        }
+    };
+
+
     return (
         <>
             <Breadcrumb items={[
@@ -25,7 +50,7 @@ const AddUser = () => {
                         </div>
                     </div>
                     <AddInformationPersonal />
-                    <AddPermissions  data={[]} isLoading={false}/>
+                    <AddPermissions data={[]} isLoading={false} />
                     <AddPassword />
                     <div className='flex gap-4 justify-end'>
                         <button type='button'
@@ -33,7 +58,8 @@ const AddUser = () => {
                             Guardar borrador
                         </button>
                         <button type='button'
-                            className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
+                            className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'
+                            onClick={handleSaveAgent}>
                             <Save size={20} /> Guardar Usuario
                         </button>
                     </div>

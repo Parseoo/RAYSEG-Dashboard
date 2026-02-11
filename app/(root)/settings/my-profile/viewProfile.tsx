@@ -1,11 +1,16 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { DynamicInputs } from "@/components/ui/Input"
-import { inputsProfile } from "../inputConfig"
+import { GetProfileApi } from "@/lib/api/auth/auth-api"
+import { User } from "@/lib/@type"
+import { Share2, Pencil } from "lucide-react"
 
-export const AddProfile = () => {
+interface ProfileHeaderProps {
+    user?: User | null;
+}
+
+export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [avatarPreview, setAvatarPreview] = useState("/casa.jpeg")
 
@@ -22,70 +27,90 @@ export const AddProfile = () => {
     }
 
     return (
-        <div className="w-full max-h-max rounded-lg p-5 border">
-            <h1 className="font-[500] text-lg">Perfil del Agente</h1>
-            <p className="text-md text-gray-500">
-                Datos visibles en las fichas de propiedades en la web.
-            </p>
-
-            {/* Avatar + botón */}
-            <div className="mt-6 flex items-start gap-4">
-                {/* Avatar */}
-                <div className="relative w-24 h-24 overflow-hidden bg-neutral-secondary-medium rounded-full">
-                    <Image
-                        src={avatarPreview}
-                        alt="avatar"
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-
-                {/* Botón + texto */}
-                <div className="flex flex-col gap-1 mt-5">
+        <div className="w-full bg-white rounded-lg p-6 border shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-6">
+                <div className="relative group">
+                    <div className="relative w-24 h-24 overflow-hidden rounded-full border-2 border-gray-100">
+                        <Image
+                            src={avatarPreview}
+                            alt="avatar"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
                     <button
                         type="button"
                         onClick={handleOpenFile}
-                        className="bg-primary_color text-white w-[270px] h-[30px] rounded-lg
-                     flex items-center justify-center gap-2 px-4
-                     hover:opacity-90 transition-opacity font-medium"
+                        className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md border hover:bg-gray-50 transition-colors"
                     >
-                        Cambiar foto
+                        <Pencil size={14} className="text-gray-600" />
                     </button>
-
-                    <p className="text-sm text-gray-500 mt-2">
-                        Recomendado: 400x400px, JPG o PNG, máximo 2 MB.
-                    </p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
                 </div>
 
-                {/* Input file oculto */}
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                />
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {user?.name} {user?.paternal_last_name}
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-600 font-medium">Agente Inmobiliario Senior</span>
+                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                            {user?.role || 'Agente'}
+                        </span>
+                    </div>
+
+
+                    <div className="flex flex-col gap-1 text-sm text-gray-500 mt-1">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-full border border-gray-400 flex items-center justify-center">
+                                    <span className="w-0.5 h-0.5 bg-gray-400 rounded-full"></span>
+                                </span>
+                                Ciudad de México, CDMX
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-full border border-gray-400 flex items-center justify-center">
+                                    <span className="w-0.5 h-0.5 bg-gray-400 rounded-full"></span>
+                                </span>
+                                Miembro desde Ene 2021
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-full border border-gray-400 flex items-center justify-center">
+                                    <span className="w-0.5 h-0.5 bg-gray-400 rounded-full"></span>
+                                </span>
+                                Último acceso: Hoy, 09:24 hrs
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="w-3 h-3 rounded-full border border-gray-400 flex items-center justify-center">
+                                    <span className="w-0.5 h-0.5 bg-gray-400 rounded-full"></span>
+                                </span>
+                                Último cambio de contraseña: 10 Dic 2024
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Inputs dinámicos */}
-            <div className="mt-4">
-                <DynamicInputs inputs={inputsProfile} withBgWhite={true} />
-            </div>
-
-            {/* Stats */}
-            <div className="flex gap-x-8 mt-4">
-                <div className="flex">
-                    <strong className="mr-2">Propiedades activas:</strong>
-                    <p>24</p>
-                </div>
-
-                <div className="flex">
-                    <strong className="mr-2">Propiedades vendidas:</strong>
-                    <p>18</p>
-                </div>
+            <div className="flex items-center gap-3">
+                <button className="flex items-center gap-2 px-4 py-2 bg-primary_color text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                    <Pencil size={16} />
+                    Editar perfil
+                </button>
             </div>
         </div>
     )
 }
 
-export default AddProfile
+export default ProfileHeader
+

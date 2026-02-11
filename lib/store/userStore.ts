@@ -1,48 +1,7 @@
-
-// "use client";
-// import { create } from 'zustand';
-// import { UserState } from '../@type';
-
-
-// const getTokenFromLocalStorage = () => {
-//   if (typeof window !== 'undefined') {
-//     return localStorage.getItem('jwtToken');
-//   }
-//   return null;
-// };
-
-// export const useUserStore = create<UserState>((set) => ({
-//   user: null,
-//   isLogin: false,
-//   token: getTokenFromLocalStorage(),
-//   login: (user) => set({ user, isLogin: true }),
-//   logout: () => set({ user: null, isLogin: false }),
-//   setToken: (token) => {
-//     if (typeof window !== 'undefined') {
-//       localStorage.setItem('jwtToken', token);
-//     }
-//     set({ token });
-//   },
-//   removeToken: () => {
-//     if (typeof window !== 'undefined') {
-//       localStorage.removeItem('jwtToken');
-//     }
-//     set({ token: null });
-//   },
-// }));
-// stores/useUserStore.ts
 "use client";
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { UserState } from '../@type';
-
-// Функция для безопасного доступа к localStorage только на клиенте
-const getTokenFromLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('jwtToken');
-  }
-  return null;
-};
 
 export const useUserStore = create<UserState>()(
   devtools(
@@ -50,28 +9,22 @@ export const useUserStore = create<UserState>()(
       (set) => ({
         user: null,
         isLogin: false,
-        token: getTokenFromLocalStorage(),
-        login: (user) => set({ user, isLogin: true }),
+        token: null,
+        login: (user, token) => set({ user, token, isLogin: true }),
         logout: () => {
-          set({ user: null, isLogin: false })
-          set({ token: null });
+          set({ user: null, isLogin: false, token: null });
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('refresh_token');
           }
         },
         setToken: (token) => {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('jwtToken', token);
-          }
           set({ token });
         },
       }),
       {
-        name: 'user-store', // имя для сохранения состояния в localStorage
+        name: 'user-store',
       }
     ),
-    { name: 'UserStore' } // имя для DevTools
+    { name: 'UserStore' }
   )
 );
-
-

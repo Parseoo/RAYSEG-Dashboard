@@ -1,15 +1,7 @@
-import React from 'react';
-import SingUp from '@/components/SingUp/SingUp';
+import { redirect } from 'next/navigation';
 
 const page = () => {
-  return (
-    <section>
-      <SingUp />
-    </section>
-  )
+  redirect('/sign-in');
 }
-
-page.getLayout = (page: React.ReactNode) => page;
-
 
 export default page
