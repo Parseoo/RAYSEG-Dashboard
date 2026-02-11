@@ -27,7 +27,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
             <div className='flex items-center gap-2 sm:gap-4'>
               <button
                 onClick={onMenuClick}
-                className='lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors'
+                className='lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-all'
                 aria-label='Abrir menú'
               >
                 <Menu className='w-5 h-5' />
@@ -56,7 +56,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
               <input
                 type='text'
                 placeholder='Buscar propiedad, cliente, etc.'
-                className='w-full max-w-[480px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 text-sm sm:text-base'
+                className='w-full max-w-[480px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-primary_color text-sm sm:text-base'
               />
             </div>
 
@@ -64,7 +64,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
             <div className='flex items-center gap-2 sm:gap-[15px] flex-shrink-0'>
               <button
                 onClick={() => setIsNotificationsOpen(true)}
-                className='p-2 hover:bg-gray-100 rounded-lg transition-colors lg:p-0 lg:hover:bg-transparent relative'
+                className='p-2 hover:bg-slate-100 rounded-lg transition-all lg:p-0 lg:hover:bg-transparent relative'
                 aria-label='Notificaciones'
               >
                 <Image src={'/notification.svg'} alt='notification' width={24} height={24} />
@@ -76,7 +76,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
               <div className='relative' ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className='flex items-center space-x-2 hover:bg-gray-50 p-2 rounded-lg transition-colors'
+                  className='flex items-center space-x-2 hover:bg-slate-50 p-2 rounded-lg transition-all'
                 >
                   <div className='bg-black w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full flex-shrink-0'></div>
                   <div className='hidden md:block text-left'>

@@ -1,15 +1,19 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, CalendarPlus, FileText } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, FileText } from 'lucide-react';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table } from '../../../components/ui/table';
 import { ClientsCard } from './ContractsCard';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { rangeDates, statusContracts, typeContracts } from '@/components/SelectData.data';
+import FilterSidebar from '@/components/ui/FilterSidebar';
+import DeleteModal from '@/components/ui/DeleteModal';
+import { Tag } from '@/components/ui/badges';
+import Tooltip from '@/components/ui/Tooltip';
 
 const headers = [
   'No. Contrato',
@@ -24,6 +28,12 @@ const headers = [
 ];
 
 function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: any | null }>({
+    isOpen: false,
+    item: null
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const propertiesData = [
     {
@@ -42,6 +52,20 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
   ]
 
   const tableData = (data && data.length > 0) ? data : propertiesData;
+
+  const handleDeleteClick = (item: any) => {
+    setDeleteModal({ isOpen: true, item });
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    // Aquí iría la lógica para eliminar el contrato
+    setTimeout(() => {
+      console.log('Eliminando contrato:', deleteModal.item);
+      setIsDeleting(false);
+      setDeleteModal({ isOpen: false, item: null });
+    }, 1500);
+  };
 
   const renderRow = (row: any, index: number) => (
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
@@ -65,32 +89,34 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
 
       <td className='py-4 px-4 text-sm text-gray-700'>{row.type}</td>
       <td className='py-4 px-4'>
-        <span className={`px-3 py-1 rounded-md text-xs font-medium ${row.status === 'Activo' ? 'bg-emerald-700 text-white' : 'bg-gray-500 text-white'}`}>
-          {row.statusLabel || row.status || 'Unknown'}
-        </span>
+        <Tag status={row.statusLabel || row.status}>{row.statusLabel || row.status || 'Unknown'}</Tag>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{row.interest}</td>
+      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{row.import || row.interest}</td>
 
       <td className='py-4 px-4'>
-
-        <span className='text-sm text-gray-700'>{row.properties}</span>
-
+        <span className='text-sm text-gray-700'>{row.period || row.properties}</span>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.agent}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.reminder || row.agent}</td>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Eye size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Pencil size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <CalendarPlus size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
-            <Trash2 size={16} className='text-white' />
-          </button>
+          <Tooltip content="Ver detalle">
+            <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <Eye size={16} className='text-gray-600' />
+            </button>
+          </Tooltip>
+          <Tooltip content="Editar">
+            <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <Pencil size={16} className='text-gray-600' />
+            </button>
+          </Tooltip>
+          <Tooltip content="Eliminar">
+            <button
+              onClick={() => handleDeleteClick(row)}
+              className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
+            >
+              <Trash2 size={16} className='text-white' />
+            </button>
+          </Tooltip>
         </div>
       </td>
     </tr>
@@ -108,10 +134,16 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
             <div>
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Listado de contratos</h1>
-              <p className='text-sm sm:text-md text-gray-500'>Filtra por estado, tipo de operación, agente y fechas</p>
             </div>
+          </div>
+
+          <div className='mb-5 flex flex-col sm:flex-row sm:items-center'>
+            <Search title='Buscar por propiedad, cliente o número de contrato' className='w-full sm:w-auto sm:min-w-[420px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' />
             <div className='flex items-center gap-2 sm:gap-4'>
-              <button className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+              >
                 <SlidersHorizontal className='w-5 h-5' />
               </button>
               <Link href='/clients/add-client' className='flex-1 sm:flex-initial'>
@@ -123,52 +155,76 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
             </div>
           </div>
 
-          <div>
-            <ul className='flex flex-col sm:flex-row gap-3 w-full mb-3'>
-              <li className='w-full'><Search title='Buscar por propiedad, cliente o No. contrato' className='w-full pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className='w-full sm:w-[180px]'>
-                    <SelectValue placeholder='Tipo de contrato' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {typeContracts.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className='w-full sm:w-[180px]'>
-                    <SelectValue placeholder='Estatus' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusContracts.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className='w-full sm:w-[180px]'>
-                    <SelectValue placeholder='Rango de fechas' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rangeDates.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-            </ul>
-          </div>
-
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
         </div>
       </div>
+
+      {/* Filter Sidebar */}
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        title="Filtrar Contratos"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Contrato</label>
+            <Select>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Seleccionar tipo' />
+              </SelectTrigger>
+              <SelectContent>
+                {typeContracts.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estatus</label>
+            <Select>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Seleccionar estatus' />
+              </SelectTrigger>
+              <SelectContent>
+                {statusContracts.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rango de Fechas</label>
+            <Select>
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Seleccionar rango' />
+              </SelectTrigger>
+              <SelectContent>
+                {rangeDates.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FilterSidebar>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, item: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Contrato"
+        itemName={deleteModal.item?.noContract || ''}
+        itemDetails={deleteModal.item ? [
+          { label: 'Propiedad', value: deleteModal.item.property || '-' },
+          { label: 'Cliente', value: deleteModal.item.name || '-' },
+          { label: 'Tipo', value: deleteModal.item.type || '-' },
+          { label: 'Importe', value: deleteModal.item.import || '-' }
+        ] : []}
+        isDeleting={isDeleting}
+      />
     </>
   )
 }

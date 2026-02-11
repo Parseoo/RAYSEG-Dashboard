@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Breadcrumb from "@/components/ui/breadcrumb"
-import { Save } from 'lucide-react';
+import { Save, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { AddInformationPersonal } from './addInformationPersonal';
 import AddPermissions from './addPermissions';
 import AddPassword from './addPassword';
@@ -32,6 +33,7 @@ const AddUser = () => {
         }
     };
 
+    const router = useRouter();
 
     return (
         <>
@@ -53,9 +55,12 @@ const AddUser = () => {
                     <AddPermissions data={[]} isLoading={false} />
                     <AddPassword />
                     <div className='flex gap-4 justify-end'>
-                        <button type='button'
-                            className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
-                            Guardar borrador
+                        <button 
+                            type='button'
+                            onClick={() => router.push('/settings/users-permissions')}
+                            className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium'
+                        >
+                            <X size={20} /> Cancelar
                         </button>
                         <button type='button'
                             className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'

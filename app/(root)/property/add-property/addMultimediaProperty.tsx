@@ -10,9 +10,39 @@ const inputs: InputFieldConfig[] = [
   { type: 'url', id: 'url', label: 'Video (URL)', placeholder: 'Pega enlace de Youtube' },
 ];
 
+interface ImageItem {
+  id: number;
+  src: string;
+  isMain: boolean;
+}
+
 export const AddMultimediaProperty = () => {
 
   const [openModal, setOpenModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
+
+  // Initial dummy data
+  const [images, setImages] = useState<ImageItem[]>([
+    { id: 1, src: '/casa.jpeg', isMain: false },
+    { id: 2, src: '/property.svg', isMain: false },
+    { id: 3, src: '/casa.jpeg', isMain: false },
+  ]);
+
+  const handleSetMain = (id: number) => {
+    setImages(prev => prev.map(img => ({
+      ...img,
+      isMain: img.id === id
+    })));
+  };
+
+  const handleViewImage = (image: ImageItem) => {
+    setSelectedImage(image);
+    setOpenModal(true);
+  };
+
+  const handleDelete = (id: number) => {
+    setImages(prev => prev.filter(img => img.id !== id));
+  };
 
   return (
     <div className='w-full max-h-max rounded-lg p-5 border'>
@@ -47,33 +77,49 @@ export const AddMultimediaProperty = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        <div className="group w-full relative max-w-sm mx-auto h-[150px] rounded-md overflow-hidden">
+        {images.map((image) => (
+          <div key={image.id} className="group w-full relative max-w-sm mx-auto h-[150px] rounded-md overflow-hidden">
+            <Image src={image.src} alt="image" fill className="object-cover" />
 
-          <Image src="/casa.jpeg" alt="image" fill className="object-cover" />
+            <a className={`absolute inset-0 bg-black transition-opacity duration-300 z-10 ${image.isMain ? 'opacity-0' : 'opacity-0 group-hover:opacity-40'}`} />
 
-          <a className="absolute inset-0 bg-black opacity-0 
-    group-hover:opacity-40 transition-opacity duration-300 z-10" />
-          <button
-            onClick={() => setOpenModal(true)}
-            className="absolute top-2 left-1.5 
-  p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
-  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          >
-            <Eye size={16} className="text-blue-600" />
-          </button>
+            {image.isMain ? (
+              <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
+                Principal
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleViewImage(image)}
+                  className="absolute top-2 left-1.5 
+                  p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                >
+                  <Eye size={16} className="text-blue-600" />
+                </button>
 
-          <button className="absolute top-2 right-1.5 
-    p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
-    opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <Trash2 size={16} className="text-red-600" />
-          </button>
-          <button className="absolute bottom-2 left-1/2 -translate-x-1/2 
-    w-[90%] bg-white text-xs font-semibold py-1 
-    rounded-sm shadow-md z-20
-    opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            Marcar principal
-          </button>
-        </div>
+                <button
+                  className="absolute top-2 right-1.5 
+                  p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={() => handleDelete(image.id)}
+                >
+                  <Trash2 size={16} className="text-red-600" />
+                </button>
+
+                <button
+                  onClick={() => handleSetMain(image.id)}
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 
+                  w-[90%] bg-white text-xs font-semibold py-1 
+                  rounded-sm shadow-md z-20
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                >
+                  Marcar principal
+                </button>
+              </>
+            )}
+          </div>
+        ))}
       </div>
 
       {openModal && (
@@ -95,11 +141,13 @@ export const AddMultimediaProperty = () => {
             </button>
 
             {/* Imagen grande */}
-            <img
-              src="/casa.jpeg"
-              alt="Vista completa"
-              className="w-full h-[30rem] object-cover"
-            />
+            {selectedImage && (
+              <img
+                src={selectedImage.src}
+                alt="Vista completa"
+                className="w-full h-[30rem] object-cover"
+              />
+            )}
           </div>
         </div>
       )}

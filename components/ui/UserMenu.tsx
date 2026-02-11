@@ -82,7 +82,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
             <div className="py-2">
                 <button
                     onClick={() => handleNavigation('/settings/my-profile')}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-all text-left"
                 >
                     <User className="w-5 h-5 text-gray-600" />
                     <span className="text-sm font-medium text-gray-700">Mi perfil</span>
@@ -91,7 +91,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
                 <div className="border-t border-gray-200 mt-2 pt-2">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-all text-left"
                     >
                         <LogOut className="w-5 h-5 text-red-600" />
                         <span className="text-sm font-medium text-red-600">Cerrar sesión</span>

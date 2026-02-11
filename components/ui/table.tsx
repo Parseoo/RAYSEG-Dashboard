@@ -84,7 +84,7 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
                             const pageNum = i + 1
                             return (
                                 <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
-                                ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100' }`}>
+                                ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100' }`}>
                                     {pageNum}
                                 </button>
                             )

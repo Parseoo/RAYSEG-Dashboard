@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Plus, SlidersHorizontal, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Plus, SlidersHorizontal, Eye, Pencil, Trash2, Star } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag } from '@/components/ui/badges';
 import Link from 'next/link';
@@ -11,6 +11,9 @@ import { Table } from '@/components/ui/table';
 import { operationProperty, statusProperty, typeProperty, webPublication } from '@/components/SelectProperties.data';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { GetAllProperties } from '@/lib/api/property/property-api';
+import FilterSidebar from '@/components/ui/FilterSidebar';
+import Tooltip from '@/components/ui/Tooltip';
+import DeleteModal from '@/components/ui/DeleteModal';
 
 const headers = [
   'Propiedad',
@@ -21,10 +24,17 @@ const headers = [
   'Estatus',
   'Publicación web',
   'Fecha alta',
+  'Destacada',
   'Acciones'
 ];
 
 function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: any | null }>({
+    isOpen: false,
+    item: null
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Llamada al endpoint para obtener propiedades
   useEffect(() => {
@@ -52,11 +62,30 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       price: '$3,500,000',
       propertyStatus: 'Disponible',
       publicationStatus: 'Publicado',
-      createdAt: '12/04/2025'
+      createdAt: '12/04/2025',
+      featured: true
     }
   ]
 
   const tableData = (data && data.length > 0) ? data : propertiesData;
+
+  const handleDeleteClick = (item: any) => {
+    setDeleteModal({ isOpen: true, item });
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    // Aquí iría la lógica para eliminar el registro
+    // await deleteProperty(deleteModal.item.id);
+
+    // Simulación de eliminación
+    setTimeout(() => {
+      console.log('Eliminando propiedad:', deleteModal.item);
+      setIsDeleting(false);
+      setDeleteModal({ isOpen: false, item: null });
+      // Aquí actualizarías la lista de propiedades
+    }, 1500);
+  };
 
   const renderRow = (row: any, index: number) => (
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
@@ -89,18 +118,36 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       </td>
       <td className='py-4 px-4 text-sm text-gray-700'>{row.createdAt || '-'}</td>
       <td className='py-4 px-4'>
+        <div className='flex items-center justify-center'>
+          {row.featured ? (
+            <Star size={18} className='fill-amber-500 text-amber-500' />
+          ) : (
+            <span className='text-xs text-gray-400'>-</span>
+          )}
+        </div>
+      </td>
+      <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
-          <Link href={`/property/${row.id || index}`}>
-            <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-              <Eye size={16} className='text-gray-600' />
+          <Tooltip content="Ver detalle">
+            <Link href={`/property/${row.id || index}`}>
+              <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+                <Eye size={16} className='text-gray-600' />
+              </button>
+            </Link>
+          </Tooltip>
+          <Tooltip content="Editar">
+            <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <Pencil size={16} className='text-gray-600' />
             </button>
-          </Link>
-          <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-            <Pencil size={16} className='text-gray-600' />
-          </button>
-          <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
-            <Trash2 size={16} className='text-white' />
-          </button>
+          </Tooltip>
+          <Tooltip content="Eliminar">
+            <button
+              onClick={() => handleDeleteClick(row)}
+              className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
+            >
+              <Trash2 size={16} className='text-white' />
+            </button>
+          </Tooltip>
         </div>
       </td>
     </tr>
@@ -119,90 +166,142 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
               <p className='text-sm sm:text-md text-gray-500'>Listado principal de propiedades</p>
             </div>
-            <div className='flex items-center gap-2 sm:gap-4'>
-              <button className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
-                <SlidersHorizontal className='w-5 h-5' />
+          </div>
+
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Buscador */}
+            <Search
+              title="Buscar por dirección, código postal, ciudad, etc."
+              className="w-full sm:min-w-[400px] pl-10 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500"
+            />
+
+            {/* Filtro + Botón */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <SlidersHorizontal className="w-5 h-5" />
               </button>
-              <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
-                <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
-                  <Plus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Propiedad</span><span className='sm:hidden'>Agregar</span>
+
+              <Link href="/property/add-property">
+                <button
+                  type="button"
+                  className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base"
+                >
+                  <Plus size={18} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Agregar Propiedad</span>
+                  <span className="sm:hidden">Agregar</span>
                 </button>
               </Link>
             </div>
+
           </div>
 
-          <div>
-            <ul className='flex flex-col sm:flex-row gap-3 w-full mb-5'>
-              <li className='w-full sm:w-[25%]'><Search title='Buscar por dirección, CP, etc.' className='w-full pl-10 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' /></li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Tipo de Propiedad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {typeProperty.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Estados" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Estados">Estados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Operación" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {operationProperty.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Estatus" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusProperty.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='w-full sm:w-auto'>
-                <Select>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Publicación Web" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {webPublication.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </li>
-              <li className='flex items-center gap-2'>
-                <input type="checkbox" className='w-4 h-4' />
-                <span className='text-sm text-gray-700'>Destacada</span>
-              </li>
-            </ul>
-          </div>
 
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
         </div>
       </div>
+
+      {/* Filter Sidebar */}
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        title="Filtrar Propiedades"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Propiedad</label>
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {typeProperty.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Estados">Estados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Operación</label>
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar operación" />
+              </SelectTrigger>
+              <SelectContent>
+                {operationProperty.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estatus</label>
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estatus" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusProperty.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Publicación Web</label>
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar publicación" />
+              </SelectTrigger>
+              <SelectContent>
+                {webPublication.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-sm font-medium text-gray-700">Solo destacadas</span>
+            </label>
+          </div>
+        </div>
+      </FilterSidebar>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, item: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Propiedad"
+        itemName={deleteModal.item?.title || ''}
+        itemDetails={deleteModal.item ? [
+          { label: 'Tipo', value: deleteModal.item.type || '-' },
+          { label: 'Operación', value: deleteModal.item.operation || '-' },
+          { label: 'Precio', value: deleteModal.item.price || '-' },
+          { label: 'Ubicación', value: deleteModal.item.location || '-' }
+        ] : []}
+        isDeleting={isDeleting}
+      />
     </>
   )
 }
