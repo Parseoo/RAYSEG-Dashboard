@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Plus, SlidersHorizontal, Eye, Pencil, Trash2, Star } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import Search from '@/components/ui/Search';
 import { Table } from '@/components/ui/table';
 import { operationProperty, statusProperty, typeProperty, webPublication } from '@/components/SelectProperties.data';
 import Breadcrumb from '@/components/ui/breadcrumb';
+import { GetAllProperties } from '@/lib/api/property/property-api';
 import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
@@ -34,6 +35,21 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     item: null
   });
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Llamada al endpoint para obtener propiedades
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const response = await GetAllProperties();
+        console.log('📦 Respuesta completa del endpoint:', response);
+        console.log('📋 Datos de propiedades:', response.data);
+      } catch (error) {
+        console.error('❌ Error al obtener propiedades:', error);
+      }
+    };
+
+    fetchProperties();
+  }, []); // Se ejecuta solo una vez al montar el componente
 
   const propertiesData = [
     {

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { LoginApi, setAuthHeader } from '@/lib/api/auth/auth-api';
+import { LoginForm } from '@/lib/@type';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,15 +14,9 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { login, setToken, isLogin } = useUserStore();
-
-  // Si ya está logueado, redirigir al dashboard
-  useEffect(() => {
-    if (isLogin) {
-      router.push('/');
-    }
-  }, [isLogin, router]);
+  const { login } = useUserStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,104 +24,63 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Preparar los datos de login
-      const loginData = {
+      const loginData: LoginForm = {
         email: email,
         password: password
       };
 
-      console.log('📤 Enviando petición de login:', {
-        url: 'http://localhost:8001/api/auth/login',
-        data: loginData
-      });
-
-      // Llamar al API de Django
       const response = await LoginApi(loginData);
+      console.log('Login Response:', response);
 
-      console.log('✅ Respuesta del servidor:', response.data);
-
-      // Verificar si la respuesta es exitosa
-      // Django devuelve: { message, user, tokens: { access, refresh } }
-      if (response.data && (response.data.token || response.data.tokens)) {
+      if (response.data && (response.data.tokens.access || response.data.tokens)) {
         const user = response.data.user;
-        
-        // Extraer el token (puede ser "token" o "tokens.access")
-        const accessToken = response.data.token || response.data.tokens?.access;
+        const accessToken = response.data.tokens?.access;
         const refreshToken = response.data.tokens?.refresh;
 
         if (!accessToken) {
-          console.error('❌ No se encontró token en la respuesta');
           setError('Error: No se recibió token de autenticación');
           return;
         }
 
-        console.log('🔑 Token extraído:', accessToken);
-        console.log('👤 Usuario extraído:', user);
-
-        // Configurar el header de autorización para futuras peticiones
         setAuthHeader(accessToken);
 
-        // Guardar en el store de Zustand
+        // Mapear el usuario de la respuesta al formato de nuestro store
         login({
-          id: user.id || user.userId || user.user_id || '1',
-          name: user.name || user.username || user.first_name || user.email,
+          id: user.id,
           email: user.email,
-          blocked: user.blocked || user.is_blocked || false,
-          confirmed: user.confirmed || user.is_active || true,
-        });
-        setToken(accessToken);
+          name: user.name,
+          paternal_last_name: user.paternal_last_name,
+          maternal_last_name: user.maternal_last_name,
+          is_active: user.is_active,
+          is_staff: user.is_staff,
+          is_superuser: user.is_superuser
+        }, accessToken);
 
-        // Si hay refresh token, también guardarlo (opcional)
         if (refreshToken) {
-          console.log('🔄 Refresh token disponible:', refreshToken);
-          // Podrías guardarlo en localStorage si lo necesitas
           localStorage.setItem('refresh_token', refreshToken);
         }
 
-        console.log('✅ Login exitoso, redirigiendo al dashboard...');
-
-        // Redirigir al dashboard
         router.push('/');
       } else {
-        console.error('❌ Respuesta del servidor inválida:', response.data);
         setError('Respuesta del servidor inválida: No se encontró token');
       }
     } catch (err: any) {
-      console.error('❌ Error al iniciar sesión:', err);
-      console.error('📋 Detalles del error:', {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        headers: err.response?.headers
-      });
-      
-      // Manejar diferentes tipos de errores
       if (err.response) {
-        // El servidor respondió con un código de error
         const status = err.response.status;
         const serverMessage = err.response.data?.message || err.response.data?.error || err.response.data?.detail;
-        
+
         if (status === 401) {
-          // Error de autenticación
           setError(serverMessage || 'Credenciales incorrectas. Verifica tu email y contraseña.');
         } else if (status === 400) {
-          // Error de validación
           setError(serverMessage || 'Datos inválidos. Verifica que el email y contraseña sean correctos.');
         } else if (status === 404) {
-          // Endpoint no encontrado
           setError('Endpoint no encontrado. Verifica que el backend esté correctamente configurado.');
         } else {
-          // Otro error del servidor
           setError(serverMessage || `Error del servidor (${status})`);
         }
-        
-        // Mostrar más detalles en consola
-        console.log('🔍 Respuesta completa del error:', JSON.stringify(err.response.data, null, 2));
       } else if (err.request) {
-        // La petición se hizo pero no hubo respuesta
-        setError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8001');
+        setError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
       } else {
-        // Algo más falló
         setError('Error al procesar la solicitud');
       }
     } finally {
@@ -157,7 +111,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Mensaje de error */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -195,15 +148,28 @@ export default function LoginPage() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   disabled={isLoading}
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary_color focus:border-transparent outline-none transition-all text-gray-800 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="block w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary_color focus:border-transparent outline-none transition-all text-gray-800 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -220,7 +186,7 @@ export default function LoginPage() {
               </label>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={isLoading}
               className="w-full bg-primary_color text-white py-3 rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary_color focus:ring-offset-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"

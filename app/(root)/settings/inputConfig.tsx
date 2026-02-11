@@ -90,9 +90,16 @@ export const inputsUserPermissions: InputFieldConfig[] = [
     },
     {
         type: 'text',
-        id: 'lastName',
-        label: 'Apellidos',
-        placeholder: 'Apellidos del agente',
+        id: 'paternal_last_name',
+        label: 'Apellido paterno',
+        placeholder: 'Apellido paterno',
+        group: 1
+    },
+    {
+        type: 'text',
+        id: 'maternal_last_name',
+        label: 'Apellido materno',
+        placeholder: 'Apellido materno',
         group: 1
     },
     {
@@ -111,7 +118,7 @@ export const inputsUserPermissions: InputFieldConfig[] = [
     },
     {
         type: 'select',
-        id: 'rol',
+        id: 'role',
         label: 'Rol',
         placeholder: 'Seleccione una opción',
         group: 3,
@@ -148,15 +155,15 @@ export const inputsUserPermissions: InputFieldConfig[] = [
 export const inputsPassword: InputFieldConfig[] = [
     {
         type: 'password',
-        id: 'currentPassword',
-        label: 'Contraseña actual',
+        id: 'password',
+        label: 'Contraseña',
         placeholder: '********',
         group: 1
     },
     {
         type: 'password',
-        id: 'confirmNewPassword',
-        label: 'Confirmar nueva contraseña',
+        id: 'password_confirm',
+        label: 'Confirmar contraseña',
         placeholder: '********',
         group: 1
     },

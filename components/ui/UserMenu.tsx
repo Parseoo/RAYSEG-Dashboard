@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { User, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
+import { useLogout } from '@/lib/api/auth/auth-query';
 import Image from 'next/image';
 
 interface UserMenuProps {
@@ -15,12 +16,13 @@ interface UserMenuProps {
 export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const { user, logout } = useUserStore();
+    const { user } = useUserStore();
+    const { mutate: logout } = useLogout();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
-                menuRef.current && 
+                menuRef.current &&
                 !menuRef.current.contains(event.target as Node) &&
                 anchorRef?.current &&
                 !anchorRef.current.contains(event.target as Node)
@@ -42,7 +44,6 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
 
     const handleLogout = () => {
         logout();
-        router.push('/sing-in');
         onClose();
     };
 
