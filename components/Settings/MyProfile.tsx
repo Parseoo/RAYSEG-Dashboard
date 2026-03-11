@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUserStore } from '@/lib/store/userStore';
 import { useLogout } from '@/lib/api/auth/auth-query';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Save } from 'lucide-react';
@@ -11,14 +10,13 @@ import { PersonalInformation } from '@/app/(root)/settings/my-profile/components
 import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
 import SecuritySettings from '@/app/(root)/settings/my-profile/security';
 import { GetProfileApi } from '@/lib/api/auth/auth-api';
-import { User, UserResponse } from '@/lib/@type';
+import { UserResponse } from '@/lib/@type';
 
 const MyProfile = () => { // trae la función logout desde el store global de usuario
-    const router = useRouter(); // instancia del router para navegar programáticamente
     const [user, setUser] = useState<UserResponse | null>(null);
     const { mutate: logout } = useLogout();
 
-    useEffect(() => { // función async para pedir el perfil al backend
+    useEffect(() => { // función async para obtener el perfil del usuario
         const fetchProfile = async () => {
             try {
                 // llamada al endpoint
@@ -37,10 +35,6 @@ const MyProfile = () => { // trae la función logout desde el store global de us
         // ejecuta la función cuando el componente monta
         fetchProfile();
     }, []); // array vacío: se ejecuta una sola vez
-
-    const handleLogout = () => {
-        logout();
-    };
 
     return (
         <>

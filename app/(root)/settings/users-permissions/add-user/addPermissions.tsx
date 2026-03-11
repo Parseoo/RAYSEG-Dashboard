@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Switch } from '@/components/ui/Switch';
+import { UserForm } from '@/lib/@type';
 
 interface PermissionSection {
     id: string;
@@ -206,7 +207,7 @@ const permissionSections: PermissionSection[] = [
     }
 ];
 
-function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnabled: boolean, onToggle: (id: string) => void }) {
+function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnabled: boolean, onToggle: (id: string, enabled: boolean) => void }) {
     return (
         <div className={`p-5 border rounded-xl transition-all ${isEnabled ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
@@ -217,7 +218,7 @@ function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnab
                 <div className="flex-shrink-0">
                     <Switch
                         checked={isEnabled}
-                        onChange={() => onToggle(section.id)}
+                        onChange={() => onToggle(section.id, !isEnabled)}
                         onLabel={section.onLabel || "Habilitado"}
                         offLabel={section.offLabel || "Deshabilitado"}
                     />
@@ -268,29 +269,46 @@ function PermissionCard({ section, isEnabled, onToggle }: { section: any, isEnab
     );
 }
 
-function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }) {
-    const [enabledSections, setEnabledSections] = useState<Record<string, boolean>>({
-        'reportes': true,
-        'propiedades': true,
-        'imagenes-propiedades': true,
-        'clientes': true,
-        'agentes': true,
-        'contratos': true,
-        'leads-contacto': true,
-        'contenido-web-home': false,
-        'contenido-web-servicios': false,
-        'contenido-web-localizacion': false,
-        'contenido-web-sobre-nosotros': false,
-        'contenido-web-footer': false,
-        'contenido-web-legal': false,
-        'mi-perfil': true,
-        'ajustes-usuarios': false
-    });
+interface AddPermissionsProps {
+    user: UserForm;
+    setUser: React.Dispatch<React.SetStateAction<UserForm>>;
+    data: any[];
+    isLoading: boolean
+}
 
-    const toggleSection = (id: string) => {
-        setEnabledSections(prev => ({
+function AddPermissions({ user, setUser, data, isLoading }: AddPermissionsProps) {
+
+    useEffect(() => {
+        // Initialize permissions if empty
+        if (!user.permissions || Object.keys(user.permissions).length === 0) {
+            const initialPermissions: Record<string, boolean> = {
+                'reportes': true,
+                'propiedades': true,
+                'imagenes-propiedades': true,
+                'clientes': true,
+                'agentes': true,
+                'contratos': true,
+                'leads-contacto': true,
+                'contenido-web-home': false,
+                'contenido-web-servicios': false,
+                'contenido-web-localizacion': false,
+                'contenido-web-sobre-nosotros': false,
+                'contenido-web-footer': false,
+                'contenido-web-legal': false,
+                'mi-perfil': true,
+                'ajustes-usuarios': false
+            };
+            setUser((prev: UserForm) => ({ ...prev, permissions: initialPermissions }));
+        }
+    }, []);
+
+    const toggleSection = (id: string, enabled: boolean) => {
+        setUser((prev: UserForm) => ({
             ...prev,
-            [id]: !prev[id]
+            permissions: {
+                ...prev.permissions,
+                [id]: enabled
+            }
         }));
     };
 
@@ -305,6 +323,7 @@ function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }
                 <div className='space-y-4'>
                     {permissionSections.map((section, index) => {
                         const showGroupHeader = section.group && (index === 0 || permissionSections[index - 1].group !== section.group);
+                        const isEnabled = user.permissions?.[section.id] ?? false;
                         return (
                             <React.Fragment key={section.id}>
                                 {showGroupHeader && (
@@ -312,7 +331,7 @@ function AddPermissions({ data, isLoading }: { data: any[]; isLoading: boolean }
                                 )}
                                 <PermissionCard
                                     section={section}
-                                    isEnabled={enabledSections[section.id]}
+                                    isEnabled={isEnabled}
                                     onToggle={toggleSection}
                                 />
                             </React.Fragment>

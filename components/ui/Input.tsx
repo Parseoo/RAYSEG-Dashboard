@@ -1,7 +1,7 @@
-'use client'
 import { cn } from '@/lib/utils';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from './select';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface SearchItem {
     title: string,
@@ -20,11 +20,14 @@ export type InputFieldConfig = {
     placeholder?: string;
     className?: string;
     group?: string | number;
-    options?: { label: string; value: string }[];
+    options?: { label: string; value: string | boolean }[];
     required?: boolean;
     rows?: number;
     icon?: React.ElementType;
     iconLayout?: 'default' | 'inline';
+    value?: string | number | boolean;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => void;
+    error?: string;
 };
 
 interface InputFieldProps {
@@ -42,17 +45,24 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
     const bgClass = withBgWhite ? 'bg-white' : '';
     const Icon = input.icon;
     const isInlineIcon = input.iconLayout === 'inline';
+    const errorClass = input.error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500';
+    const [showPassword, setShowPassword] = useState(false);
+
+    const isPasswordType = input.type === 'password';
 
     const renderInput = () => (
-        <>
+        <div className="relative">
             {input.type === 'select' ? (
-                <Select>
-                    <SelectTrigger className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all ${bgClass} ${input.className || ''}`} id={input.id}>
+                <Select 
+                    value={String(input.value)} 
+                    onValueChange={(val) => input.onChange && input.onChange(val)}
+                >
+                    <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>
                         <SelectValue placeholder={input.placeholder || 'Seleccionar...'} />
                     </SelectTrigger>
                     <SelectContent>
                         {input.options?.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value} className={bgClass}>
+                            <SelectItem key={String(opt.value)} value={String(opt.value)} className={bgClass}>
                                 {opt.label}
                             </SelectItem>
                         ))}
@@ -64,18 +74,34 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                     placeholder={input.placeholder}
                     required={input.required}
                     rows={input.rows}
-                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all min-h-[100px] resize-y ${bgClass} ${input.className || ''}`}
+                    value={input.value as string | number | readonly string[] | undefined}
+                    onChange={input.onChange as any}
+                    className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all min-h-[100px] resize-y ${bgClass} ${errorClass} ${input.className || ''}`}
                 />
             ) : (
-                <input
-                    type={input.type}
-                    id={input.id}
-                    placeholder={input.placeholder}
-                    required={input.required}
-                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all ${bgClass} ${input.className || ''}`}
-                />
+                <div className="relative flex items-center">
+                    <input
+                        type={isPasswordType ? (showPassword ? 'text' : 'password') : input.type}
+                        id={input.id}
+                        placeholder={input.placeholder}
+                        required={input.required}
+                        value={input.value as string | number | readonly string[] | undefined}
+                        onChange={input.onChange as any}
+                        className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''} ${isPasswordType ? 'pr-10' : ''}`}
+                    />
+                    {isPasswordType && (
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    )}
+                </div>
             )}
-        </>
+            {input.error && <p className="text-xs text-red-500 mt-1">{input.error}</p>}
+        </div>
     );
 
     return (

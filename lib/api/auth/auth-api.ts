@@ -1,5 +1,6 @@
 import { LoginForm, RegisterForm, ResetPasswordForm, LoginResponse } from "@/lib/@type";
 import { httpClient } from "@/lib/api/fetch-client";
+import { useUserStore } from "@/lib/store/userStore";
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -47,6 +48,24 @@ export async function LogoutApi(refresh_token: string) {
   return httpClient.post('/api/auth/logout', { refresh: refresh_token });
 }
 
+httpClient.addRequestInterceptor((config) => {
+  if (typeof window !== 'undefined') {
+    const token = useUserStore.getState().token;
+    if (token) {
+      const hasAuth = Object.keys(config.headers || {}).some(
+        (key) => key.toLowerCase() === 'authorization'
+      );
+      if (!hasAuth) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
+    }
+  }
+  return config;
+});
+
 httpClient.addResponseInterceptor(
   (response) => response,
   async (error) => {
@@ -76,7 +95,7 @@ httpClient.addResponseInterceptor(
       if (!refreshToken) {
         isRefreshing = false;
         if (typeof window !== 'undefined') {
-          window.location.href = '/sign-in';
+          window.location.href = '/sign-in?session_expired=true';
         }
         return Promise.reject(error);
       }
@@ -106,7 +125,7 @@ httpClient.addResponseInterceptor(
         if (typeof window !== 'undefined') {
           localStorage.removeItem('jwtToken');
           localStorage.removeItem('refresh_token');
-          window.location.href = '/sign-in';
+          window.location.href = '/sign-in?session_expired=true';
         }
         return Promise.reject(refreshError);
       } finally {

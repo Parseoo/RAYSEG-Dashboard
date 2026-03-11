@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
@@ -64,6 +65,14 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       console.log('Eliminando cliente:', deleteModal.item);
       setIsDeleting(false);
       setDeleteModal({ isOpen: false, item: null });
+
+      showToast.success("El cliente ha sido eliminado correctamente.", {
+        duration: 5000,
+        position: "top-right",
+        transition: "topBounce",
+        icon: "",
+        sound: true,
+      });
     }, 1500);
   };
 
@@ -87,7 +96,7 @@ function ClientsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       <td className='py-4 px-4'>
 
         <div>
-          <td className='text-sm'>{row.email}</td>
+          <p className='text-sm'>{row.email}</p>
           <p className='text-xs text-gray-500'>{row.document}</p>
         </div>
 

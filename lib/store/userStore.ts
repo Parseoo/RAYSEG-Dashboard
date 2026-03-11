@@ -10,6 +10,7 @@ export const useUserStore = create<UserState>()(
         user: null,
         isLogin: false,
         token: null,
+        _hasHydrated: false,
         login: (user, token) => set({ user, token, isLogin: true }),
         logout: () => {
           set({ user: null, isLogin: false, token: null });
@@ -20,9 +21,25 @@ export const useUserStore = create<UserState>()(
         setToken: (token) => {
           set({ token });
         },
+        setHasHydrated: (state) => {
+          set({
+            _hasHydrated: state
+          });
+        }
       }),
       {
         name: 'user-store',
+        onRehydrateStorage: () => {
+          return (state, error) => {
+            if (error) {
+              console.log('Error during hydration:', error);
+            }
+            // Always set hydrated to true, even if there was no stored data
+            if (state) {
+              state.setHasHydrated(true);
+            }
+          }
+        }
       }
     ),
     { name: 'UserStore' }

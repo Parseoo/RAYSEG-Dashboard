@@ -4,15 +4,15 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-{/* Define la interface de props para la tabla */}
-interface TableProps<T> { 
+{/* Define la interface de props para la tabla */ }
+interface TableProps<T> {
     data: T[]
     headers: string[]
     renderRow: (item: T, index: number) => React.ReactNode
     isLoading: boolean
 }
 
-{/* Implementa la tabla */}
+{/* Implementa la tabla */ }
 export const Table = <T extends any>({ data = [], headers, renderRow, isLoading }: TableProps<T>) => {
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -64,7 +64,8 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
                         <span className='text-xs sm:text-sm text-gray-600 whitespace-nowrap'>Por página:</span>
                         <Select value={itemsPerPage.toString()} onValueChange={(value) => {
                             setItemsPerPage(Number(value))
-                            setCurrentPage(1)}}>
+                            setCurrentPage(1)
+                        }}>
                             <SelectTrigger className='w-[80px] h-8'>
                                 <SelectValue />
                             </SelectTrigger>
@@ -84,7 +85,7 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
                             const pageNum = i + 1
                             return (
                                 <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
-                                ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100' }`}>
+                                ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'}`}>
                                     {pageNum}
                                 </button>
                             )

@@ -32,15 +32,12 @@ const AddAgent = () => {
           <AddPreferencesClient />
           <AddNotesClient />
           <div className='flex gap-4 justify-end'>
-            <button 
-              type='button'
-              onClick={() => router.push('/agents')}
-              className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium'
-            >
+            <button type='button' onClick={() => router.push('/agents')} 
+            className='bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium'>
               <X size={20} /> Cancelar
             </button>
-            <button type='button'
-              className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium'>
+            <button type='button' 
+            className='bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium'>
               <Save size={20} /> Guardar Agente
             </button>
           </div>

@@ -1,4 +1,3 @@
-import { create } from 'zustand';
 export interface propertyListItem {
   id: number,
   square: number,
@@ -33,7 +32,7 @@ export interface User {
   email: string;
   name: string;
   paternal_last_name: string;
-  maternal_last_name: string;
+  maternal_last_name: string | null;
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
@@ -47,10 +46,12 @@ export interface User {
 export interface UserState {
   user: User | null;
   isLogin: boolean;
-  token: string | null,
+  token: string | null;
+  _hasHydrated?: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
   setToken: (token: string) => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 // Authentication
@@ -89,7 +90,7 @@ export interface AuthUserResponse {
   email: string;
   name: string;
   paternal_last_name: string;
-  maternal_last_name: string;
+  maternal_last_name: string | null;
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
@@ -103,7 +104,7 @@ export interface AuthUserResponse {
 }
 
 // Users
-export interface CreateUserForm {
+export interface UserForm {
   email: string;
   name: string;
   paternal_last_name: string;
@@ -112,6 +113,7 @@ export interface CreateUserForm {
   password_confirm: string;
   role: string;
   is_active: boolean;
+  permissions?: { [key: string]: boolean };
 }
 
 export interface UserResponse {
@@ -119,10 +121,11 @@ export interface UserResponse {
   email: string;
   name: string;
   paternal_last_name: string;
-  maternal_last_name: string;
+  maternal_last_name: string | null;
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
+  role?: string;
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
 }
@@ -160,24 +163,25 @@ export interface PropertyListItemResponse {
   number_mls: string;
   title: string;
   description: string;
-  price: number;
+  price: string;
   property_type: CatalogItem;
   operation_type: string;
   terrain_type: CatalogItem;
-  terrain_size: number;
-  construction_size: number;
+  terrain_size: string;
+  construction_size: string;
   rooms: number;
   bathrooms: number;
   parking_spaces: number;
   floors: number;
   construction_year: number;
   conservation_status: string;
-  address: unknown[];
-  amenities: unknown[];
-  images: unknown[];
-  plans: unknown[];
+  address: LocationItemResponse[];
+  amenities: CatalogItem[];
+  images: PropertyImageItem[];
+  plans: PropertyPlanItem[];
   property_status: string;
   property_post_status: CatalogItem;
+  is_featured?: boolean;
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
 }
@@ -274,6 +278,21 @@ export interface PropertyImage {
 export interface PropertyPlan {
   fileID: number;
   file: string;
+}
+
+export interface PropertyImageItem {
+  property_image_id: number;
+  image: string;
+  is_main: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface PropertyPlanItem {
+  property_plan_id: number;
+  plan: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface PropertyUpdateForm {

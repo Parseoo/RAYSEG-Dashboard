@@ -104,7 +104,7 @@ export const inputsUserPermissions: InputFieldConfig[] = [
     },
     {
         type: 'email',
-        id: 'correo',
+        id: 'email',
         label: 'Correo electrónico',
         placeholder: 'agente@rayseg.com',
         group: 2
@@ -126,20 +126,19 @@ export const inputsUserPermissions: InputFieldConfig[] = [
             { label: 'Agente Inmobiliario', value: 'compra' },
             { label: 'Asesor de Ventas', value: 'venta' },
             { label: 'Asesor de Renta', value: 'renta' },
-            { label: 'Administrador/a', value: 'administrador' },
-            { label: 'Gerente / Dueño', value: 'gerente' }
+            { label: 'Administrador/a', value: 'admin' },
+            { label: 'Gerente / Dueño', value: 'editor' } 
         ]
     },
     {
         type: 'select',
-        id: 'estatus',
+        id: 'is_active',
         label: 'Estatus',
         placeholder: 'Seleccione el estatus',
         group: 3,
         options: [
-            { label: 'Activo', value: 'activo' },
-            { label: 'Inactivo', value: 'inactivo' },
-            { label: 'En capacitación', value: 'encapacitacion' }
+            { label: 'Activo', value: true },
+            { label: 'Inactivo', value: false }
         ]
     },
     {

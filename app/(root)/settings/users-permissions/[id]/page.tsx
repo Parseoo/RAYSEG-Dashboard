@@ -1,44 +1,69 @@
 "use client"
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
 import { ViewPermissions } from '../add-user/viewPermissions';
+import { GetUsersById } from '@/lib/api/user-api';
+import { UserResponse } from '@/lib/@type';
+import { typeOptions } from '../selectUsers';
 
 export default function UserDetailPage() {
     const params = useParams();
     const router = useRouter();
     const userId = params?.id as string;
+    
+    const [userData, setUserData] = useState<UserResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Mock data - en producción esto vendría de una API
-    const mockUserData = {
-        id: userId,
-        name: 'Juan Pérez',
-        email: 'juan.perez@inmogestion.mx',
-        role: 'Agente Inmobiliario',
-        status: 'Activo',
-        permissions: {
-            'reportes': true,
-            'propiedades': true,
-            'imagenes-propiedades': true,
-            'clientes': true,
-            'agentes': false,
-            'contratos': true,
-            'leads-contacto': true,
-            'contenido-web-home': false,
-            'contenido-web-servicios': false,
-            'contenido-web-localizacion': false,
-            'contenido-web-sobre-nosotros': false,
-            'contenido-web-footer': false,
-            'contenido-web-legal': false,
-            'mi-perfil': true,
-            'ajustes-usuarios': false
-        }
-    };
+    useEffect(() => {
+        if (!userId) return;
 
-    const userData = mockUserData;
+        const fetchUser = async () => {
+            setLoading(true);
+            try {
+                const response = await GetUsersById(Number(userId));
+                setUserData(response.data);
+            } catch (err: any) {
+                console.error("Error fetching user details:", err);
+                setError(err?.response?.data?.detail || "No se pudo cargar la información del usuario");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUser();
+    }, [userId]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <Loader2 className="w-10 h-10 text-primary_color animate-spin" />
+                <p className="text-gray-500 font-medium">Cargando información del usuario...</p>
+            </div>
+        );
+    }
+
+    if (error || !userData) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
+                    <p className="text-red-600 font-medium mb-4">{error || "Usuario no encontrado"}</p>
+                    <button 
+                        onClick={() => router.push('/settings/users-permissions')}
+                        className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                    >
+                        Volver al listado
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const userRoleLabel = userData.role ? (typeOptions.find(opt => opt.value === userData.role)?.label || userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Usuario');
 
     return (
         <>
@@ -65,11 +90,11 @@ export default function UserDetailPage() {
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Rol asignado</p>
-                        <p className='text-base font-semibold text-gray-800'>{userData.role}</p>
+                        <p className='text-base font-semibold text-gray-800'>{userRoleLabel}</p>
                     </div>
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Estado</p>
-                        <Tag status={userData.status}>{userData.status}</Tag>
+                        <Tag status={userData.is_active ? 'Activo' : 'Inactivo'}>{userData.is_active ? 'Activo' : 'Inactivo'}</Tag>
                     </div>
                 </div>
             </div>
@@ -80,7 +105,7 @@ export default function UserDetailPage() {
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Nombre completo</p>
-                        <p className='text-sm font-medium text-gray-800'>{userData.name}</p>
+                        <p className='text-sm font-medium text-gray-800'>{userData.name} {userData.paternal_last_name} {userData.maternal_last_name || ''}</p>
                     </div>
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Correo electrónico</p>
@@ -91,14 +116,15 @@ export default function UserDetailPage() {
                         <p className='text-sm font-medium text-gray-800'>#{userData.id}</p>
                     </div>
                     <div>
-                        <p className='text-xs text-gray-500 mb-1'>Fecha de registro</p>
-                        <p className='text-sm font-medium text-gray-800'>15 enero 2024</p>
+                        <p className='text-xs text-gray-500 mb-1'>Fecha de actualización</p>
+                        <p className='text-sm font-medium text-gray-800'>{new Date(userData.updated_at).toLocaleDateString()}</p>
                     </div>
                 </div>
             </div>
 
             {/* PERMISOS POR PANTALLA */}
-            <ViewPermissions userPermissions={userData.permissions} isReadOnly={true} />
+            {/* Se asume que permissions viene incluido en userData o se maneja por ViewPermissions */}
+            <ViewPermissions userPermissions={(userData as any).permissions || {}} isReadOnly={true} />
         </>
     );
 }

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react'
+import { useUserStore } from '@/lib/store/userStore';
+import WarningModal from './ui/WarningModal';
 import {
   ChartColumn,
   Building2,
@@ -78,6 +80,11 @@ export const menuItems: MenuItem[] = [
 const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const path = usePathname()
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const { user } = useUserStore();
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
+
+  const isAdmin = user?.is_staff || user?.is_superuser;
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => ({
@@ -182,7 +189,15 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                               ? 'bg-property_purple text-white'
                               : 'hover:bg-gray-100 text-gray-700'
                           )}
-                          onClick={onLinkClick}
+                          onClick={(e) => {
+                            if (child.label === 'Usuarios y Permisos' && !isAdmin) {
+                              e.preventDefault();
+                              setWarningMessage("Solo los administradores pueden acceder a esta sección.");
+                              setShowWarning(true);
+                              return;
+                            }
+                            if (onLinkClick) onLinkClick();
+                          }}
                         >
                           <ChildIcon
                             className={cn(
@@ -201,6 +216,12 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
           </li>
         );
       })}
+      <WarningModal
+        isOpen={showWarning}
+        onClose={() => setShowWarning(false)}
+        title="Acceso Restringido"
+        message={warningMessage}
+      />
     </ul>
   );
 };

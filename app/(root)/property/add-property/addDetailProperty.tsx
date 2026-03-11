@@ -182,32 +182,37 @@ const MultiSelect = ({
     );
 };
 
-export const AddDetailProperty = () => {
-    const [selectedComodidades, setSelectedComodidades] = useState<string[]>(['1']);
-    return (
-        <>
-            <div className='bg-white w-full max-h-max rounded-lg'>
-                <div className='w-full h-full'>
-                    <div className='flex gap-3'>
-                        <div className='w-full max-h-max rounded-lg p-5 mb-9 border'>
-                            <h1 className='font-[500] text-lg'>Caracteristicas</h1>
-                            <p className='text-md text-gray-500'>Caracteristicas físicas y comodidades.</p>
+import { useProperty } from '../propertyContext';
 
-                            <div className='mt-4 flex flex-col gap-4'>
-                                <DynamicInputs inputs={inputs} withBgWhite={true} />
-                                <MultiSelect
-                                    label='Amenidades'
-                                    options={amenidadesOptions}
-                                    selectedValues={selectedComodidades}
-                                    onChange={setSelectedComodidades}
-                                    placeholder='Seleccionar amenidades...'
-                                />
-                            </div>
+export const AddDetailProperty = () => {
+    const { state, updateField } = useProperty();
+    const mappedInputs = inputs.map(input => ({
+        ...input,
+        value: state[input.id as keyof typeof state] as any,
+        onChange: (e: any) => updateField(input.id as any, typeof e === 'string' ? e : e.target.value)
+    }));
+
+    return (
+        <div className='bg-white w-full max-h-max rounded-lg'>
+            <div className='w-full h-full'>
+                <div className='flex gap-3'>
+                    <div className='w-full max-h-max rounded-lg p-5 mb-9 border'>
+                        <h1 className='font-[500] text-lg'>Caracteristicas</h1>
+                        <p className='text-md text-gray-500'>Caracteristicas físicas y comodidades.</p>
+                        <div className='mt-4 flex flex-col gap-4'>
+                            <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
+                            <MultiSelect
+                                label='Amenidades'
+                                options={amenidadesOptions}
+                                selectedValues={state.amenities}
+                                onChange={(vals) => updateField('amenities', vals)}
+                                placeholder='Seleccionar amenidades...'
+                            />
                         </div>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 

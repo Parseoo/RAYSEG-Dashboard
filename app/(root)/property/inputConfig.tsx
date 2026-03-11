@@ -29,7 +29,7 @@ export const inputsDataProperty: InputFieldConfig[] = [
 
 export const inputsPublicationProperty: InputFieldConfig[] = [
 {
-        type: 'select', id: 'statusProperty', label: 'Estado de publicación', placeholder: 'Seleccionar', group: 2, options: [
+        type: 'select', id: 'statusPublication', label: 'Estado de publicación', placeholder: 'Seleccionar', group: 2, options: [
             { label: 'Publicado', value: 'publicado' },
             { label: 'Borrador', value: 'borrador' },
             { label: 'Oculto', value: 'oculto' },

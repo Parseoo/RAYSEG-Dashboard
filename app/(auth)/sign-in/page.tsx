@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { LoginApi, setAuthHeader } from '@/lib/api/auth/auth-api';
 import { LoginForm } from '@/lib/@type';
@@ -17,6 +17,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { login } = useUserStore();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams?.get('session_expired') === 'true') {
+      setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      // Limpiar el parámetro de la URL
+      router.replace('/sign-in');
+    }
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
