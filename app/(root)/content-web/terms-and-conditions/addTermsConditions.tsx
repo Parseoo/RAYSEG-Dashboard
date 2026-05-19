@@ -4,7 +4,20 @@ import { DynamicInputs } from "@/components/ui/Input"
 import { inputsAddTermsConditions } from "../inputConfig"
 import { Info } from "lucide-react"
 
+import React, { useState } from "react"
+
 export const AddTermsConditions = () => {
+    const [termsData, setTermsData] = useState<Record<string, string>>({});
+
+    const mappedInputs = inputsAddTermsConditions.map(input => ({
+        ...input,
+        value: termsData[input.id] || "",
+        onChange: (val: any) => {
+            const value = val?.target ? val.target.value : val;
+            setTermsData(prev => ({ ...prev, [input.id]: value }));
+        }
+    }));
+
     return (
         <>
             <div className='w-full max-h-max rounded-lg p-5 border flex flex-col'>
@@ -22,7 +35,7 @@ export const AddTermsConditions = () => {
 
 
                 <div className="mt-4">
-                    <DynamicInputs inputs={inputsAddTermsConditions} withBgWhite={true} />
+                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                 </div>
 
                 <p className="text-sm text-gray-500 mt-2 self-end text-right">

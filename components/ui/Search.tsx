@@ -14,8 +14,7 @@ const Search: React.FC<SearchItem> = ({ title, className, value, onChange }) => 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     return (
         <div className={cn(
-            'relative flex-grow lg:block',
-            isSearchOpen ? 'block' : 'hidden',
+            'relative flex-grow',
             className === 'default' ? 'w-full' : className
         )}>
             <div className='absolute inset-y-0 left-0 pl-3 flex pointer-events-none items-center'>

@@ -112,8 +112,8 @@ export interface UserForm {
   password: string;
   password_confirm: string;
   role: string;
-  is_active: boolean;
-  permissions?: { [key: string]: boolean };
+  is_active: boolean | string;
+  permissions?: { [key: string]: boolean | string[] };
 }
 
 export interface UserResponse {
@@ -186,9 +186,16 @@ export interface PropertyListItemResponse {
   updated_at: string; // ISO datetime
 }
 
+export interface Pagination {
+  total: number;
+  pagina_actual: number;
+  registros_por_pagina: number;
+  total_paginas: number;
+}
+
 export interface PropertyListResponse {
   properties: PropertyListItemResponse[];
-  count: number;
+  pagination: Pagination;
 }
 
 export interface createPropertyForm {
@@ -327,11 +334,11 @@ export interface CatalogResponse {
   description: string;
   created_at: string;
   updated_at: string;
-  catalogItems: unknown[];
+  catalogItems: ItemResponse[];
 }
 
 export interface CatalogListResponse {
-  catalogs: CatalogListResponse[];
+  catalogs: CatalogResponse[];
   count: number;
 }
 
@@ -343,7 +350,7 @@ export interface CreateCatalogForm {
 
 export interface ListCatalogItemsResponse {
   items: ItemResponse[];
-  count: number;
+  pagination: Pagination;
 }
 
 export interface ItemResponse {

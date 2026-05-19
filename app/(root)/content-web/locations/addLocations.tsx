@@ -1,18 +1,25 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 
 import { DynamicInputs } from "@/components/ui/Input"
 import { inputsLocation } from "../inputConfig"
-import { Info, MapPinned, Pencil, Trash2 } from "lucide-react"
+import { Info, Loader2, MapPinned } from "lucide-react"
 import { Table } from "@/components/ui/table"
+import { GetPropertiesLocations } from "@/lib/api/property/property-api"
+import { GetCatalogPropertyTypes } from "@/lib/api/catalog-api"
 
 // Headers de la tabla
 const headers = [
     "Propiedad",
-    "Dirección",
-    "Acciones"
+    "Calle y número",
+    "Colonia",
+    "Ciudad",
+    "Estado",
+    "CP",
+    "Latitud",
+    "Longitud",
 ]
 
 // Importar el mapa dinámicamente para evitar errores de SSR
@@ -22,82 +29,153 @@ const MapWithMarker = dynamic(
 )
 
 export const AddLocations = () => {
-    // Estados
     const [address, setAddress] = useState("")
-    const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [tableData, setTableData] = useState<any[]>([])
+    const [manualPosition, setManualPosition] = useState<{ lat: number, lng: number } | null>(null)
 
-    // Datos mock de la tabla (luego vienen del backend)
-    const tableData = [
-        {
-            id: 1,
-            title: "Casa Centro",
-            address: "Av. Juárez 123, León, Gto"
-        },
-        {
-            id: 2,
-            title: "Departamento Norte",
-            address: "Blvd. Campestre 456, León, Gto"
+    const [filters, setFilters] = useState({
+        typeProperty: "",
+    })
+
+    const [propertyTypes, setPropertyTypes] = useState<{ label: string, value: string }[]>([])
+
+    // Fetch catalog property types
+    useEffect(() => {
+        const fetchPropertyTypes = async () => {
+            try {
+                const res = await GetCatalogPropertyTypes()
+                if (res?.data?.items) {
+                    const options = res.data.items.map(item => ({
+                        label: item.name,
+                        value: item.value || String(item.catalogItemID)
+                    }))
+                    setPropertyTypes(options)
+                }
+            } catch (err) {
+                console.error("Error fetching property types:", err)
+            }
         }
-    ]
+        fetchPropertyTypes()
+    }, [])
 
-    // Render de filas (mismo patrón que PropertyList)
+    // Fetch de datos desde el API
+    useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                const response = await GetPropertiesLocations()
+                const properties = response.data?.properties || response.data || []
+                const rows: any[] = []
+                properties.forEach((prop: any) => {
+                    if (prop.address && prop.address.length > 0) {
+                        prop.address.forEach((addr: any) => {
+                            rows.push({
+                                id: prop.property_id,
+                                title: prop.title || '-',
+                                street: addr.street || '-',
+                                street_number: addr.street_number || '',
+                                neighborhood: addr.neighborhood || '-',
+                                city: addr.city || '-',
+                                state: addr.state || '-',
+                                postal_code: addr.postal_code || '-',
+                                latitude: addr.latitude != null ? parseFloat(addr.latitude) : NaN,
+                                longitude: addr.longitude != null ? parseFloat(addr.longitude) : NaN,
+                            })
+                        })
+                    } else {
+                        rows.push({
+                            id: prop.property_id,
+                            title: prop.title || '-',
+                            street: '-', street_number: '',
+                            neighborhood: '-', city: '-',
+                            state: '-', postal_code: '-',
+                            latitude: NaN, longitude: NaN,
+                        })
+                    }
+                })
+                setTableData(rows)
+            } catch (err) {
+                console.error('Error fetching locations:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchLocations()
+    }, [])
+
+    // Construir lista de marcadores válidos desde la tabla
+    const mapMarkers = tableData
+        .filter((row) => Number.isFinite(row.latitude) && Number.isFinite(row.longitude))
+        .map((row) => ({
+            lat: row.latitude as number,
+            lng: row.longitude as number,
+            title: row.title,
+            address: `${row.street} ${row.street_number}, ${row.neighborhood}, ${row.city}, ${row.state} CP ${row.postal_code}`,
+        }))
+
+    // Render de filas
     const renderRow = (row: any, index: number) => (
-        <tr key={row.id || index} className="border-b border-slate-100 hover:bg-gray-50 transition-colors">
-            <td className="py-4 px-4 text-sm font-medium text-gray-900">
-                {row.title}
-            </td>
-
-            <td className="py-4 px-4 text-sm text-gray-700">
-                {row.address}
-            </td>
-
-            <td className='py-4 px-4'>
-                <div className='flex items-center gap-2'>
-                    <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
-                        <Pencil size={16} className='text-gray-600' />
-                    </button>
-                    <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
-                        <Trash2 size={16} className='text-white' />
-                    </button>
-                </div>
-            </td>
+        <tr key={`${row.id}-${index}`} className="border-b border-slate-100 hover:bg-gray-50 transition-colors">
+            <td className="py-4 px-4 text-sm font-medium text-gray-900">{row.title}</td>
+            <td className="py-4 px-4 text-sm text-gray-700">{row.street} {row.street_number}</td>
+            <td className="py-4 px-4 text-sm text-gray-700">{row.neighborhood}</td>
+            <td className="py-4 px-4 text-sm text-gray-700">{row.city}</td>
+            <td className="py-4 px-4 text-sm text-gray-700">{row.state}</td>
+            <td className="py-4 px-4 text-sm text-gray-700">{row.postal_code}</td>
+            <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.latitude) ? (row.latitude as number).toFixed(6) : '-'}</td>
+            <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.longitude) ? (row.longitude as number).toFixed(6) : '-'}</td>
         </tr>
     )
 
-    // Fijar dirección en el mapa
+    // Buscar dirección manualmente y centrar el mapa (con marcador)
     const fijarEnMapa = async () => {
         if (!address.trim()) {
             setError("Por favor ingresa una dirección")
             return
         }
-
         setLoading(true)
         setError("")
-
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
             )
             const data = await response.json()
-
             if (data && data.length > 0) {
-                const { lat, lon } = data[0]
-                setMarkerPosition({
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lon)
-                })
+                const result = data[0]
+                const lat = parseFloat(result.lat)
+                const lng = parseFloat(result.lon)
+                setManualPosition({ lat, lng })
             } else {
                 setError("No se encontró la dirección. Intenta con más detalles.")
+                setManualPosition(null)
             }
         } catch {
             setError("Error al buscar la dirección. Intenta de nuevo.")
+            setManualPosition(null)
         } finally {
             setLoading(false)
         }
     }
+
+    const dynamicInputsLocation = inputsLocation
+        .filter(i => i.id !== "direccion")
+        .map(input => {
+            let options = input.options;
+            if (input.id === "typeProperty" && propertyTypes.length > 0) {
+                options = propertyTypes;
+            }
+            return {
+                ...input,
+                options,
+                value: filters[input.id as keyof typeof filters] || "",
+                onChange: (val: any) => {
+                    const value = val?.target ? val.target.value : val;
+                    setFilters(prev => ({ ...prev, [input.id]: value }));
+                }
+            }
+        })
 
     return (
         <div className="w-full rounded-lg p-5 border">
@@ -106,19 +184,18 @@ export const AddLocations = () => {
                 Visualización de las propiedades según su ubicación registrada.
             </p>
 
-            {/* Inputs */}
+            {/* Inputs de filtro */}
             <div className="mt-4">
                 <DynamicInputs
-                    inputs={inputsLocation.filter(i => i.id !== "direccion")}
+                    inputs={dynamicInputsLocation}
                     withBgWhite
                 />
 
-                {/* Dirección */}
+                {/* Input de dirección */}
                 <div className="flex flex-col gap-2 mt-4">
                     <label htmlFor="direccion" className="text-sm font-medium text-gray-700">
                         Dirección a fijar en el mapa
                     </label>
-
                     <div className="flex gap-2">
                         <input
                             id="direccion"
@@ -129,29 +206,36 @@ export const AddLocations = () => {
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             onKeyDown={(e) => e.key === "Enter" && fijarEnMapa()}
                         />
-
-                        <button type="button" onClick={fijarEnMapa} className="bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 font-medium">
-                            <MapPinned size={20} />
+                        <button
+                            type="button"
+                            onClick={fijarEnMapa}
+                            disabled={loading}
+                            className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 font-medium disabled:opacity-60"
+                        >
+                            {loading ? <Loader2 size={18} className="animate-spin" /> : <MapPinned size={20} />}
                             Fijar en el mapa
                         </button>
                     </div>
-
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                 </div>
             </div>
 
-            <p className="text-gray-500 text-sm mt-4 mb-4">
+            <p className="text-gray-500 text-sm mt-4 mb-2">
                 Usa la dirección completa para una mejor precisión del pin en el mapa.
             </p>
 
-            {markerPosition && (
-                <p className="text-green-600 text-sm mb-4">
-                    📍 Coordenadas: {markerPosition.lat.toFixed(6)}, {markerPosition.lng.toFixed(6)}
-                </p>
+            {/* Indicador de marcadores activos */}
+            {!isLoading && (
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-sm font-medium px-3 py-1.5 rounded-full border border-green-200">
+                        <MapPinned size={14} />
+                        {mapMarkers.length} propiedad{mapMarkers.length !== 1 ? 'es' : ''} con ubicación en el mapa
+                    </span>
+                </div>
             )}
 
-            {/* Mapa */}
-            <MapWithMarker markerPosition={markerPosition} address={address} />
+            {/* Mapa con todos los marcadores de la tabla */}
+            <MapWithMarker markers={mapMarkers} markerPosition={manualPosition} address={address} />
 
             {/* Info */}
             <div className="flex items-start gap-2 text-sm text-gray-500 mt-5">
@@ -159,7 +243,7 @@ export const AddLocations = () => {
                 <div className="space-y-1">
                     <p>
                         El mapa muestra automáticamente las propiedades con estatus
-                        <strong> "Disponible"</strong> que tienen una dirección valida registrada.
+                        <strong> &quot;Disponible&quot;</strong> que tienen una dirección válida registrada.
                     </p>
                     <p>Los marcadores se actualizan en tiempo real.</p>
                     <p>Puedes ajustar manualmente la dirección para mejorar la precisión del pin en el mapa público.</p>

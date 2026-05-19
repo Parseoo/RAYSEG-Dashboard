@@ -4,7 +4,20 @@ import { DynamicInputs } from "@/components/ui/Input"
 import { inputsPrivacyNotice } from "../inputConfig"
 import { Info } from "lucide-react"
 
+import React, { useState } from "react"
+
 export const AddPrivacyNotice = () => {
+    const [privacyData, setPrivacyData] = useState<Record<string, string>>({});
+
+    const mappedInputs = inputsPrivacyNotice.map(input => ({
+        ...input,
+        value: privacyData[input.id] || "",
+        onChange: (val: any) => {
+            const value = val?.target ? val.target.value : val;
+            setPrivacyData(prev => ({ ...prev, [input.id]: value }));
+        }
+    }));
+
     return (
         <>
             <div className='bg-blue-50 w-full rounded-lg p-5 flex items-start gap-3'>
@@ -30,7 +43,7 @@ export const AddPrivacyNotice = () => {
 
 
                 <div className="mt-4">
-                    <DynamicInputs inputs={inputsPrivacyNotice} withBgWhite={true} />
+                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                 </div>
 
                 <p className="text-sm text-gray-500 mt-2 self-end text-right">

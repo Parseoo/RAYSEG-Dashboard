@@ -220,14 +220,16 @@ export default function PropertyDetailPage() {
 
           <div className='space-y-6'>
             <div>
-              <div className='flex items-center justify-between mb-3'>
+              <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
                 <h3 className='text-base font-semibold text-gray-800'>Imágenes de la propiedad</h3>
                 <button onClick={() => setIsGalleryOpen(true)} className='text-xs text-blue-600 hover:text-blue-700 font-medium'>Ver todas</button>
               </div>
               <div className='space-y-2'>
                 <div className='relative group cursor-pointer' onClick={() => setIsGalleryOpen(true)}>
                   <Image src={propertyImages[0]} alt='Principal' width={400} height={250} className='w-full h-48 object-cover rounded-lg' />
-                  <div className='absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium'>Principal</div>
+                  <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
+                    Principal
+                  </div>
                 </div>
                 <div className='grid grid-cols-3 gap-2'>
                   {propertyImages.slice(1, 4).map((img, idx) => (

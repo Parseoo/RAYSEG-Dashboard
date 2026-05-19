@@ -4,8 +4,8 @@ export async function CreateClient(data: any) {
     return httpClient.post('/api/clients', data);
 }
 
-export async function GetAllClients() {
-    return httpClient.get('/api/clients');
+export async function GetAllClients(page: number = 1, limit: number = 10) {
+    return httpClient.get(`/api/clients?page=${page}&limit=${limit}`);
 }
 
 export async function GetClientById(client_id: string) {

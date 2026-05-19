@@ -7,8 +7,17 @@ import Image from 'next/image';
 import { inputsBannerConfiguration } from '../inputConfig';
 
 export const AddHome = () => {
-
     const [openModal, setOpenModal] = useState(false);
+    const [bannerData, setBannerData] = useState<Record<string, string>>({});
+
+    const mappedInputs = inputsBannerConfiguration.map(input => ({
+        ...input,
+        value: bannerData[input.id] || "",
+        onChange: (val: any) => {
+            const value = val?.target ? val.target.value : val;
+            setBannerData(prev => ({ ...prev, [input.id]: value }));
+        }
+    }));
 
     return (
         <>
@@ -17,7 +26,7 @@ export const AddHome = () => {
                 <p className='text-md text-gray-500'>Configura el banner de inicio: texto e imágen destacada.</p>
 
    <div className='mt-4'>
-                    <DynamicInputs inputs={inputsBannerConfiguration} withBgWhite={true} />
+                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                 </div>
                 
                 <div
@@ -105,7 +114,7 @@ export const AddHome = () => {
                 <h1 className='font-[500] text-lg'>Contenido introductorio</h1>
                 <p className='text-md text-gray-500'>Texto breve que aparece debajo de la ección de propiedades para explicar la propuesta de valor.</p>
                 <div className='mt-4'>
-                    <DynamicInputs inputs={inputsBannerConfiguration} withBgWhite={true} />
+                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                 </div>
             </div>
         </>

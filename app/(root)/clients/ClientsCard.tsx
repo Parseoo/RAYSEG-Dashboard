@@ -45,13 +45,13 @@ export const ClientsCard = () => {
   return (
     <div className='bg-white w-full max-h-max rounded-lg p-5 mb-5 shadow-md'>
       <div className='w-full h-full'>
-        <div className='flex items-center justify-between mb-3'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
           <div>
             <h1 className='text-black font-[700] text-2xl'>Clientes</h1>
             <p className='text-md text-gray-500'>Gestión de clientes, prospectos y propietarios</p>
           </div>
           <button type='button'
-            className='w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
+            className='w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium'>
             <Upload size={20} /> Importar CSV
           </button>
         </div>

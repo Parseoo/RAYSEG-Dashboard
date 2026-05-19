@@ -21,29 +21,32 @@ export const clearAuthHeader = () => {
   httpClient.removeDefaultHeader('Authorization');
 };
 
-// Login API
+// Iniciar sesión
 export async function LoginApi(data: LoginForm) {
   return httpClient.post<LoginResponse>('/api/auth/login', data);
 }
 
-// Register API
+// Registrarse
 export async function RegisterApi(data: RegisterForm) {
   return httpClient.post('/api/auth/register', data);
 }
 
+// Resetear contraseña
 export async function ResetPasswordApi(data: ResetPasswordForm) {
   return httpClient.patch('/api/auth/reset-password', data);
 }
 
+// Obtener perfil
 export async function GetProfileApi() {
   return httpClient.get('/api/auth/me');
 }
 
-// Refresh Token API
+// Refrescar token
 export async function RefreshTokenApi(refreshToken: string) {
   return httpClient.post('/api/auth/refresh', { refresh: refreshToken });
 }
 
+// Cerrar sesión
 export async function LogoutApi(refresh_token: string) {
   return httpClient.post('/api/auth/logout', { refresh: refresh_token });
 }

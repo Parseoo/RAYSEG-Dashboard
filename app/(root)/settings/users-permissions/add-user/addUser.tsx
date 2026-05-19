@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { showToast } from "nextjs-toast-notify";
 import Breadcrumb from "@/components/ui/breadcrumb";
-import { Save, X, AlertTriangle } from "lucide-react";
+import { Save, X, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AddInformationPersonal } from "./addInformationPersonal";
+import { AddRoleAccess } from "./addRoleAccess";
 import AddPermissions from "./addPermissions";
 import AddPassword from "./addPassword";
 import { UserForm } from "@/lib/@type";
-import { CreateUser } from "@/lib/api/user-api";
+import { CreateUser, UploadProfilePicture } from "@/lib/api/user-api";
+import { GetListRoles, GetRolePermissions } from "@/lib/api/permission-api";
 
 const initialUser: UserForm = {
     email: "",
@@ -19,7 +21,7 @@ const initialUser: UserForm = {
     password: "",
     password_confirm: "",
     role: "",
-    is_active: true,
+    is_active: "",
 };
 
 interface AddUserProps {
@@ -30,11 +32,32 @@ interface AddUserProps {
 
 const AddUser = ({ initialData, isEdit = false, onSubmit }: AddUserProps) => {
     const [user, setUser] = useState<UserForm>(initialData || initialUser);
+    const [profileImage, setProfileImage] = useState<File | null>(null);
+    const [roles, setRoles] = useState<any[]>([]);
+    const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingEvent, setPendingEvent] = useState<React.FormEvent | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                setIsLoadingRoles(true);
+                const res = await GetListRoles();
+                if (res.data) {
+                    const extracted = res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
+                    setRoles(extracted);
+                }
+            } catch (error) {
+                console.error("Error fetching roles in AddUser:", error);
+            } finally {
+                setIsLoadingRoles(false);
+            }
+        };
+        fetchRoles();
+    }, []);
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,15 +81,47 @@ const AddUser = ({ initialData, isEdit = false, onSubmit }: AddUserProps) => {
 
     const handleSaveUser = async (e: React.FormEvent, formData: UserForm) => {
         e.preventDefault();
-        
+
         if (onSubmit) {
             await onSubmit(e, formData);
             return;
         }
 
+        if (user.is_active === "") {
+            showToast.warning("Por favor seleccione un estatus", {
+                duration: 4000,
+                position: "top-right",
+                transition: "topBounce",
+                icon: "",
+                sound: true,
+            });
+            return;
+        }
+
         try {
-            const response = await CreateUser(user);
-            
+            setIsSaving(true);
+
+            // Asegurar que is_active sea booleano para el API
+            const finalUserData = {
+                ...user,
+                is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo'
+            };
+
+            const response = await CreateUser(finalUserData);
+
+            // Subir foto si existe
+            if (profileImage && response.data.data) {
+                const userId = parseInt(response.data.data);
+                if (!isNaN(userId)) {
+                    const base64 = await new Promise<string>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(profileImage);
+                    });
+                    await UploadProfilePicture(userId, base64);
+                }
+            }
+
             showToast.success(response.data.message || "Usuario creado exitosamente", {
                 duration: 5000,
                 position: "top-right",
@@ -74,12 +129,16 @@ const AddUser = ({ initialData, isEdit = false, onSubmit }: AddUserProps) => {
                 icon: "",
                 sound: true,
             })
-            
+
             router.push("/settings/users-permissions");
         } catch (error: any) {
             if (error.response) {
-              showToast.error(error?.response?.data?.detail || error?.response?.data?.message || "Error al crear usuario");
+                showToast.error(error?.response?.data?.detail || error?.response?.data?.message || "Error al crear usuario");
+            } else {
+                showToast.error("Error de conexión al servidor");
             }
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -89,15 +148,21 @@ const AddUser = ({ initialData, isEdit = false, onSubmit }: AddUserProps) => {
                 items={[
                     { label: "Inicio", href: "/" },
                     { label: "Configuración", href: "/settings" },
-                    { label: "Usuarios y Permisos", href: "/settings/users-permissions" },
+                    { label: "Usuarios", href: "/settings/users-permissions" },
                     { label: isEdit ? "Editar Usuario" : "Agregar Usuario", href: isEdit ? "#" : "/settings/users-permissions/add-user", active: true },
                 ]}
             />
 
+            <div className="mb-3">
+                <button onClick={() => router.push('/settings/users-permissions')} className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                    <ArrowLeft size={18} /><span className="text-sm">Volver</span>
+                </button>
+            </div>
+
             <div className="space-y-4">
                 <form onSubmit={handleFormSubmit} className="bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md">
                     <div className="w-full h-full">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4">
                             <div>
                                 <h1 className="font-[700] text-2xl">{isEdit ? "Editar usuario" : "Registrar nuevo usuario"}</h1>
                                 <p className="text-md text-gray-500">
@@ -106,18 +171,17 @@ const AddUser = ({ initialData, isEdit = false, onSubmit }: AddUserProps) => {
                             </div>
                         </div>
 
-                        <AddInformationPersonal user={user} setUser={setUser} errors={errors} />
-                        <AddPermissions user={user} setUser={setUser} data={[]} isLoading={false} />
+                        <AddInformationPersonal user={user} setUser={setUser} errors={errors} onImageChange={setProfileImage} rolesData={roles} />
                         {!isEdit && <AddPassword user={user} setUser={setUser} errors={errors} />}
 
                         <div className="flex gap-4 justify-end mt-5">
                             <button type="button" onClick={() => router.push("/settings/users-permissions")}
-                                className="bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium">
+                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium">
                                 <X size={20} /> Cancelar
                             </button>
 
                             <button type="submit" disabled={isSaving}
-                                className="bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium disabled:opacity-60">
+                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium disabled:opacity-60">
                                 <Save size={20} /> {isEdit ? "Guardar Cambios" : "Guardar Usuario"}
                             </button>
                         </div>

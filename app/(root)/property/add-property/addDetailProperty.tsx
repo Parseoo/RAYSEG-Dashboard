@@ -3,27 +3,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown, Check } from 'lucide-react';
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
+import { ItemResponse } from '@/lib/@type';
 
 // Configuración de los inputs
 const inputs: InputFieldConfig[] = [
-    { type: 'text', id: 'superficie', label: 'Superficie (m²)', placeholder: 'Ej: 75', group: 1 },
-    { type: 'text', id: 'ambientes', label: 'Ambientes', placeholder: 'Ej: 3', group: 1 },
-    { type: 'text', id: 'dormitorios', label: 'Recamaras', placeholder: 'Ej: 2', group: 1 },
-    { type: 'text', id: 'baños', label: 'Baños', placeholder: 'Ej: 1', group: 2 },
-    { type: 'text', id: 'cocheras', label: 'Cocheras', placeholder: 'Ej: 1', group: 2 },
+    { type: 'text', id: 'terrain_size', label: 'Superficie Terreno (m²)', placeholder: 'Ej: 100', group: 1 },
+    { type: 'text', id: 'construction_size', label: 'Superficie Const. (m²)', placeholder: 'Ej: 80', group: 1 },
+    { type: 'text', id: 'rooms', label: 'Recámaras / Habitaciones', placeholder: 'Ej: 3', group: 2 },
+    { type: 'text', id: 'bathrooms', label: 'Baños', placeholder: 'Ej: 2', group: 2 },
+    { type: 'text', id: 'parking_spaces', label: 'Cocheras', placeholder: 'Ej: 1', group: 2 },
+    { type: 'text', id: 'floors', label: 'Pisos', placeholder: 'Ej: 1', group: 3 },
+    { type: 'text', id: 'construction_year', label: 'Año de construcción', placeholder: 'Ej: 2020', group: 3 },
+    { type: 'text', id: 'terrain_type', label: 'Tipo de terreno', placeholder: 'Ej: Regular', group: 4 },
+    { type: 'select', id: 'conservation_status', label: 'Estado de conservación', placeholder: 'Seleccionar', group: 4, options: [
+        { label: 'Excelente', value: 'excellent' },
+        { label: 'Bueno', value: 'good' },
+        { label: 'A remodelar', value: 'to_remodel' }
+    ] },
 ];
 
-// Opciones para el select múltiple
-const amenidadesOptions = [
-    { value: '1', label: 'WiFi', description: 'Internet inalámbrico' },
-    { value: '2', label: 'Aire acondicionado', description: 'Climatización' },
-    { value: '3', label: 'Calefacción', description: 'Sistema de calefacción' },
-    { value: '4', label: 'Lavadora', description: 'Lavadora incluida' },
-    { value: '5', label: 'Secadora', description: 'Secadora incluida' },
-    { value: '6', label: 'Piscina', description: 'Piscina comunal' },
-    { value: '7', label: 'Gimnasio', description: 'Gimnasio en el edificio' },
-    { value: '8', label: 'Estacionamiento', description: 'Lugar de estacionamiento' },
-];
+import { useProperty } from '../propertyContext';
 
 // Componente de Select Múltiple
 const MultiSelect = ({
@@ -182,14 +181,20 @@ const MultiSelect = ({
     );
 };
 
-import { useProperty } from '../propertyContext';
-
 export const AddDetailProperty = () => {
-    const { state, updateField } = useProperty();
+    const { state, updateField, amenitiesCatalog } = useProperty();
+    
     const mappedInputs = inputs.map(input => ({
         ...input,
         value: state[input.id as keyof typeof state] as any,
         onChange: (e: any) => updateField(input.id as any, typeof e === 'string' ? e : e.target.value)
+    }));
+
+    // Convertir el catálogo de amenidades al formato del MultiSelect
+    const dynamicAmenities = (amenitiesCatalog || []).map((item: ItemResponse) => ({
+        value: String(item.catalogItemID),
+        label: item.name,
+        description: item.description
     }));
 
     return (
@@ -203,7 +208,7 @@ export const AddDetailProperty = () => {
                             <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                             <MultiSelect
                                 label='Amenidades'
-                                options={amenidadesOptions}
+                                options={dynamicAmenities}
                                 selectedValues={state.amenities}
                                 onChange={(vals) => updateField('amenities', vals)}
                                 placeholder='Seleccionar amenidades...'

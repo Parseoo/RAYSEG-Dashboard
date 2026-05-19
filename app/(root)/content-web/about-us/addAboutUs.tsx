@@ -7,8 +7,17 @@ import { CloudUpload, Eye, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 
 export const AddAboutUs = () => {
-
     const [openModal, setOpenModal] = useState(false);
+    const [aboutData, setAboutData] = useState<Record<string, string>>({});
+
+    const mappedInputs = inputsAboutUsSection.map(input => ({
+        ...input,
+        value: aboutData[input.id] || "",
+        onChange: (val: any) => {
+            const value = val?.target ? val.target.value : val;
+            setAboutData(prev => ({ ...prev, [input.id]: value }));
+        }
+    }));
 
     return (
         <>
@@ -17,7 +26,7 @@ export const AddAboutUs = () => {
                 <p className='text-md text-gray-500'>  Datos principales que describen quiénes somos y nuestra identidad.</p>
 
                 <div className="mt-4">
-                    <DynamicInputs inputs={inputsAboutUsSection} withBgWhite={true} />
+                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
                 </div>
             </div>
 
@@ -61,7 +70,7 @@ export const AddAboutUs = () => {
                             </button>
                         </div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-5">Estas imágenes se mostrarán en la sección de "Sobre Nosotros" con el diseño de la página web pública.</p>
+                    <p className="text-sm text-gray-500 mt-5">Estas imágenes se mostrarán en la sección de &quot;Sobre Nosotros&quot; con el diseño de la página web pública.</p>
                     {openModal && (
                         <div
                             className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"

@@ -23,6 +23,9 @@ import {
   FileKey,
   X,
   FileText,
+  UserCog,
+  Shield,
+  Key,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -49,7 +52,7 @@ export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
-  { href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
+  //{ href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
   //{ href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
 
   {
@@ -70,8 +73,9 @@ export const menuItems: MenuItem[] = [
     label: 'Configuración',
     path: '/settings',
     children: [
-      { href: '/settings/my-profile', path: '/settings/my-profile', icon: Home, label: 'Mi Perfil' },
-      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: Home, label: 'Usuarios y Permisos' },
+      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: UserCog, label: 'Usuarios' },
+      { href: '/settings/roles', path: '/settings/roles', icon: Shield, label: 'Roles' },
+      { href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos' },
     ]
   },
 ]

@@ -14,7 +14,8 @@ import { GetAllProperties, DeleteProperty } from '@/lib/api/property/property-ap
 import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
-import { PropertyListItemResponse } from '@/lib/@type';
+import { PropertyListItemResponse, Pagination as PaginationType } from '@/lib/@type';
+import { Pagination } from '@/components/ui/Pagination';
 import { showToast } from 'nextjs-toast-notify';
 
 const headers = ['Propiedad', 'Tipo', 'Operación', 'Precio', 'Dirección', 'Estatus', 'Publicación web', 'Fecha alta', 'Destacada', 'Acciones'];
@@ -30,22 +31,93 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedPublication, setSelectedPublication] = useState("all");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationType>({
+    total: 0,
+    pagina_actual: 1,
+    registros_por_pagina: 10,
+    total_paginas: 1
+  });
+  const [isPageLoading, setIsPageLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await GetAllProperties();
-        if (response.data?.properties) setProperties(response.data.properties);
-      } catch (error: any) {
-        if (error?.response?.status === 403) {
-          showToast.error(error?.response?.data?.detail || "Solo los administradores pueden listar propiedades", {
-            duration: 5000, position: "top-right", transition: "topBounce", icon: "", sound: true,
-          })
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedStatus !== 'all') count++;
+    if (selectedType !== 'all') count++;
+    if (selectedOperation !== 'all') count++;
+    if (selectedPublication !== 'all') count++;
+    if (isFeatured) count++;
+    return count;
+  }, [selectedStatus, selectedType, selectedOperation, selectedPublication, isFeatured]);
+
+  const handleClearFilters = () => {
+    setSelectedStatus("all");
+    setSelectedType("all");
+    setSelectedOperation("all");
+    setSelectedPublication("all");
+    setIsFeatured(false);
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilters = () => {
+    setIsFilterOpen(false);
+  };
+
+  const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
+      <span className="text-sm font-semibold text-gray-500 whitespace-nowrap sm:min-w-[120px]">{label}:</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => onChange('all')}
+          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 whitespace-nowrap ${
+            selectedValue === 'all'
+              ? 'bg-primary_color text-white font-medium shadow-sm'
+              : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+          }`}
+        >
+          Todos
+        </button>
+        {options.map((opt: any) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 whitespace-nowrap ${
+              selectedValue === opt.value
+                ? 'bg-primary_color text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const fetchProperties = async (page: number) => {
+    setIsPageLoading(true);
+    try {
+      const response = await GetAllProperties(page);
+      if (response.data?.properties) {
+        setProperties(response.data.properties);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
         }
       }
-    };
-    fetchProperties();
-  }, []);
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        showToast.error(error?.response?.data?.detail || "Solo los administradores pueden listar propiedades", {
+          duration: 5000, position: "top-right", transition: "topBounce", icon: "", sound: true,
+        })
+      }
+    } finally {
+      setIsPageLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProperties(currentPage);
+  }, [currentPage]);
 
   const formatAddress = (address: PropertyListItemResponse['address']) => {
     if (!address || address.length === 0) return '-';
@@ -139,81 +211,206 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
               <p className='text-sm sm:text-md text-gray-500'>Listado principal de propiedades</p>
             </div>
-          </div>
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <Search
-              title="Buscar por dirección, código postal, ciudad, etc."
-              className="w-full sm:min-w-[400px]"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button onClick={() => setIsFilterOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><SlidersHorizontal className="w-5 h-5" /></button>
-              <Link href="/property/add-property">
+            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+              <button
+                type='button'
+                onClick={() => setIsFilterOpen(true)}
+                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
+                title="Filtros"
+              >
+                <SlidersHorizontal className='w-5 h-5' />
+                {activeFiltersCount > 0 && (
+                  <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+              <Link href="/property/add-property" className='w-full sm:w-auto'>
                 <button type="button" className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base">
                   <Plus size={18} className="sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Agregar Propiedad</span><span className="sm:hidden">Agregar</span>
                 </button>
               </Link>
             </div>
           </div>
-          <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading} />
+
+          <div className="mb-6 space-y-6">
+            {/* Buscador y Estatus Lado a Lado */}
+            <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
+              <Search
+                title="Buscar por dirección, código postal, ciudad, etc."
+                className="max-w-[450px] w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className='flex-shrink-0 flex items-center justify-start lg:justify-end min-w-max gap-3'>
+                <FilterPills
+                  label="Estatus"
+                  options={statusProperty}
+                  selectedValue={selectedStatus}
+                  onChange={setSelectedStatus}
+                />
+              </div>
+            </div>
+
+            {/* Píldoras de Filtro Tipo de Propiedad */}
+            <div className='py-1'>
+              <FilterPills
+                label="Tipo de propiedad"
+                options={typeProperty}
+                selectedValue={selectedType}
+                onChange={setSelectedType}
+              />
+            </div>
+
+            {/* Filtros Secundarios Desplegables */}
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-6'>
+              <div className='flex flex-col pb-2 sm:pb-0'>
+                <label className="text-xs text-gray-500 mb-1 font-semibold">Operación</label>
+                <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
+                    <SelectValue placeholder='Todas las operaciones' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las operaciones</SelectItem>
+                    {operationProperty.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex flex-col pb-2 sm:pb-0'>
+                <label className="text-xs text-gray-500 mb-1 font-semibold">Publicación Web</label>
+                <Select value={selectedPublication} onValueChange={setSelectedPublication}>
+                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
+                    <SelectValue placeholder='Todas las publicaciones' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las publicaciones</SelectItem>
+                    {webPublication.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex items-center gap-2.5 pb-2 lg:pb-0 h-full sm:pt-6'>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={isFeatured} 
+                    onChange={(e) => setIsFeatured(e.target.checked)} 
+                    className="w-4.5 h-4.5 rounded border-gray-300 text-primary_color focus:ring-primary_color cursor-pointer transition-colors" 
+                  />
+                  <span className="text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">Solo destacadas</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} />
+
+          {pagination.total_paginas > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={pagination.total_paginas}
+              onPageChange={setCurrentPage}
+              disabled={isLoading || isPageLoading}
+            />
+          )}
         </div>
       </div>
-      <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtrar Propiedades">
+
+      {/* Filter Sidebar de Filtros Aplicados */}
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onClear={handleClearFilters}
+        onApply={handleApplyFilters}
+        title="Filtros Aplicados"
+      >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Propiedad</label>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar tipo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                {typeProperty.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-            <Select><SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar estado" /></SelectTrigger>
-              <SelectContent><SelectItem value="Estados">Estados</SelectItem></SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Operación</label>
-            <Select value={selectedOperation} onValueChange={setSelectedOperation}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar operación" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las operaciones</SelectItem>
-                {operationProperty.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Estatus</label>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar estatus" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estatus</SelectItem>
-                {statusProperty.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Publicación Web</label>
-            <Select value={selectedPublication} onValueChange={setSelectedPublication}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar publicación" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las publicaciones</SelectItem>
-                {webPublication.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="pt-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-              <span className="text-sm font-medium text-gray-700">Solo destacadas</span>
-            </label>
-          </div>
-          <button onClick={() => { setSearchTerm(""); setSelectedType("all"); setSelectedOperation("all"); setSelectedStatus("all"); setSelectedPublication("all"); setIsFeatured(false); }} className="w-full py-2 text-sm text-primary_color font-medium border border-primary_color rounded-lg hover:bg-slate-50 transition-colors">Limpiar filtros</button>
+          {activeFiltersCount === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No hay filtros aplicados actualmente.</p>
+          ) : (
+            <div className="space-y-5">
+              {selectedStatus !== 'all' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estatus</label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar estatus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los estatus</SelectItem>
+                      {statusProperty.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selectedType !== 'all' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo de propiedad</label>
+                  <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
+                      {typeProperty.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selectedOperation !== 'all' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Operación</label>
+                  <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar operación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las operaciones</SelectItem>
+                      {operationProperty.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selectedPublication !== 'all' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Publicación Web</label>
+                  <Select value={selectedPublication} onValueChange={setSelectedPublication}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar publicación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las publicaciones</SelectItem>
+                      {webPublication.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {isFeatured && (
+                <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-lg border border-slate-100 mt-2">
+                  <input 
+                    type="checkbox" 
+                    checked={isFeatured} 
+                    onChange={(e) => setIsFeatured(e.target.checked)} 
+                    className="w-4.5 h-4.5 rounded border-gray-300 text-primary_color focus:ring-primary_color cursor-pointer transition-colors" 
+                  />
+                  <span className="text-sm font-semibold text-gray-700 select-none">Solo destacadas</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </FilterSidebar>
 
@@ -223,7 +420,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         itemDetails={deleteModal.item ? [{ label: 'Tipo', value: deleteModal.item.property_type?.name || '-' }, { label: 'Operación', value: formatOperationType(deleteModal.item.operation_type) || '-' }, { label: 'Precio', value: formatPrice(deleteModal.item.price) || '-' }, { label: 'Ubicación', value: formatAddress(deleteModal.item.address) || '-' }] : []}
       />
     </>
-  )
+  );
 }
 
-export default PropertyList
+export default PropertyList;

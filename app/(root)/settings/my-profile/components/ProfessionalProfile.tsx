@@ -19,7 +19,7 @@ export const ProfessionalProfile = ({ user }: ProfessionalProfileProps) => {
                 {user?.description || "Especialista en propiedades residenciales de lujo y comerciales en la zona poniente de la Ciudad de México. Con más de 10 años de experiencia en el sector inmobiliario, enfocada en brindar un servicio personalizado y eficiente para la gestión de compra-venta y renta de inmuebles premium."}
             </p>
 
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-600">12</div>
                     <div className="text-xs text-gray-500 font-medium">Propiedades Activas</div>

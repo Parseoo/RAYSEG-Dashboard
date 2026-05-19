@@ -135,24 +135,26 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
             <div>
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Listado de contratos</h1>
             </div>
-          </div>
-
-          <div className='mb-5 flex flex-col sm:flex-row sm:items-center'>
-            <Search title='Buscar por propiedad, cliente o número de contrato' className='w-full sm:w-auto sm:min-w-[420px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' />
-            <div className='flex items-center gap-2 sm:gap-4'>
+            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
               <button
+                type='button'
                 onClick={() => setIsFilterOpen(true)}
-                className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
+                title="Filtros"
               >
                 <SlidersHorizontal className='w-5 h-5' />
               </button>
-              <Link href='/clients/add-client' className='flex-1 sm:flex-initial'>
+              <Link href='/clients/add-client' className='w-full sm:w-auto'>
                 <button type='button'
                   className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
                   <FileText size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Nuevo Contrato</span><span className='sm:hidden'>Nuevo</span>
                 </button>
               </Link>
             </div>
+          </div>
+
+          <div className='mb-5'>
+            <Search title='Buscar por propiedad, cliente o número de contrato' className='max-w-[450px] w-full' />
           </div>
 
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />

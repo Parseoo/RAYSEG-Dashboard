@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-{/* Define la interface de props para la tabla */ }
+{/* Define la interface de props para la tabla */}
 interface TableProps<T> {
     data: T[]
     headers: string[]
@@ -12,25 +12,178 @@ interface TableProps<T> {
     isLoading: boolean
 }
 
-{/* Implementa la tabla */ }
+// Mapper de valores para ordenación genérica
+const getValueByHeader = (item: any, header: string): any => {
+    if (!item) return '';
+    const h = header.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+    // 1. Mapeos manuales prioritarios y bien definidos:
+    if (h === 'cliente' || h === 'agente' || h === 'propiedad' || h === 'nombre' || h === 'usuario') {
+        return item.name || item.nombre || item.title || item.nombre_rol || '';
+    }
+    if (h === 'tipo') {
+        if (item.property_type && typeof item.property_type === 'object') {
+            return item.property_type.name || '';
+        }
+        return item.type || item.tipo || '';
+    }
+    if (h === 'operacion') {
+        return item.operation_type || item.operation || '';
+    }
+    if (h === 'precio' || h === 'monto') {
+        return parseFloat(String(item.price || item.precio || item.monto || 0).replace(/[^0-9.]/g, '')) || 0;
+    }
+    if (h === 'estatus' || h === 'estado') {
+        return item.property_status || item.status || item.estatus || item.property_status_label || '';
+    }
+    if (h === 'publicacion') {
+        if (item.property_post_status && typeof item.property_post_status === 'object') {
+            return item.property_post_status.name || '';
+        }
+        return item.status_publication || '';
+    }
+    if (h === 'mls' || h === 'clave') {
+        return item.number_mls || item.clave || '';
+    }
+    if (h === 'telefono') {
+        return item.phone || item.telefono || item.number || '';
+    }
+    if (h === 'rfc') return item.rfc || '';
+    if (h === 'curp') return item.curp || '';
+    if (h === 'rol' || h === 'rol/permisos') {
+        return item.type || item.role?.name || item.role || item.rol || '';
+    }
+    if (h === 'propiedades activas') {
+        return Number(item.propertiesActive || 0);
+    }
+    if (h === 'citas') {
+        return Number(item.dates || 0);
+    }
+    if (h === 'contacto') {
+        return item.email || item.contacto || '';
+    }
+    if (h === 'alta' || h === 'fecha' || h === 'inicio' || h === 'fin' || h === 'ultimo acceso') {
+        return item.high || item.created_at || item.updated_at || item.inicio || item.fin || '';
+    }
+    if (h === 'calle y numero') {
+        return `${item.street || ''} ${item.street_number || ''}`.trim();
+    }
+    if (h === 'colonia') return item.neighborhood || item.colonia || '';
+    if (h === 'ciudad') return item.city || item.ciudad || '';
+    if (h === 'cp') return item.postal_code || item.cp || '';
+    if (h === 'latitud') return Number(item.latitude || 0);
+    if (h === 'longitud') return Number(item.longitude || 0);
+    if (h === 'clientes') {
+        if (Array.isArray(item.clients)) {
+            return item.clients.map((c: any) => c.name || c.nombre || '').join(', ');
+        }
+        return item.clients || '';
+    }
+    if (h === 'responsable') {
+        if (item.responsable && typeof item.responsable === 'object') {
+            return item.responsable.name || item.responsable.nombre || '';
+        }
+        return item.responsable || '';
+    }
+
+    // 2. Caídas dinámicas por propiedad
+    const cleanKey = h.replace(/\s+/g, '_');
+    if (item[cleanKey] !== undefined) return item[cleanKey];
+
+    const camelKey = h.replace(/\s+(.)/g, (_, c) => c.toUpperCase());
+    if (item[camelKey] !== undefined) return item[camelKey];
+
+    return '';
+};
+
+{/* Implementa la tabla */}
 export const Table = <T extends any>({ data = [], headers, renderRow, isLoading }: TableProps<T>) => {
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
+    
+    // Estados de ordenación
+    const [sortHeader, setSortHeader] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
 
-    const totalItems = data.length
+    const handleSort = (header: string) => {
+        const h = header.toLowerCase();
+        if (h === 'acciones' || h === 'imagen' || h === 'imagenes') return;
+
+        if (sortHeader === header) {
+            if (sortDirection === 'asc') {
+                setSortDirection('desc');
+            } else if (sortDirection === 'desc') {
+                setSortHeader(null);
+                setSortDirection(null);
+            } else {
+                setSortDirection('asc');
+            }
+        } else {
+            setSortHeader(header);
+            setSortDirection('asc');
+        }
+    };
+
+    // Ordenar los datos antes de paginar
+    const sortedData = useMemo(() => {
+        if (!sortHeader || !sortDirection) return data;
+
+        return [...data].sort((a, b) => {
+            const valA = getValueByHeader(a, sortHeader);
+            const valB = getValueByHeader(b, sortHeader);
+
+            // Ordenación de números
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return sortDirection === 'asc' ? valA - valB : valB - valA;
+            }
+
+            // Ordenación de cadenas
+            const strA = String(valA).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const strB = String(valB).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
+            if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [data, sortHeader, sortDirection]);
+
+    const totalItems = sortedData.length
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    const currentData = data.slice(startIndex, endIndex)
+    const currentData = sortedData.slice(startIndex, endIndex)
 
     return (
         <div className='w-full mt-6 overflow-x-auto'>
             <table className='w-full border-collapse rounded-lg overflow-hidden shadow-sm'>
                 <thead>
                     <tr className='bg-slate-100 rounded-t-lg'>
-                        {headers.map((header, index) => (
-                            <th key={index} className='text-left py-3 px-4 font-semibold text-sm text-gray-700'>{header}</th>
-                        ))}
+                        {headers.map((header, index) => {
+                            const h = header.toLowerCase();
+                            const isSortable = h !== 'acciones' && h !== 'imagen' && h !== 'imagenes';
+                            const isCurrent = sortHeader === header;
+
+                            return (
+                                <th 
+                                    key={index} 
+                                    onClick={() => isSortable && handleSort(header)}
+                                    className={`py-3 px-4 font-semibold text-sm text-gray-700 select-none text-left ${
+                                        isSortable ? 'cursor-pointer hover:bg-slate-200 transition-colors' : ''
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>{header}</span>
+                                        {isSortable && (
+                                            <span className="text-gray-400">
+                                                {isCurrent && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                {isCurrent && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                {!isCurrent && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                            </span>
+                                        )}
+                                    </div>
+                                </th>
+                            )
+                        })}
                     </tr>
                 </thead>
                 <tbody>

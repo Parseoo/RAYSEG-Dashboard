@@ -7,7 +7,7 @@ import Breadcrumb from '@/components/ui/breadcrumb';
 import { Save } from 'lucide-react';
 import { ProfileHeader } from '@/app/(root)/settings/my-profile/viewProfile';
 import { PersonalInformation } from '@/app/(root)/settings/my-profile/components/PersonalInformation';
-import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
+// import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
 import SecuritySettings from '@/app/(root)/settings/my-profile/security';
 import { GetProfileApi } from '@/lib/api/auth/auth-api';
 import { UserResponse } from '@/lib/@type';
@@ -47,10 +47,10 @@ const MyProfile = () => { // trae la función logout desde el store global de us
                 <div className="flex flex-col gap-6">
                     <ProfileHeader user={user} />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> */}
                         <PersonalInformation user={user} />
-                        <ProfessionalProfile user={user} />
-                    </div>
+                        {/* <ProfessionalProfile user={user} /> */}
+                    {/* </div> */}
 
                     <div className="bg-white rounded-lg p-6 border shadow-sm">
                         <SecuritySettings />

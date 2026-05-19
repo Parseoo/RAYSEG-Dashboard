@@ -14,7 +14,7 @@ interface SearchItem {
 }
 
 export type InputFieldConfig = {
-    type: 'text' | 'select' | 'url' | 'email' | 'number' | 'tel' | 'textarea' | 'checkbox' | 'date' | 'password';
+    type: 'text' | 'select' | 'url' | 'email' | 'number' | 'tel' | 'textarea' | 'checkbox' | 'date' | 'password' | 'color';
     id: string;
     label?: string;
     placeholder?: string;
@@ -54,7 +54,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
         <div className="relative">
             {input.type === 'select' ? (
                 <Select 
-                    value={String(input.value)} 
+                    value={input.value !== undefined && input.value !== null && input.value !== '' ? String(input.value) : undefined} 
                     onValueChange={(val) => input.onChange && input.onChange(val)}
                 >
                     <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>

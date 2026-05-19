@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
@@ -25,6 +25,7 @@ function UsersList() {
     const [users, setUsers] = useState<UserResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [selectedRole, setSelectedRole] = useState("all");
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -32,12 +33,34 @@ function UsersList() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
     const [warningMessage, setWarningMessage] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const PER_PAGE = 10;
+
+    // Debounce search: wait 400ms after user stops typing
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Reset to page 1 whenever any filter changes
+    useEffect(() => { setCurrentPage(1); }, [debouncedSearch, selectedRole, selectedStatus]);
 
     useEffect(() => {
         const fetchUsers = async () => {
+            setLoading(true);
             try {
-                const { data } = await GetAllUsers();
+                const params: Parameters<typeof GetAllUsers>[0] = {
+                    page: currentPage,
+                    perPage: PER_PAGE,
+                };
+                if (debouncedSearch)           params.search    = debouncedSearch;
+                if (selectedRole !== "all")    params.role      = selectedRole;
+                if (selectedStatus !== "all")  params.is_active = selectedStatus === "true";
+
+                const { data } = await GetAllUsers(params);
                 setUsers(data?.users || []);
+                setTotalCount(data?.count ?? 0);
             } catch (error: any) {
                 if (error?.response?.status === 403) {
                     showToast.error(
@@ -50,34 +73,9 @@ function UsersList() {
             }
         };
         fetchUsers();
-    }, []);
+    }, [debouncedSearch, selectedRole, selectedStatus, currentPage]);
 
-    const filteredUsers = useMemo(() => {
-        const term = searchTerm.trim().toLowerCase();
-        return users.filter(user => {
-            const firstName = (user.name || "").toLowerCase();
-            const lastName = (user.paternal_last_name || "").toLowerCase();
-            const secondLastName = (user.maternal_last_name || "").toLowerCase();
-            const fullName = `${firstName} ${lastName} ${secondLastName}`.trim();
-            const email = (user.email || "").toLowerCase();
-            const matchesSearch =
-                term === "" ||
-                firstName.includes(term) ||
-                lastName.includes(term) ||
-                secondLastName.includes(term) ||
-                fullName.includes(term) ||
-                email.includes(term);
-            const matchesRole =
-                selectedRole === "all" ||
-                (selectedRole === "admin" && (user.role === "admin" || user.is_staff)) ||
-                (selectedRole === "editor" && (user.role === "editor" || user.is_superuser)) ||
-                user.role === selectedRole;
-            const matchesStatus =
-                selectedStatus === "all" ||
-                user.is_active === (selectedStatus === "true");
-            return matchesSearch && matchesRole && matchesStatus;
-        });
-    }, [users, searchTerm, selectedRole, selectedStatus]);
+    const totalPages = Math.ceil(totalCount / PER_PAGE);
 
     const handleDeleteClick = (user: UserResponse) => {
         setDeleteModal({ isOpen: true, item: user });
@@ -175,19 +173,16 @@ function UsersList() {
                         <h1 className='text-xl font-bold'>Listado de usuarios</h1>
                         <p className='text-gray-500 text-sm'>Administra quién puede acceder al sistema.</p>
                     </div>
-                </div>
-                <div className='mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                    <Search
-                        title='Buscar por nombre o correo'
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className='w-full sm:w-auto sm:min-w-[420px]'
-                    />
-                    <div className='flex items-center gap-2 sm:gap-4'>
-                        <button onClick={() => setIsFilterOpen(true)} className='p-2 hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200'>
+                    <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+                        <button
+                            type='button'
+                            onClick={() => setIsFilterOpen(true)}
+                            className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
+                            title="Filtros"
+                        >
                             <SlidersHorizontal size={20} className='text-gray-600' />
                         </button>
-                        <Link href='/settings/users-permissions/add-user' className='flex-1 sm:flex-initial'>
+                        <Link href='/settings/users-permissions/add-user' className='w-full sm:w-auto'>
                             <button className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium text-sm'>
                                 <UserPlus size={18} />
                                 <span>Agregar Usuario</span>
@@ -195,7 +190,43 @@ function UsersList() {
                         </Link>
                     </div>
                 </div>
-                <Table data={filteredUsers} headers={headers} renderRow={renderRow} isLoading={loading} />
+                <div className='mb-5'>
+                    <Search
+                        title='Buscar por nombre o correo'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className='max-w-[270px] w-full'
+                    />
+                </div>
+                <Table data={users} headers={headers} renderRow={renderRow} isLoading={loading} />
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className='flex items-center justify-between mt-4 pt-4 border-t border-slate-100'>
+                        <p className='text-sm text-gray-500'>
+                            Mostrando {users.length} de {totalCount} usuarios
+                        </p>
+                        <div className='flex items-center gap-2'>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className='px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
+                            >
+                                Anterior
+                            </button>
+                            <span className='text-sm text-gray-600'>
+                                Página {currentPage} de {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className='px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtrar Usuarios">
