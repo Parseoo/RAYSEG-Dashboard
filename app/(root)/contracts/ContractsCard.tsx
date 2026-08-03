@@ -45,13 +45,13 @@ export const ClientsCard = () => {
   return (
     <div className='bg-white w-full max-h-max rounded-lg p-5 mb-5 shadow-md'>
       <div className='w-full h-full'>
-        <div className='flex items-center justify-between mb-3'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
           <div>
             <h1 className='text-black font-[700] text-2xl'>Contratos</h1>
             <p className='text-md text-gray-500'>Gestión centralizada de contratos de renta y compraventa.</p>
           </div>
           <button type='button'
-            className='w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity font-medium text-gray-500'>
+            className='w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity font-medium text-gray-500'>
             <Clock4 size={20} /> Próximos vencimientos
           </button>
         </div>

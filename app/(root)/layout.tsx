@@ -10,58 +10,51 @@ import { isTokenExpired } from '@/lib/utils/checkTokenExpiration';
 
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isZustandReady, setIsZustandReady] = useState(false);
-  const { isLogin, token, logout } = useUserStore()
+  const { isLogin, token, logout, _hasHydrated, isSessionExpired, setSessionExpired } = useUserStore()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Activar auto-logout por inactividad (30 minutos)
   useAutoLogout(30);
 
-  // Esperar a que Zustand termine de rehidratar desde localStorage
+  // Validar expiración del token al cargar (solo después de que el store esté listo)
   useEffect(() => {
-    // Pequeño delay para asegurar que Zustand terminó de cargar
-    const timer = setTimeout(() => {
-      setIsZustandReady(true);
-      setIsHydrated(true);
-    }, 100);
+    if (!_hasHydrated) return;
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Validar expiración del token al cargar
-  useEffect(() => {
-    if (!isZustandReady) return;
-
-    const jwtToken = typeof window !== 'undefined' ? localStorage.getItem('jwtToken') : null;
-
-    if (jwtToken && isTokenExpired(jwtToken)) {
+    if (token && isTokenExpired(token)) {
       console.log('Token expirado, cerrando sesión...');
       logout();
-      clearAuthHeader();
+      setSessionExpired(true);
       localStorage.removeItem('jwtToken');
       localStorage.removeItem('refresh_token');
-      router.push('/sign-in');
     }
-  }, [isZustandReady, logout, router]);
-
-  // Configurar header de autorización si hay token
-  useEffect(() => {
-    if (token) {
-      setAuthHeader(token);
-    }
-  }, [token]);
+  }, [_hasHydrated, token, logout, setSessionExpired]);
 
   // Redirigir a /sign-in si no está logueado (solo después de que Zustand esté listo)
   useEffect(() => {
-    if (isZustandReady && !isLogin) {
-      router.push('/sign-in');
+    if (_hasHydrated && !isLogin) {
+      if (isSessionExpired) {
+        router.push('/sign-in?session_expired=true');
+      } else {
+        router.push('/sign-in');
+      }
     }
-  }, [isZustandReady, isLogin, router]);
+  }, [_hasHydrated, isLogin, isSessionExpired, router]);
 
-  // Mientras se hidrata o si no está logueado, permitir que los hooks manejen la redirección
-  // Sin bloquear la UI con un loader de pantalla completa
+  const isExpired = token ? isTokenExpired(token) : false;
+  const isAuthenticated = isLogin && !isExpired;
+
+  if (!_hasHydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-200">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className='flex flex-col h-screen'>
@@ -75,8 +68,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
     </div>
   )
-
 }
 
 export default Layout
+
 

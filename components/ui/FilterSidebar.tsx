@@ -8,9 +8,11 @@ interface FilterSidebarProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  onClear?: () => void;
+  onApply?: () => void;
 }
 
-export default function FilterSidebar({ isOpen, onClose, title = "Filtros", children }: FilterSidebarProps) {
+export default function FilterSidebar({ isOpen, onClose, title = "Filtros", children, onClear, onApply }: FilterSidebarProps) {
   // Bloquear scroll del body cuando el sidebar está abierto
   useEffect(() => {
     if (isOpen) {
@@ -24,6 +26,22 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleClear = () => {
+    if (onClear) {
+      onClear();
+    } else {
+      onClose();
+    }
+  };
+
+  const handleApply = () => {
+    if (onApply) {
+      onApply();
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -57,16 +75,16 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
         <div className="border-t border-gray-200 p-5">
           <div className="flex gap-3">
             <button
-              onClick={onClose}
+              onClick={handleClear}
               className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-slate-50 transition-all font-medium"
             >
               Limpiar filtros
             </button>
             <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+              onClick={handleApply}
+              className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-opacity font-medium shadow-md"
             >
-              Aplicar filtros
+              Filtrar
             </button>
           </div>
         </div>

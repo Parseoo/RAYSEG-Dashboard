@@ -1,82 +1,110 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon, Users, DollarSign, Calendar, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tag } from './badges';
+import { useNotificationStore } from '@/lib/store/notificationStore';
+import { NotificationCategory, NotificationItem } from '@/lib/types/notifications';
 
-interface Notification {
-    id: string;
-    type: 'property' | 'lead' | 'system' | 'image';
-    title: string;
-    description: string;
-    timestamp: string;
-    tags: string[];
-    read: boolean;
-}
+type FilterType = 'all' | 'unread' | 'property' | 'lead' | 'system' | 'users' | 'sales' | 'visits';
 
-const mockNotifications: Notification[] = [
-    {
-        id: '1',
-        type: 'property',
-        title: 'Nueva propiedad publicada',
-        description: 'Casa en Condesa, CDMX ahora es visible en la web para venta.',
-        timestamp: 'hace 5 min',
-        tags: ['Propiedades', 'Publicada'],
-        read: false
-    },
-    {
-        id: '2',
-        type: 'lead',
-        title: 'Nuevo lead registrado',
-        description: 'Juan Pérez está interesado en Departamento en Polanco, CDMX',
-        timestamp: 'hace 12 min',
-        tags: ['Leads', 'Nuevo'],
-        read: false
-    },
-    {
-        id: '3',
-        type: 'system',
-        title: 'Usuario creado correctamente',
-        description: 'Se creó el usuario "Agente Norte" con el rol "Agente inmobiliario"',
-        timestamp: 'hace 1 h',
-        tags: ['Sistema', 'Usuarios'],
-        read: false
-    },
-    {
-        id: '4',
-        type: 'image',
-        title: 'Imágenes actualizadas',
-        description: 'Se reemplazaron 5 fotos y se definió una nueva imagen principal para "Terreno en Querétaro"',
-        timestamp: 'hace 3 h',
-        tags: ['Propiedades', 'Imágenes'],
-        read: false
-    },
-    {
-        id: '5',
-        type: 'property',
-        title: 'Propiedad desactivada',
-        description: '',
-        timestamp: 'ayer',
-        tags: ['Propiedades'],
-        read: true
+const getNotificationIcon = (category?: string, type?: string) => {
+    const cat = (category || '').toUpperCase();
+    const typ = (type || '').toUpperCase();
+
+    if (typ === 'IMAGES_UPDATED') {
+        return <ImageIcon className="w-5 h-5 text-orange-600" />;
     }
-];
-
-type FilterType = 'all' | 'unread' | 'property' | 'lead' | 'system';
-
-const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-        case 'property':
-            return <Home className="w-5 h-5 text-blue-600" />;
-        case 'lead':
-            return <UserPlus className="w-5 h-5 text-green-600" />;
-        case 'system':
-            return <ShieldCheck className="w-5 h-5 text-purple-600" />;
-        case 'image':
-            return <ImageIcon className="w-5 h-5 text-orange-600" />;
-        default:
-            return <Bell className="w-5 h-5 text-gray-600" />;
+    if (cat === 'PROPERTIES' || typ.startsWith('PROPERTY')) {
+        return <Home className="w-5 h-5 text-blue-600" />;
     }
+    if (cat === 'LEADS' || typ.startsWith('LEAD') || typ === 'GENERAL_CONTACT') {
+        return <UserPlus className="w-5 h-5 text-green-600" />;
+    }
+    if (cat === 'USERS' || typ.startsWith('USER')) {
+        return <Users className="w-5 h-5 text-indigo-600" />;
+    }
+    if (cat === 'SALES' || typ.startsWith('SALE')) {
+        return <DollarSign className="w-5 h-5 text-emerald-600" />;
+    }
+    if (cat === 'VISITS' || typ.startsWith('VISIT')) {
+        return <Calendar className="w-5 h-5 text-amber-600" />;
+    }
+    if (cat === 'SYSTEM' || typ.startsWith('SYSTEM')) {
+        return <ShieldCheck className="w-5 h-5 text-purple-600" />;
+    }
+    return <Bell className="w-5 h-5 text-gray-600" />;
+};
+
+const categoryLabels: Record<string, string> = {
+    PROPERTIES: 'Propiedades',
+    LEADS: 'Leads',
+    SYSTEM: 'Sistema',
+    USERS: 'Usuarios',
+    SALES: 'Ventas',
+    VISITS: 'Visitas',
+};
+
+const typeLabels: Record<string, string> = {
+    PROPERTY_CREATED: 'Creada',
+    PROPERTY_UPDATED: 'Actualizada',
+    PROPERTY_PUBLISHED: 'Publicada',
+    PROPERTY_DEACTIVATED: 'Desactivada',
+    IMAGES_UPDATED: 'Imágenes',
+    LEAD_CREATED: 'Nuevo',
+    GENERAL_CONTACT: 'Contacto',
+    USER_CREATED: 'Usuario creado',
+    USER_UPDATED: 'Usuario actualizado',
+    VISIT_CREATED: 'Visita',
+    SALE_CREATED: 'Venta',
+    SYSTEM_EVENT: 'Sistema',
+};
+
+const getNotificationTags = (notification: NotificationItem): string[] => {
+    const tags: string[] = [];
+    const cat = (notification.category || '').toUpperCase();
+    const typ = (notification.type || '').toUpperCase();
+
+    if (categoryLabels[cat]) {
+        tags.push(categoryLabels[cat]);
+    } else if (notification.category) {
+        tags.push(notification.category);
+    }
+
+    if (typeLabels[typ]) {
+        tags.push(typeLabels[typ]);
+    }
+
+    if (notification.metadata && Array.isArray(notification.metadata.tags)) {
+        tags.push(...notification.metadata.tags);
+    }
+
+    return Array.from(new Set(tags));
+};
+
+const formatTimestamp = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSec < 60) return 'hace un momento';
+    if (diffMin < 60) return `hace ${diffMin} min`;
+    if (diffHours < 24) return `hace ${diffHours} h`;
+    if (diffDays === 1) return 'ayer';
+    if (diffDays < 7) return `hace ${diffDays} días`;
+
+    return date.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
 };
 
 interface NotificationsModalProps {
@@ -86,43 +114,86 @@ interface NotificationsModalProps {
 
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
     const [filter, setFilter] = useState<FilterType>('all');
-    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+    const [showAllFilters, setShowAllFilters] = useState(false);
+    const {
+        notifications,
+        unreadCount,
+        isLoading,
+        error,
+        fetchNotifications,
+        fetchUnreadCount,
+        markAsRead,
+        markAllAsRead
+    } = useNotificationStore();
+
+    const loadFilteredNotifications = useCallback((selectedFilter: FilterType) => {
+        let category: NotificationCategory | undefined = undefined;
+        let unread: boolean | undefined = undefined;
+
+        if (selectedFilter === 'unread') {
+            unread = true;
+        } else if (selectedFilter === 'property') {
+            category = 'PROPERTIES';
+        } else if (selectedFilter === 'lead') {
+            category = 'LEADS';
+        } else if (selectedFilter === 'system') {
+            category = 'SYSTEM';
+        } else if (selectedFilter === 'users') {
+            category = 'USERS';
+        } else if (selectedFilter === 'sales') {
+            category = 'SALES';
+        } else if (selectedFilter === 'visits') {
+            category = 'VISITS';
+        }
+
+        fetchNotifications({
+            page: 1,
+            pageSize: 50,
+            category,
+            unread
+        });
+    }, [fetchNotifications]);
 
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            loadFilteredNotifications(filter);
+            fetchUnreadCount();
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen]);
+    }, [isOpen, filter, loadFilteredNotifications, fetchUnreadCount]);
 
-    if (!isOpen) return null;
-
-    const filteredNotifications = notifications.filter(notif => {
-        if (filter === 'all') return true;
-        if (filter === 'unread') return !notif.read;
-        if (filter === 'property') return notif.type === 'property' || notif.tags.includes('Propiedades');
-        if (filter === 'lead') return notif.type === 'lead' || notif.tags.includes('Leads');
-        if (filter === 'system') return notif.type === 'system' || notif.tags.includes('Sistema');
-        return true;
-    });
-
-    const unreadCount = notifications.filter(n => !n.read).length;
-
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const handleFilterClick = (newFilter: FilterType) => {
+        setFilter(newFilter);
+        loadFilteredNotifications(newFilter);
     };
 
-    const filters: { id: FilterType; label: string }[] = [
+    const filters: { id: FilterType; label: string }[] = useMemo(() => [
         { id: 'all', label: 'Todas' },
         { id: 'unread', label: 'Sin leer' },
         { id: 'property', label: 'Propiedades' },
         { id: 'lead', label: 'Leads' },
-        { id: 'system', label: 'Sistema' }
-    ];
+        { id: 'system', label: 'Sistema' },
+        { id: 'users', label: 'Usuarios' },
+        { id: 'sales', label: 'Ventas' },
+        { id: 'visits', label: 'Visitas' }
+    ], []);
+
+    const displayedFilters = useMemo(() => {
+        if (showAllFilters) return filters;
+        const initial = filters.slice(0, 2);
+        if (!initial.some(f => f.id === filter)) {
+            const active = filters.find(f => f.id === filter);
+            if (active) return [...initial, active];
+        }
+        return initial;
+    }, [showAllFilters, filter, filters]);
+
+    if (!isOpen) return null;
 
     return (
         <>
@@ -158,11 +229,11 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
 
                 {/* Filters */}
                 <div className="px-6 pt-4 pb-3 border-b border-gray-200">
-                    <div className="flex flex-wrap gap-2">
-                        {filters.map((f) => (
+                    <div className="flex flex-wrap gap-2 items-center">
+                        {displayedFilters.map((f) => (
                             <button
                                 key={f.id}
-                                onClick={() => setFilter(f.id)}
+                                onClick={() => handleFilterClick(f.id)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === f.id
                                     ? 'bg-blue-50 text-blue-600 border-2 border-primary_color'
                                     : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200'
@@ -176,82 +247,125 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                                 )}
                             </button>
                         ))}
+
+                        <button
+                            onClick={() => setShowAllFilters(!showAllFilters)}
+                            className="px-3.5 py-2 rounded-full text-sm font-medium transition-all bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200 flex items-center gap-1"
+                        >
+                            <span>{showAllFilters ? 'Ver menos' : 'Ver más'}</span>
+                            {showAllFilters ? (
+                                <ChevronUp className="w-4 h-4 text-gray-500" />
+                            ) : (
+                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                            )}
+                        </button>
                     </div>
                 </div>
 
                 {/* Notifications List */}
                 <div className="flex-1 overflow-y-auto p-6">
-                    {filteredNotifications.length === 0 ? (
+                    {isLoading && notifications.length === 0 ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((n) => (
+                                <div key={n} className="p-4 rounded-lg border border-gray-200 animate-pulse bg-gray-50">
+                                    <div className="flex gap-4">
+                                        <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-4 bg-gray-300 rounded w-3/4" />
+                                            <div className="h-3 bg-gray-200 rounded w-full" />
+                                            <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : error && notifications.length === 0 ? (
+                        <div className="text-center py-12">
+                            <Bell className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-3">{error}</p>
+                            <button
+                                onClick={() => loadFilteredNotifications(filter)}
+                                className="px-4 py-2 bg-primary_color text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
+                    ) : notifications.length === 0 ? (
                         <div className="text-center py-12">
                             <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                             <p className="text-gray-500">No hay notificaciones</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {filteredNotifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className={`p-4 rounded-lg border transition-all ${notification.read
-                                        ? 'bg-white border-gray-200'
-                                        : 'bg-blue-50 border-blue-200'
-                                        }`}
-                                >
-                                    <div className="flex gap-4">
-                                        {/* Icon */}
-                                        <div className="flex-shrink-0 mt-0.5">
-                                            {getNotificationIcon(notification.type)}
-                                        </div>
+                            {notifications.map((notification) => {
+                                const tags = getNotificationTags(notification);
+                                return (
+                                    <div
+                                        key={notification.id}
+                                        onClick={() => {
+                                            if (!notification.isRead) {
+                                                markAsRead(notification.id);
+                                            }
+                                        }}
+                                        className={`p-4 rounded-lg border transition-all cursor-pointer ${notification.isRead
+                                            ? 'bg-white border-gray-200 hover:border-gray-300'
+                                            : 'bg-blue-50/70 border-blue-200 hover:border-blue-300 shadow-sm'
+                                            }`}
+                                    >
+                                        <div className="flex gap-4">
+                                            {/* Icon */}
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                {getNotificationIcon(notification.category, notification.type)}
+                                            </div>
 
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-gray-800 mb-1">
-                                                {notification.title}
-                                            </h3>
-                                            {notification.description && (
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    {notification.description}
-                                                </p>
-                                            )}
-                                            <div className="flex items-center gap-3 flex-wrap">
-                                                <span className="text-xs text-gray-500">
-                                                    {notification.timestamp}
-                                                </span>
-                                                <div className="flex gap-2 flex-wrap">
-                                                    {notification.tags.map((tag, idx) => (
-                                                        <Tag
-                                                            key={idx}
-                                                            variant="gray"
-                                                            className="text-xs px-2 py-0.5"
-                                                        >
-                                                            {tag}
-                                                        </Tag>
-                                                    ))}
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+                                                        {notification.title}
+                                                    </h3>
+                                                    {!notification.isRead && (
+                                                        <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
+                                                    )}
+                                                </div>
+                                                {notification.message && (
+                                                    <p className="text-sm text-gray-600 mb-3">
+                                                        {notification.message}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-3 flex-wrap">
+                                                    <span className="text-xs text-gray-500">
+                                                        {formatTimestamp(notification.createdAt)}
+                                                    </span>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {tags.map((tag, idx) => (
+                                                            <Tag
+                                                                key={idx}
+                                                                variant="gray"
+                                                                className="text-xs px-2 py-0.5"
+                                                            >
+                                                                {tag}
+                                                            </Tag>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3">
+                <div className="px-6 py-4 border-t border-gray-200">
                     <button
                         onClick={markAllAsRead}
-                        className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-slate-50 transition-all"
+                        disabled={unreadCount === 0}
+                        className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
                     >
                         Marcar todas como leídas
-                    </button>
-                    <button
-                        onClick={() => {
-                            // Navegar al centro de notificaciones
-                            onClose();
-                        }}
-                        className="flex-1 px-4 py-2 bg-primary_color text-white rounded-lg font-medium hover:opacity-90 transition-all"
-                    >
-                        Ver centro de notificaciones
                     </button>
                 </div>
             </div>

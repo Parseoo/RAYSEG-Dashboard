@@ -9,10 +9,10 @@ const inputs: InputFieldConfig[] = [
         { label: 'Referencia', value: 'referencia' },
         { label: 'Publicidad', value: 'publicidad' },
     ]},
-    { type: 'select', id: 'responsable_asignado', label: 'Responsable', placeholder: 'Seleccionar agente', group: 1, options: [
+    /* { type: 'select', id: 'responsable_asignado', label: 'Responsable', placeholder: 'Seleccionar agente', group: 1, options: [
         { label: 'Agente 1', value: 'agente_1' },
         { label: 'Agente 2', value: 'agente_2' },
-    ]},
+    ]}, */
     { type: 'textarea', id: 'notas_internas', label: 'Notas internas', placeholder: 'Escribe aquí las notas internas del cliente...', group: 2 },
 ];
 

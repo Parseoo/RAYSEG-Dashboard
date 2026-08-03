@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { clearAuthHeader } from '@/lib/api/auth/auth-api';
@@ -14,7 +14,7 @@ export const useAutoLogout = (timeoutMinutes: number = 30) => {
     const router = useRouter();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
         // Limpiar todo
         logout();
         clearAuthHeader();
@@ -25,9 +25,9 @@ export const useAutoLogout = (timeoutMinutes: number = 30) => {
         }
 
         router.push('/sign-in');
-    };
+    }, [logout, router]);
 
-    const resetTimer = () => {
+    const resetTimer = useCallback(() => {
         // Limpiar el timer anterior si existe
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -38,7 +38,7 @@ export const useAutoLogout = (timeoutMinutes: number = 30) => {
             console.log('Sesión cerrada por inactividad');
             handleLogout();
         }, timeoutMinutes * 60 * 1000); // Convertir minutos a milisegundos
-    };
+    }, [handleLogout, timeoutMinutes]);
 
     useEffect(() => {
         // Solo activar si el usuario está logueado
@@ -65,5 +65,5 @@ export const useAutoLogout = (timeoutMinutes: number = 30) => {
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [isLogin, timeoutMinutes]); // Re-ejecutar si cambia el estado de login o el timeout
+    }, [isLogin, timeoutMinutes, resetTimer]); // Re-ejecutar si cambia el estado de login o el timeout
 };

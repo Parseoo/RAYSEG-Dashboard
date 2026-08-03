@@ -59,7 +59,7 @@ export const inputsSecurity: InputFieldConfig[] = [
     {
         type: 'password',
         id: 'currentPassword',
-        label: 'Contraseña actual',
+        label: 'Contraseña anterior',
         placeholder: '********',
         group: 1
     },
@@ -104,7 +104,7 @@ export const inputsUserPermissions: InputFieldConfig[] = [
     },
     {
         type: 'email',
-        id: 'correo',
+        id: 'email',
         label: 'Correo electrónico',
         placeholder: 'agente@rayseg.com',
         group: 2
@@ -126,20 +126,8 @@ export const inputsUserPermissions: InputFieldConfig[] = [
             { label: 'Agente Inmobiliario', value: 'compra' },
             { label: 'Asesor de Ventas', value: 'venta' },
             { label: 'Asesor de Renta', value: 'renta' },
-            { label: 'Administrador/a', value: 'administrador' },
-            { label: 'Gerente / Dueño', value: 'gerente' }
-        ]
-    },
-    {
-        type: 'select',
-        id: 'estatus',
-        label: 'Estatus',
-        placeholder: 'Seleccione el estatus',
-        group: 3,
-        options: [
-            { label: 'Activo', value: 'activo' },
-            { label: 'Inactivo', value: 'inactivo' },
-            { label: 'En capacitación', value: 'encapacitacion' }
+            { label: 'Administrador/a', value: 'admin' },
+            { label: 'Gerente / Dueño', value: 'editor' }
         ]
     },
     {
@@ -158,13 +146,15 @@ export const inputsPassword: InputFieldConfig[] = [
         id: 'password',
         label: 'Contraseña',
         placeholder: '********',
-        group: 1
+        group: 1,
+        required: true
     },
     {
         type: 'password',
         id: 'password_confirm',
         label: 'Confirmar contraseña',
         placeholder: '********',
-        group: 1
+        group: 1,
+        required: true
     },
 ];

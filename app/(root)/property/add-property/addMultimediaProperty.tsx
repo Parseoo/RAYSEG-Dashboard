@@ -4,11 +4,15 @@ import React, { useState } from 'react';
 import { CloudUpload, Eye, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import Image from 'next/image';
+import { useProperty } from '../propertyContext';
+import { getImageUrl } from '@/lib/utils';
+import DeleteModal from '@/components/ui/DeleteModal';
 
 // Configuración de los inputs
+/*
 const inputs: InputFieldConfig[] = [
   { type: 'url', id: 'url', label: 'Video (URL)', placeholder: 'Pega enlace de Youtube' },
-];
+];*/
 
 interface ImageItem {
   id: number;
@@ -17,40 +21,100 @@ interface ImageItem {
 }
 
 export const AddMultimediaProperty = () => {
-
+  const { state, updateField } = useProperty();
   const [openModal, setOpenModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ fileID: number; file: string; is_main?: boolean } | null>(null);
+  const [deleteImageModal, setDeleteImageModal] = useState<{ isOpen: boolean; id: number | null; type: 'image' | 'plan' }>({
+    isOpen: false,
+    id: null,
+    type: 'image'
+  });
 
-  // Initial dummy data
-  const [images, setImages] = useState<ImageItem[]>([
-    { id: 1, src: '/casa.jpeg', isMain: false },
-    { id: 2, src: '/property.svg', isMain: false },
-    { id: 3, src: '/casa.jpeg', isMain: false },
-  ]);
+  const images = state.images;
+  const plans = state.plans || [];
 
   const handleSetMain = (id: number) => {
-    setImages(prev => prev.map(img => ({
+    const newImages = images.map((img: any) => ({
       ...img,
-      isMain: img.id === id
-    })));
+      is_main: img.fileID === id
+    }));
+    updateField('images', newImages);
   };
 
-  const handleViewImage = (image: ImageItem) => {
+  const handleViewImage = (image: { fileID: number; file: string; is_main?: boolean }) => {
     setSelectedImage(image);
     setOpenModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    setImages(prev => prev.filter(img => img.id !== id));
+  const triggerDeleteImage = (id: number) => {
+    setDeleteImageModal({ isOpen: true, id, type: 'image' });
+  };
+
+  const triggerDeletePlan = (id: number) => {
+    setDeleteImageModal({ isOpen: true, id, type: 'plan' });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteImageModal.id === null) return;
+    if (deleteImageModal.type === 'image') {
+      const newImages = images.filter((img: any) => img.fileID !== deleteImageModal.id);
+      updateField('images', newImages);
+    } else {
+      const newPlans = plans.filter((p: any) => p.fileID !== deleteImageModal.id);
+      updateField('plans', newPlans);
+    }
+    setDeleteImageModal({ isOpen: false, id: null, type: 'image' });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newImages = [...images];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newImages.push({
+          fileID: Date.now() + i,
+          file: reader.result as string,
+          is_main: newImages.length === 0
+        });
+        updateField('images', [...newImages]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePlanFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newPlans = [...plans];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPlans.push({
+          fileID: Date.now() + i,
+          file: reader.result as string,
+        });
+        updateField('plans', [...newPlans]);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
-    <div className='w-full max-h-max rounded-lg p-5 border'>
+    <div className='flex gap-6'>
+      <div className='w-full max-h-max rounded-lg p-5 border bg-white'>
       <div className='flex justify-between items-center mb-2'>
         <h1 className='font-[500] text-lg'>Galería</h1>
-        <h3>3 imágenes cargadas</h3>
+       <h3 className="text-sm text-gray-500">
+  {images.length} {images.length === 1 ? "Imagen cargada" : "Imagenes cargadas"}
+</h3>
       </div>
-      <p className='text-md text-gray-500'>Fotos y video para destacar la propiedad.</p>
+      <p className='text-md text-gray-500'>Sube las fotografías que se mostrarán en la publicación de la propiedad.</p>
 
       <div
         className='bg-white flex items-center justify-center w-full mt-5 rounded-md'
@@ -64,60 +128,128 @@ export const AddMultimediaProperty = () => {
               <ImageIcon size={20} className='mr-2' />
               Seleccionar archivos
             </div>
-            <p className='text-sm mt-2 text-gray-500'>Formatos JPG/PNG <span className='font-semibold'>30MB</span> por foto.</p>
+            <p className='text-sm mt-2 text-gray-500'>JPG, PNG · Máximo 30 MB por imagen</p>
           </div>
         </div>
 
         {/* Hidden File Input */}
-        <input id='dropzone-file-2' type='file' className='hidden' />
+        <input id='dropzone-file-2' type='file' className='hidden' multiple onChange={handleFileChange} accept="image/*" />
       </div>
 
-      <div className='mt-4'>
+
+      {/*<div className='mt-4'>
         <DynamicInputs inputs={inputs} withBgWhite={true} />
-      </div>
+      </div>*/}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {images.map((image) => (
-          <div key={image.id} className="group w-full relative max-w-sm mx-auto h-[150px] rounded-md overflow-hidden">
-            <Image src={image.src} alt="image" fill className="object-cover" />
+          <div key={image.fileID} className="group w-full relative max-w-sm mx-auto h-[150px] rounded-md overflow-hidden border border-slate-200 shadow-sm">
+            <Image src={getImageUrl(image.file)} alt="image" fill className="object-cover" />
 
-            <a className={`absolute inset-0 bg-black transition-opacity duration-300 z-10 ${image.isMain ? 'opacity-0' : 'opacity-0 group-hover:opacity-40'}`} />
+            <a className="absolute inset-0 bg-black transition-opacity duration-300 z-10 opacity-0 group-hover:opacity-40" />
 
-            {image.isMain ? (
-              <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
+            {image.is_main && (
+              <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-3 py-.5 rounded-full z-20 shadow">
                 Principal
               </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleViewImage(image)}
-                  className="absolute top-2 left-1.5 
-                  p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                >
-                  <Eye size={16} className="text-blue-600" />
-                </button>
-
-                <button
-                  className="absolute top-2 right-1.5 
-                  p-1.5 bg-white rounded-full hover:bg-gray-100 z-20
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={() => handleDelete(image.id)}
-                >
-                  <Trash2 size={16} className="text-red-600" />
-                </button>
-
-                <button
-                  onClick={() => handleSetMain(image.id)}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 
-                  w-[90%] bg-white text-xs font-semibold py-1 
-                  rounded-sm shadow-md z-20
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                >
-                  Marcar principal
-                </button>
-              </>
             )}
+
+            {/* Hover Action - Eye (Top Left) */}
+            <button
+              type="button"
+              onClick={() => handleViewImage(image)}
+              className="absolute top-2 left-2 p-2 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100"
+              title="Ver imagen"
+            >
+              <Eye size={16} className="text-blue-600" />
+            </button>
+
+            {/* Hover Action - Trash (Top Right) */}
+            <button
+              type="button"
+              onClick={() => triggerDeleteImage(image.fileID)}
+              className="absolute top-2 right-2 p-2 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100"
+              title="Eliminar imagen"
+            >
+              <Trash2 size={16} className="text-red-600" />
+            </button>
+
+            {!image.is_main && (
+              <button
+                type="button"
+                onClick={() => handleSetMain(image.fileID)}
+                className="absolute bottom-2.5 left-1/2 -translate-x-1/2
+                w-[85%] bg-white text-xs font-semibold py-1
+                rounded-lg shadow-md z-30
+                opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-50 text-gray-800"
+              >
+                Marcar principal
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      </div>
+
+      <div className='w-full max-h-max rounded-lg p-5 border bg-white'>
+        <div className='flex justify-between items-center mb-2'>
+          <h1 className='font-[500] text-lg'>Planos</h1>
+        <h3 className="text-sm text-gray-500">
+          {plans.length} {plans.length === 1 ? "Plano cargado" : "Planos cargados"}
+        </h3>
+      </div>
+      <p className='text-md text-gray-500'>Sube los planos o croquis de la propiedad.</p>
+
+      <div
+        className='bg-white flex items-center justify-center w-full mt-5 rounded-md'
+        onClick={() => document.getElementById('dropzone-file-plans')?.click()}
+      >
+        <div className='flex flex-col items-center justify-center w-full h-64 bg-neutral-secondary-medium border border-dashed border-default-strong rounded-md hover:bg-blue-50  hover:border-blue-500 transition-colors cursor-pointer'>
+          <div className='flex flex-col items-center justify-center text-body pt-5 pb-6'>
+            <CloudUpload size={30} className='mb-3 text-blue-500' />
+            <p className='mb-2 text-sm font-semibold'>Haz click o arrastra planos aquí </p>
+            <div className='inline-flex items-center text-sm font-medium'>
+              <ImageIcon size={20} className='mr-2' />
+              Seleccionar archivos
+            </div>
+            <p className='text-sm mt-2 text-gray-500'>JPG, PNG o PDF · Máximo 30 MB por archivo</p>
+          </div>
+        </div>
+
+        <input id='dropzone-file-plans' type='file' className='hidden' multiple onChange={handlePlanFileChange} accept="image/*,application/pdf" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {plans.map((plan) => (
+          <div key={plan.fileID} className="group w-full relative max-w-sm mx-auto h-[150px] rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-slate-200 shadow-sm">
+            {plan.file.includes('application/pdf') || plan.file.endsWith('.pdf') ? (
+              <span className="text-gray-500 font-medium text-lg text-center select-none">PDF</span>
+            ) : (
+              <Image src={getImageUrl(plan.file)} alt="plano" fill className="object-contain animate-fadeIn" />
+            )}
+
+            <a className="absolute inset-0 bg-black transition-opacity duration-300 z-10 opacity-0 group-hover:opacity-40" />
+
+            {/* Hover Action - Eye (Top Left) */}
+            <button
+              type="button"
+              onClick={() => handleViewImage(plan)}
+              className="absolute top-2 left-2 p-2 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100"
+              title="Ver plano"
+            >
+              <Eye size={16} className="text-blue-600" />
+            </button>
+
+            {/* Hover Action - Trash (Top Right) */}
+            <button
+              type="button"
+              onClick={() => triggerDeletePlan(plan.fileID)}
+              className="absolute top-2 right-2 p-2 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100"
+              title="Eliminar plano"
+            >
+              <Trash2 size={16} className="text-red-600" />
+            </button>
           </div>
         ))}
       </div>
@@ -142,16 +274,36 @@ export const AddMultimediaProperty = () => {
 
             {/* Imagen grande */}
             {selectedImage && (
-              <img
-                src={selectedImage.src}
-                alt="Vista completa"
-                className="w-full h-[30rem] object-cover"
-              />
+              selectedImage.file.includes('application/pdf') || selectedImage.file.endsWith('.pdf') ? (
+                <iframe src={getImageUrl(selectedImage.file)} className="w-full h-[40rem]" />
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getImageUrl(selectedImage.file)}
+                    alt="Vista completa"
+                    className="w-full h-[30rem] object-contain"
+                  />
+                </>
+              )
             )}
           </div>
         </div>
       )}
 
+      <DeleteModal
+        isOpen={deleteImageModal.isOpen}
+        onClose={() => setDeleteImageModal({ isOpen: false, id: null, type: 'image' })}
+        onConfirm={handleConfirmDelete}
+        title={deleteImageModal.type === 'image' ? 'Eliminar Imagen' : 'Eliminar Plano'}
+        message={
+          deleteImageModal.type === 'image'
+            ? '¿Estás seguro de que deseas eliminar esta imagen de la galería?'
+            : '¿Estás seguro de que deseas eliminar este plano?'
+        }
+      />
+
+      </div>
     </div>
   )
 }

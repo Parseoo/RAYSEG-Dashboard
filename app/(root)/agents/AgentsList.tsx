@@ -1,10 +1,11 @@
 "use client"
 
 import React, { useState } from 'react';
+import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
-import { typeOptions, statusOptions, responsibleOptions } from '../../../components/selectClients.data';
+import { statusOptions, responsibleOptions } from '../../../components/selectClients.data';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table } from '../../../components/ui/table';
@@ -63,6 +64,14 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       console.log('Eliminando agente:', deleteModal.item);
       setIsDeleting(false);
       setDeleteModal({ isOpen: false, item: null });
+
+      showToast.success("El agente ha sido eliminado correctamente.", {
+        duration: 5000,
+        position: "top-right",
+        transition: "topBounce",
+        icon: "",
+        sound: true,
+      });
     }, 1500);
   };
 
@@ -94,7 +103,7 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       </td>
       <td className='py-4 px-4'>
         <div>
-          <td className='text-sm'>{row.email}</td>
+          <p className='text-sm'>{row.email}</p>
           <p className='text-xs text-gray-500'>{row.number}</p>
         </div>
       </td>
@@ -114,10 +123,7 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
             </button>
           </Tooltip>
           <Tooltip content="Eliminar">
-            <button
-              onClick={() => handleDeleteClick(row)}
-              className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
-            >
+            <button onClick={() => handleDeleteClick(row)} className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'>
               <Trash2 size={16} className='text-white' />
             </button>
           </Tooltip>
@@ -138,24 +144,25 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Listado de agentes</h1>
               <p className='text-sm sm:text-md text-gray-500'>Gestión de agentes inmobiliarios</p>
             </div>
-          </div>
-
-          <div className='mb-5 flex flex-col sm:flex-row sm:items-center'>
-            <Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='w-full sm:w-auto sm:min-w-[420px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500' />
-            <div className='flex items-center gap-2 sm:gap-4'>
+            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
               <button
+                type='button'
                 onClick={() => setIsFilterOpen(true)}
-                className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
               >
                 <SlidersHorizontal className='w-5 h-5' />
               </button>
-              <Link href='/agents/add-agent' className='flex-1 sm:flex-initial'>
+              <Link href='/agents/add-agent' className='w-full sm:w-auto'>
                 <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
                   <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Agente</span><span className='sm:hidden'>Agregar</span>
                 </button>
               </Link>
             </div>
+          </div>
+
+          <div className='mb-5'>
+            <Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='max-w-[420px] w-full' />
           </div>
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
         </div>
@@ -197,7 +204,6 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
           </div>
         </div>
       </FilterSidebar>
-
       {/* Delete Modal */}
       <DeleteModal
         isOpen={deleteModal.isOpen}

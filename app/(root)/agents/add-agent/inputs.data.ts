@@ -126,11 +126,11 @@ export const inputsAddEmployment: InputFieldConfig[] = [
         placeholder: 'Seleccione una opción',
         group: 1,
         options: [
-            { label: 'Agente Inmobiliario', value: 'compra' },
+            { label: 'Agente Inmobiliario', value: 'agente' },
+            { label: 'Asistente Administrativo', value: 'asistente' },
             { label: 'Asesor de Ventas', value: 'venta' },
             { label: 'Asesor de Renta', value: 'renta' },
-            { label: 'Administrador/a', value: 'administrador' },
-            { label: 'Gerente / Dueño', value: 'gerente' }
+            { label: 'Administrador/a', value: 'administrador' }
         ]
     },
     {

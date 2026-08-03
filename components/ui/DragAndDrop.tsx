@@ -14,6 +14,8 @@ export type Item = {
 interface DragAndDropProps {
     items?: Item[];
     onChange?: (items: Item[]) => void;
+    onDelete?: (item: Item) => void;
+    onEdit?: (item: Item) => void;
     className?: string;
 }
 
@@ -26,7 +28,7 @@ const defaultItems: Item[] = [
     },
 ];
 
-const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChange, className }) => {
+const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChange, onDelete, onEdit, className }) => {
     const [list, setList] = useState<Item[]>(items);
     const containerRef = useRef<HTMLUListElement | null>(null);
     const sortableRef = useRef<any>(null);
@@ -92,10 +94,14 @@ const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChang
                                 <div className="text-sm font-medium">{item.title}</div>
                                 {item.description ? <p className="text-xs text-gray-500">{item.description}</p> : null}
                             </div>
-                            <button className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
+                            <button
+                                onClick={() => onEdit?.(item)}
+                                className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
                                 <Pencil size={16} className='text-gray-600' />
                             </button>
-                            <button className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
+                            <button
+                                onClick={() => onDelete?.(item)}
+                                className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
                                 <Trash2 size={16} className='text-white' />
                             </button>
                         </li>

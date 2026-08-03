@@ -1,3 +1,6 @@
 {
-    "svg.preview.background": "black"
+    "svg.preview.background": "black",
+    "kiroAgent.configureMCP": "Disabled",
+    "snyk.advanced.organization": "f879bf86-e87d-4d52-9110-730b9e4aa726",
+    "snyk.advanced.autoSelectOrganization": true
 }

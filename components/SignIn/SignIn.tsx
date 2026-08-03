@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Input } from '../ui/Input';
 import { useRouter } from 'next/navigation';
+import { RegisterApi } from '@/lib/api/auth/auth-api';
 
 const SignIn = () => {
   const [name, setName] = useState('');
@@ -20,32 +21,19 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
-      // Enviar petición al backend
-      const response = await fetch(`${process.env.HOST_API}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          name
-        })
+      // Enviar petición al backend mediante RegisterApi
+      await RegisterApi({
+        username,
+        email,
+        password,
+        name
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || 'Error en el registro');
-        return;
-      }
-
-      const data = await response.json();
 
       // Redirigir al login después del registro exitoso
       router.push('/sign-in');
     } catch (err: any) {
-      setError('Error al procesar el registro. Intenta nuevamente.');
+      const serverMessage = err?.response?.data?.message || err?.response?.data?.error || err?.response?.data?.detail;
+      setError(typeof serverMessage === 'string' ? serverMessage : 'Error al procesar el registro. Intenta nuevamente.');
       console.error('Registration error:', err);
     } finally {
       setIsLoading(false);

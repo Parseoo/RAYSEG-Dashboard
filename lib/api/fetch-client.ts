@@ -49,15 +49,25 @@ class FetchClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<{ data: T; status: number; headers: Headers }> {
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
+    const cleanBase = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${cleanBase}${cleanEndpoint}`;
+
+    let headers: Record<string, string> = {
+      ...(this.defaultHeaders as Record<string, string>),
+      ...(options.headers as Record<string, string>),
+    };
+
+    // Si el body es FormData, remover Content-Type para que el navegador genere el multipart boundary
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+      delete headers['content-type'];
+    }
 
     let config: RequestConfig = {
       ...options,
       url,
-      headers: {
-        ...this.defaultHeaders,
-        ...options.headers,
-      },
+      headers,
     };
 
     for (const interceptor of this.requestInterceptors) {
@@ -65,14 +75,27 @@ class FetchClient {
     }
 
     try {
-      let response = await fetch(config.url, config);
+      let response: Response;
+      try {
+        response = await fetch(config.url, config);
+      } catch (fetchErr: any) {
+        // Envolver el error nativo de red con contexto detallado
+        const networkError: any = new Error(
+          `Error de conexión al servidor (${config.method || 'GET'} ${config.url}): ${fetchErr.message || 'No se pudo contactar el backend'}`
+        );
+        networkError.name = 'NetworkError';
+        networkError.isNetworkError = true;
+        networkError.config = config;
+        networkError.originalError = fetchErr;
+        throw networkError;
+      }
 
       for (const interceptor of this.responseInterceptors) {
         response = await interceptor(response, config);
       }
 
       if (!response.ok) {
-        const error: any = new Error(`HTTP Error: ${response.status}`);
+        const error: any = new Error(`HTTP Error: ${response.status} at ${config.method || 'GET'} ${config.url}`);
         error.response = {
           status: response.status,
           statusText: response.statusText,
@@ -80,6 +103,12 @@ class FetchClient {
           headers: response.headers,
         };
         error.config = config; // importante para retry
+
+        // Solo loguear errores que no sean 404 (son esperados en algunos casos)
+        if (response.status !== 404) {
+          console.error(`[FetchClient] Request failed: ${config.method || 'GET'} ${config.url} - Status: ${response.status}`);
+        }
+
         throw error;
       }
 
@@ -91,10 +120,26 @@ class FetchClient {
         headers: response.headers,
       };
     } catch (error: any) {
-      for (const interceptor of this.errorInterceptors) {
-        error = await interceptor(error);
+      if (!error.config) {
+        error.config = config;
       }
-      throw error;
+      let currentError = error;
+      let recovered = false;
+      let result;
+      for (const interceptor of this.errorInterceptors) {
+        try {
+          result = await interceptor(currentError);
+          recovered = true;
+          break;
+        } catch (e) {
+          currentError = e;
+        }
+      }
+      
+      if (recovered) {
+        return result;
+      }
+      throw currentError;
     }
   }
 
@@ -105,7 +150,7 @@ class FetchClient {
 
     if (contentType.includes('application/json')) return response.json();
     if (contentType.includes('text/')) return response.text();
-    if (contentType.includes('application/octet-stream')) return response.blob();
+    if (contentType.includes('application/octet-stream') || contentType.includes('application/pdf')) return response.blob();
 
     return response.text();
   }
@@ -115,26 +160,29 @@ class FetchClient {
   }
 
   post<T = any>(endpoint: string, data?: any, options?: RequestInit) {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
     });
   }
 
   put<T = any>(endpoint: string, data?: any, options?: RequestInit) {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
     });
   }
 
   patch<T = any>(endpoint: string, data?: any, options?: RequestInit) {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data !== undefined ? JSON.stringify(data) : undefined),
     });
   }
 

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react'
+import { useUserStore } from '@/lib/store/userStore';
+import WarningModal from './ui/WarningModal';
 import {
   ChartColumn,
   Building2,
@@ -21,6 +23,10 @@ import {
   FileKey,
   X,
   FileText,
+  UserCog,
+  Shield,
+  Key,
+  Library,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -47,7 +53,7 @@ export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
-  { href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
+  //{ href: agents, path: '/agents', icon: CircleUserRound, label: 'Agentes' },
   //{ href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
 
   {
@@ -68,8 +74,10 @@ export const menuItems: MenuItem[] = [
     label: 'Configuración',
     path: '/settings',
     children: [
-      { href: '/settings/my-profile', path: '/settings/my-profile', icon: Home, label: 'Mi Perfil' },
-      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: Home, label: 'Usuarios y Permisos' },
+      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: UserCog, label: 'Usuarios' },
+      { href: '/settings/roles', path: '/settings/roles', icon: Shield, label: 'Roles' },
+      //{ href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos' },
+      { href: '/catalogs', path: '/catalogs', icon: Library, label: 'Catálogos' },
     ]
   },
 ]
@@ -77,12 +85,25 @@ export const menuItems: MenuItem[] = [
 // Componente para renderizar el menú (reutilizable)
 const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const path = usePathname()
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuItems.forEach(item => {
+      if ('children' in item && item.children) {
+        initial[item.label] = true;
+      }
+    });
+    return initial;
+  });
+  const { user } = useUserStore();
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
+
+  const isAdmin = user?.is_staff || user?.is_superuser;
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => ({
       ...prev,
-      [label]: !prev[label]
+      [label]: !(prev[label] ?? true)
     }));
   };
 
@@ -93,7 +114,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
         if (isChildActive) {
           setOpenMenus(prev => {
-            if (prev[item.label]) return prev;
+            if (prev[item.label] !== undefined) return prev;
             return { ...prev, [item.label]: true };
           });
         }
@@ -119,7 +140,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         const hasChildren = 'children' in item && item.children && item.children.length > 0;
         const itemPath = 'path' in item ? item.path : undefined;
         const isItemActive = isActive(itemPath);
-        const isOpen = openMenus[item.label] || false;
+        const isOpen = openMenus[item.label] ?? true;
 
         const Icon = item.icon;
 
@@ -182,7 +203,15 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                               ? 'bg-property_purple text-white'
                               : 'hover:bg-gray-100 text-gray-700'
                           )}
-                          onClick={onLinkClick}
+                          onClick={(e) => {
+                            if (child.label === 'Usuarios y Permisos' && !isAdmin) {
+                              e.preventDefault();
+                              setWarningMessage("Solo los administradores pueden acceder a esta sección.");
+                              setShowWarning(true);
+                              return;
+                            }
+                            if (onLinkClick) onLinkClick();
+                          }}
                         >
                           <ChildIcon
                             className={cn(
@@ -201,13 +230,19 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
           </li>
         );
       })}
+      <WarningModal
+        isOpen={showWarning}
+        onClose={() => setShowWarning(false)}
+        title="Acceso Restringido"
+        message={warningMessage}
+      />
     </ul>
   );
 };
 
 export const SideBar = () => {
   return (
-    <nav className='hidden bg-white lg:flex flex-col w-[250px] h-screen pr-4 pl-4 text-second_text_color'>
+    <nav className='hidden bg-white lg:flex flex-col w-[250px] h-full pr-4 pl-4 text-second_text_color relative z-10 shadow-xl'>
       <div className='flex-1 overflow-y-auto pt-4 pb-6'>
         <MenuContent />
       </div>

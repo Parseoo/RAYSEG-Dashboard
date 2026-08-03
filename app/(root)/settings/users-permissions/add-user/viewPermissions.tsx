@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Switch } from '@/components/ui/Switch';
+import { GetListPermissions } from '@/lib/api/permission-api';
+import { Permission } from '@/lib/@type-permission';
+import { Loader2 } from 'lucide-react';
 
 interface PermissionSection {
     id: string;
@@ -11,200 +14,63 @@ interface PermissionSection {
     subActions?: { id: string; label: string }[];
     onLabel?: string;
     offLabel?: string;
+    order?: number;
 }
 
-const permissionSections: PermissionSection[] = [
-    {
-        id: 'reportes',
-        title: 'Reportes / Dashboard',
+const SECTION_METADATA: Record<string, { title: string, description: string, group?: string, order?: number }> = {
+    'reportes': { 
+        title: 'Reportes / Dashboard', 
         description: 'Visualización de estadísticas, métricas y reportes del sistema.',
-        actions: [
-            { id: 'ver-dashboard', label: 'Ver dashboard' },
-            { id: 'ver-reportes', label: 'Ver reportes' },
-            { id: 'exportar-reportes', label: 'Exportar reportes' },
-        ]
+        group: 'ANÁLISIS Y CONTROL',
+        order: 1
     },
-    {
-        id: 'propiedades',
-        title: 'Propiedades',
+    'property': { 
+        title: 'Propiedades', 
         description: 'Listado, creación y gestión de inmuebles.',
-        actions: [
-            { id: 'ver-lista', label: 'Ver lista' },
-            { id: 'crear', label: 'Crear' },
-            { id: 'editar', label: 'Editar' },
-            { id: 'eliminar', label: 'Eliminar' },
-            { id: 'ver-detalle', label: 'Ver detalle' },
-        ],
-        subActions: [
-            { id: 'marcar-publicada', label: 'Marcar como publicada' },
-            { id: 'quitar-web', label: 'Quitar de la web' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 2
     },
-    {
-        id: 'imagenes-propiedades',
-        title: 'Imágenes de propiedades',
+    'propertyimage': { 
+        title: 'Imágenes de propiedades', 
         description: 'Carga, cambio y eliminación de fotos.',
-        actions: [
-            { id: 'subir-varias', label: 'Subir varias fotos' },
-            { id: 'elegir-principal', label: 'Elegir foto principal' },
-            { id: 'eliminar-fotos', label: 'Eliminar fotos' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 3
     },
-    {
-        id: 'clientes',
-        title: 'Clientes',
+    'client': { 
+        title: 'Clientes', 
         description: 'Gestión de clientes, contactos y preferencias.',
-        actions: [
-            { id: 'ver-lista', label: 'Ver lista' },
-            { id: 'crear', label: 'Crear' },
-            { id: 'editar', label: 'Editar' },
-            { id: 'eliminar', label: 'Eliminar' },
-            { id: 'ver-detalle', label: 'Ver detalle' },
-        ],
-        subActions: [
-            { id: 'ver-notas', label: 'Ver notas internas' },
-            { id: 'editar-notas', label: 'Editar notas internas' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 4
     },
-    {
-        id: 'agentes',
-        title: 'Agentes',
+    'agent': { 
+        title: 'Agentes', 
         description: 'Gestión de agentes inmobiliarios y sus datos.',
-        actions: [
-            { id: 'ver-lista', label: 'Ver lista' },
-            { id: 'crear', label: 'Crear' },
-            { id: 'editar', label: 'Editar' },
-            { id: 'eliminar', label: 'Eliminar' },
-            { id: 'ver-detalle', label: 'Ver detalle' },
-        ],
-        subActions: [
-            { id: 'asignar-propiedades', label: 'Asignar propiedades' },
-            { id: 'ver-estadisticas', label: 'Ver estadísticas' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 5
     },
-    {
-        id: 'contratos',
-        title: 'Contratos',
+    'contract': { 
+        title: 'Contratos', 
         description: 'Gestión de contratos de arrendamiento y venta.',
-        actions: [
-            { id: 'ver-lista', label: 'Ver lista' },
-            { id: 'crear', label: 'Crear' },
-            { id: 'editar', label: 'Editar' },
-            { id: 'eliminar', label: 'Eliminar' },
-            { id: 'ver-detalle', label: 'Ver detalle' },
-        ],
-        subActions: [
-            { id: 'generar-documentos', label: 'Generar documentos' },
-            { id: 'configurar-recordatorios', label: 'Configurar recordatorios' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 6
     },
-    {
-        id: 'leads-contacto',
-        title: 'Leads / Contacto',
+    'lead': { 
+        title: 'Leads / Contacto', 
         description: 'Mensajes recibidos desde la web.',
-        actions: [
-            { id: 'ver-leads', label: 'Ver leads' },
-            { id: 'marcar-leido', label: 'Marcar como leído' },
-            { id: 'eliminar-lead', label: 'Eliminar lead' },
-            { id: 'responder-lead', label: 'Responder lead' },
-        ]
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 7
     },
-    {
-        id: 'contenido-web-home',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Home',
-        description: 'Edición del contenido de la página principal.',
-        actions: [
-            { id: 'ver-contenido', label: 'Ver contenido' },
-            { id: 'editar-textos', label: 'Editar textos' },
-            { id: 'editar-imagenes', label: 'Editar imágenes' },
-        ]
-    },
-    {
-        id: 'contenido-web-servicios',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Servicios',
-        description: 'Gestión de servicios mostrados en la web.',
-        actions: [
-            { id: 'ver-servicios', label: 'Ver servicios' },
-            { id: 'crear-servicio', label: 'Crear servicio' },
-            { id: 'editar-servicio', label: 'Editar servicio' },
-            { id: 'eliminar-servicio', label: 'Eliminar servicio' },
-        ]
-    },
-    {
-        id: 'contenido-web-localizacion',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Localización',
-        description: 'Gestión de ubicaciones y zonas de cobertura.',
-        actions: [
-            { id: 'ver-localizaciones', label: 'Ver localizaciones' },
-            { id: 'crear-localizacion', label: 'Crear localización' },
-            { id: 'editar-localizacion', label: 'Editar localización' },
-            { id: 'eliminar-localizacion', label: 'Eliminar localización' },
-        ]
-    },
-    {
-        id: 'contenido-web-sobre-nosotros',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Sobre Nosotros',
-        description: 'Edición de la sección "Sobre Nosotros".',
-        actions: [
-            { id: 'ver-contenido', label: 'Ver contenido' },
-            { id: 'editar-textos', label: 'Editar textos' },
-            { id: 'editar-imagenes', label: 'Editar imágenes' },
-        ]
-    },
-    {
-        id: 'contenido-web-footer',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Footer',
-        description: 'Edición del pie de página y enlaces.',
-        actions: [
-            { id: 'ver-footer', label: 'Ver footer' },
-            { id: 'editar-enlaces', label: 'Editar enlaces' },
-            { id: 'editar-textos', label: 'Editar textos' },
-        ]
-    },
-    {
-        id: 'contenido-web-legal',
-        group: 'PERMISOS EN CONTENIDO WEB',
-        title: 'Contenido Web - Páginas Legales',
-        description: 'Gestión de términos, condiciones y avisos legales.',
-        actions: [
-            { id: 'ver-paginas', label: 'Ver páginas legales' },
-            { id: 'editar-terminos', label: 'Editar términos y condiciones' },
-            { id: 'editar-aviso', label: 'Editar aviso de privacidad' },
-        ]
-    },
-    {
-        id: 'mi-perfil',
-        group: 'CONFIGURACIÓN',
-        title: 'Mi Perfil',
-        description: 'Gestión de datos personales y configuración de cuenta.',
-        actions: [
-            { id: 'ver-perfil', label: 'Ver perfil' },
-            { id: 'editar-datos', label: 'Editar datos personales' },
-            { id: 'cambiar-password', label: 'Cambiar contraseña' },
-            { id: 'editar-preferencias', label: 'Editar preferencias' },
-        ]
-    },
-    {
-        id: 'ajustes-usuarios',
-        group: 'CONFIGURACIÓN',
-        title: 'Usuarios y Permisos',
-        description: 'Configuración del sistema y gestión de otros usuarios.',
-        actions: [
-            { id: 'ver-usuarios', label: 'Ver lista de usuarios' },
-            { id: 'crear-usuarios', label: 'Crear usuarios' },
-            { id: 'editar-usuarios', label: 'Editar usuarios' },
-            { id: 'eliminar-usuarios', label: 'Eliminar usuarios' },
-            { id: 'editar-permisos', label: 'Editar permisos' },
-        ],
-        onLabel: "Solo administradores",
-        offLabel: "Acceso limitado"
-    }
-];
+    // Contenido Web
+    'webcontenthome': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
+    'webcontentservices': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
+    'webcontentlocation': { title: 'Contenido Web - Localización', description: 'Gestión de ubicaciones y zonas de cobertura.', group: 'PERMISOS EN CONTENIDO WEB', order: 12 },
+    'webcontentabout': { title: 'Contenido Web - Sobre Nosotros', description: 'Edición de la sección "Sobre Nosotros".', group: 'PERMISOS EN CONTENIDO WEB', order: 13 },
+    'webcontentfooter': { title: 'Contenido Web - Footer', description: 'Edición del pie de página y enlaces.', group: 'PERMISOS EN CONTENIDO WEB', order: 14 },
+    'webcontentlegal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
+    // Configuración
+    'user': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'profile': { title: 'Mi Perfil', description: 'Gestión de datos personales y configuración de cuenta.', group: 'CONFIGURACIÓN', order: 21 },
+};
 
 function PermissionCard({ section, enabledSections, isReadOnly }: {
     section: PermissionSection,
@@ -287,6 +153,85 @@ interface ViewPermissionsProps {
 }
 
 export function ViewPermissions({ userPermissions = {}, isReadOnly = true }: ViewPermissionsProps) {
+    const [sections, setSections] = useState<PermissionSection[]>([]);
+    const [isFetchingPermissions, setIsFetchingPermissions] = useState(true);
+
+    useEffect(() => {
+        const fetchAllPermissions = async () => {
+            try {
+                setIsFetchingPermissions(true);
+                const res = await GetListPermissions();
+                
+                const extractData = (res: any) => {
+                    if (!res?.data) return [];
+                    return res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
+                };
+
+                const perms = extractData(res);
+
+                // Group permissions by model
+                const permsByModel: Record<string, Permission[]> = {};
+                perms.forEach((p: Permission) => {
+                    if (!permsByModel[p.model]) permsByModel[p.model] = [];
+                    permsByModel[p.model].push(p);
+                });
+
+                // Build sections dynamically from models found in API
+                const dynamicSections: PermissionSection[] = Object.keys(permsByModel).map(modelName => {
+                    const metadata = SECTION_METADATA[modelName] || {
+                        title: modelName.charAt(0).toUpperCase() + modelName.slice(1),
+                        description: `Gestión de ${modelName}.`,
+                        group: 'OTROS PERMISOS',
+                        order: 99
+                    };
+
+                    const modelPermissions = permsByModel[modelName];
+                    const actions = modelPermissions.map((p: Permission) => {
+                        const parts = p.codename.split('_');
+                        const action = parts[0];
+                        
+                        // Map labels to friendly names
+                        let label = p.name;
+                        if (action === 'view') label = 'Ver lista / detalle';
+                        else if (action === 'add') label = 'Crear';
+                        else if (action === 'change') label = 'Editar';
+                        else if (action === 'delete') label = 'Eliminar';
+                        
+                        const actionId = action === 'view' ? 'ver-lista' :
+                                        action === 'add' ? 'crear' :
+                                        action === 'change' ? 'editar' :
+                                        action === 'delete' ? 'eliminar' : action;
+
+                        return { id: actionId, label: label };
+                    });
+
+                    // Deduplicate actions
+                    const uniqueActions = Array.from(new Map(actions.map(item => [item.id, item])).values());
+
+                    return {
+                        id: modelName,
+                        title: metadata.title,
+                        description: metadata.description,
+                        group: metadata.group,
+                        actions: uniqueActions,
+                        order: metadata.order || 99
+                    };
+                });
+
+                // Sort sections by order
+                dynamicSections.sort((a, b) => (a.order || 99) - (b.order || 99));
+
+                setSections(dynamicSections);
+            } catch (error) {
+                console.error("Error fetching permissions:", error);
+            } finally {
+                setIsFetchingPermissions(false);
+            }
+        };
+
+        fetchAllPermissions();
+    }, []);
+
     // Valores por defecto basados en permisos del usuario o valores predeterminados
     const defaultEnabledSections: Record<string, boolean> = {
         'reportes': true,
@@ -316,23 +261,30 @@ export function ViewPermissions({ userPermissions = {}, isReadOnly = true }: Vie
                     <p className='text-sm text-gray-500'>Vista de los permisos asignados a este usuario. Los permisos no se pueden modificar desde esta vista.</p>
                 </div>
 
-                <div className='space-y-4'>
-                    {permissionSections.map((section, index) => {
-                        const showGroupHeader = section.group && (index === 0 || permissionSections[index - 1].group !== section.group);
-                        return (
-                            <React.Fragment key={section.id}>
-                                {showGroupHeader && (
-                                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-6 mb-4 first:mt-0">{section.group}</h2>
-                                )}
-                                <PermissionCard
-                                    section={section}
-                                    enabledSections={enabledSections}
-                                    isReadOnly={isReadOnly}
-                                />
-                            </React.Fragment>
-                        );
-                    })}
-                </div>
+                {isFetchingPermissions ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-3">
+                        <Loader2 className="animate-spin text-blue-600" size={40} />
+                        <p className="text-slate-500 font-medium">Cargando configuración de permisos...</p>
+                    </div>
+                ) : (
+                    <div className='space-y-4'>
+                        {sections.map((section, index) => {
+                            const showGroupHeader = section.group && (index === 0 || sections[index - 1].group !== section.group);
+                            return (
+                                <React.Fragment key={section.id}>
+                                    {showGroupHeader && (
+                                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-6 mb-4 first:mt-0">{section.group}</h2>
+                                    )}
+                                    <PermissionCard
+                                        section={section}
+                                        enabledSections={enabledSections}
+                                        isReadOnly={isReadOnly}
+                                    />
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

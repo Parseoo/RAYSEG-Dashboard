@@ -1,10 +1,11 @@
 "use client"
 
 import { useUserStore } from '@/lib/store/userStore';
+import { useNotificationStore } from '@/lib/store/notificationStore';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NotificationsModal } from '@/components/ui/NotificationsModal';
 import { UserMenu } from '@/components/ui/UserMenu';
 
@@ -14,9 +15,20 @@ interface SideBarTopProps {
 
 const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
   const { user } = useUserStore()
+  const { unreadCount, fetchNotifications } = useNotificationStore()
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+
+  const roleName = typeof user?.role === 'object' && user?.role !== null
+    ? (user.role as any).name
+    : user?.role;
+  const displayRole = roleName || (user?.is_superuser ? 'SuperAdmin' : user?.is_staff ? 'Administrador' : '');
 
   return (
     <>
@@ -69,7 +81,11 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
               >
                 <Image src={'/notification.svg'} alt='notification' width={24} height={24} />
                 {/* Badge de notificaciones no leídas */}
-                <span className='absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full'></span>
+                {unreadCount > 0 && (
+                  <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* User info - Clickable */}
@@ -81,7 +97,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
                   <div className='bg-black w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full flex-shrink-0'></div>
                   <div className='hidden md:block text-left'>
                     <p className='text-sm font-medium'>{user?.name || 'Usuario'}</p>
-                    <p className='text-xs text-gray-500'>Gerente de la empresa</p>
+                    <p className='text-xs text-gray-500'>{displayRole}</p>
                   </div>
                 </button>
 

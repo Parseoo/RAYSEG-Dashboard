@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUserStore } from '@/lib/store/userStore';
 import { useLogout } from '@/lib/api/auth/auth-query';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Save } from 'lucide-react';
@@ -11,14 +10,13 @@ import { PersonalInformation } from '@/app/(root)/settings/my-profile/components
 import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
 import SecuritySettings from '@/app/(root)/settings/my-profile/security';
 import { GetProfileApi } from '@/lib/api/auth/auth-api';
-import { User, UserResponse } from '@/lib/@type';
+import { User } from '@/lib/@type';
 
 const MyProfile = () => { // trae la función logout desde el store global de usuario
-    const router = useRouter(); // instancia del router para navegar programáticamente
-    const [user, setUser] = useState<UserResponse | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const { mutate: logout } = useLogout();
 
-    useEffect(() => { // función async para pedir el perfil al backend
+    useEffect(() => { // función async para obtener el perfil del usuario
         const fetchProfile = async () => {
             try {
                 // llamada al endpoint
@@ -38,10 +36,6 @@ const MyProfile = () => { // trae la función logout desde el store global de us
         fetchProfile();
     }, []); // array vacío: se ejecuta una sola vez
 
-    const handleLogout = () => {
-        logout();
-    };
-
     return (
         <>
             <Breadcrumb items={[
@@ -60,22 +54,6 @@ const MyProfile = () => { // trae la función logout desde el store global de us
 
                     <div className="bg-white rounded-lg p-6 border shadow-sm">
                         <SecuritySettings />
-                    </div>
-                </div>
-
-                <div className="flex items-center mt-6">
-                    <div className="flex items-center gap-4 justify-end w-full">
-                        <button
-                            type="button"
-                            className="bg-slate-100 w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="button"
-                            className="bg-primary_color text-white w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
-                            <Save size={20} /> Guardar
-                        </button>
                     </div>
                 </div>
             </div>
