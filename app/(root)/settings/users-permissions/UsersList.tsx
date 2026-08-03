@@ -1,24 +1,26 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
 import { Table } from '@/components/ui/table';
-import { statusOptions, typeOptions } from './selectUsers';
 import Search from '@/components/ui/Search';
 import FilterSidebar from '@/components/ui/FilterSidebar';
 import DeleteModal from '@/components/ui/DeleteModal';
 import Tooltip from '@/components/ui/Tooltip';
 import { DeleteUser, GetAllUsers } from '@/lib/api/user-api';
+import { GetListRoles } from '@/lib/api/permission-api';
 import { useRouter } from 'next/navigation';
 import { UserResponse } from '@/lib/@type';
 import { showToast } from 'nextjs-toast-notify';
+import { statusOptions } from './selectUsers';
+import { getUserImageUrl } from '@/lib/utils';
 
-const headers = ['Imagen', 'Usuario', 'Rol', 'Estatus', 'Último acceso', 'Acciones'];
+const headers = ['Imagen', 'Usuario', 'Contacto', 'Rol', 'Estatus', 'Creado en', 'Acciones'];
 
 function UsersList() {
     const router = useRouter();
@@ -28,14 +30,53 @@ function UsersList() {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [selectedRole, setSelectedRole] = useState("all");
     const [selectedStatus, setSelectedStatus] = useState("all");
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: UserResponse | null }>({ isOpen: false, item: null });
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
     const [warningMessage, setWarningMessage] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+    const [roles, setRoles] = useState<any[]>([]);
     const PER_PAGE = 10;
+
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (selectedRole !== 'all') count++;
+        if (selectedStatus !== 'all') count++;
+        return count;
+    }, [selectedRole, selectedStatus]);
+
+    const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
+        <div className="flex items-center gap-3 flex-shrink-0 max-w-full">
+            <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{label}:</span>
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-1">
+                <button
+                    onClick={() => onChange('all')}
+                    className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                        selectedValue === 'all'
+                            ? 'bg-primary_color text-white font-medium shadow-md'
+                            : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+                    }`}
+                >
+                    Todos
+                </button>
+                {options.map((opt: any) => (
+                    <button
+                        key={opt.value}
+                        onClick={() => onChange(opt.value)}
+                        className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                            selectedValue === opt.value
+                                ? 'bg-primary_color text-white font-medium shadow-md'
+                                : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+                        }`}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 
     // Debounce search: wait 400ms after user stops typing
     useEffect(() => {
@@ -45,6 +86,58 @@ function UsersList() {
 
     // Reset to page 1 whenever any filter changes
     useEffect(() => { setCurrentPage(1); }, [debouncedSearch, selectedRole, selectedStatus]);
+
+    // Fetch roles from API
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const res = await GetListRoles();
+                if (res.data) {
+                    const extracted = res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
+                    setRoles(extracted);
+                }
+            } catch (error) {
+                console.error("Error fetching roles:", error);
+            }
+        };
+        fetchRoles();
+    }, []);
+
+    const roleOptions = useMemo(() => {
+        return roles.map(role => ({
+            label: role.name,
+            value: role.name
+        }));
+    }, [roles]);
+
+    // Filtrado local para garantizar que funcione incluso si la API ignora los parámetros
+    const filteredUsers = useMemo(() => {
+        let result = users;
+        
+        if (selectedRole !== 'all') {
+            result = result.filter(user => {
+                const roleName = typeof user.role === 'object' && user.role !== null ? (user.role as any).name : user.role;
+                const role = roleName || (user.is_superuser ? "SuperAdmin" : user.is_staff ? "Administrador" : "Usuario");
+                return role === selectedRole;
+            });
+        }
+        
+        if (selectedStatus !== 'all') {
+            const isActive = selectedStatus === 'true';
+            result = result.filter(user => user.is_active === isActive);
+        }
+        
+        if (debouncedSearch) {
+            const search = debouncedSearch.toLowerCase();
+            result = result.filter(user => {
+                const fullName = `${user.name} ${user.paternal_last_name ?? ""} ${user.maternal_last_name ?? ""}`.trim().toLowerCase();
+                const email = user.email.toLowerCase();
+                return fullName.includes(search) || email.includes(search);
+            });
+        }
+        
+        return result;
+    }, [users, selectedRole, selectedStatus, debouncedSearch]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -104,16 +197,37 @@ function UsersList() {
 
     const renderRow = (user: UserResponse) => {
         const fullName = `${user.name} ${user.paternal_last_name ?? ""} ${user.maternal_last_name ?? ""}`.trim();
-        const role = user.role
-            ? typeOptions.find(opt => opt.value === user.role)?.label || user.role
-            : user.is_superuser ? "SuperAdmin" : user.is_staff ? "Administrador" : "Usuario";
+        // user.role es un objeto {id, name}, extraer el name directamente
+        const roleName = typeof user.role === 'object' && user.role !== null
+            ? (user.role as any).name
+            : user.role;
+        const role = roleName || (user.is_superuser ? "SuperAdmin" : user.is_staff ? "Administrador" : "Usuario");
         return (
             <tr key={user.id} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
                 <td className='py-4 px-4'>
-                    <Image src='/user.svg' alt={fullName} width={60} height={60} className='rounded-lg object-cover w-[60px] h-[60px]' />
+                    <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0'>
+                        <Image 
+                            src={getUserImageUrl(user.profile_picture)} 
+                            alt={fullName} 
+                            fill
+                            sizes="48px"
+                            unoptimized={true}
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (target && !target.src.endsWith('/user.svg')) {
+                                    target.src = '/user.svg';
+                                }
+                            }}
+                            className='object-cover' 
+                        />
+                    </div>
                 </td>
                 <td className='py-4 px-4'>
                     <p className='font-medium text-sm'>{fullName}</p>
+                    <p className='text-xs text-gray-500'>{user.email}</p>
+                </td>
+                <td className='py-4 px-4'>
+                    <p className='font-medium text-sm'>{user.phone}</p>
                     <p className='text-xs text-gray-500'>{user.email}</p>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>{role}</td>
@@ -123,7 +237,7 @@ function UsersList() {
                     </Tag>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
                 </td>
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
@@ -177,34 +291,56 @@ function UsersList() {
                         <button
                             type='button'
                             onClick={() => setIsFilterOpen(true)}
-                            className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
-                            title="Filtros"
+                            className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2'
                         >
                             <SlidersHorizontal size={20} className='text-gray-600' />
+                            <span className='text-sm text-gray-600'>Filtros</span>
+                            {activeFiltersCount > 0 && (
+                                <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                                    {activeFiltersCount}
+                                </span>
+                            )}
                         </button>
                         <Link href='/settings/users-permissions/add-user' className='w-full sm:w-auto'>
-                            <button className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium text-sm'>
+                            <button className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm'>
                                 <UserPlus size={18} />
                                 <span>Agregar Usuario</span>
                             </button>
                         </Link>
                     </div>
                 </div>
-                <div className='mb-5'>
-                    <Search
-                        title='Buscar por nombre o correo'
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className='max-w-[270px] w-full'
-                    />
+                <div className="mb-6 space-y-4">
+                    {/* Buscador y Filtros Lado a Lado */}
+                    <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
+                        <Search
+                            title='Buscar por nombre, apellido o correo'
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="max-w-[350px] w-full"
+                        />
+                        <div className='flex flex-wrap lg:flex-nowrap items-center gap-4 w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-1'>
+                            <FilterPills
+                                label="Rol"
+                                options={roleOptions}
+                                selectedValue={selectedRole}
+                                onChange={setSelectedRole}
+                            />
+                            <FilterPills
+                                label="Estatus"
+                                options={statusOptions}
+                                selectedValue={selectedStatus}
+                                onChange={setSelectedStatus}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <Table data={users} headers={headers} renderRow={renderRow} isLoading={loading} />
+                <Table data={filteredUsers} headers={headers} renderRow={renderRow} isLoading={loading} />
 
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className='flex items-center justify-between mt-4 pt-4 border-t border-slate-100'>
                         <p className='text-sm text-gray-500'>
-                            Mostrando {users.length} de {totalCount} usuarios
+                            Mostrando {filteredUsers.length} de {totalCount} usuarios
                         </p>
                         <div className='flex items-center gap-2'>
                             <button
@@ -229,30 +365,46 @@ function UsersList() {
                 )}
             </div>
 
-            <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtrar Usuarios">
-                <div className="space-y-4">
-                    <Select value={selectedRole} onValueChange={setSelectedRole}>
-                        <SelectTrigger>
-                            <SelectValue placeholder='Rol' />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            {typeOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                        <SelectTrigger>
-                            <SelectValue placeholder='Estatus' />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            {statusOptions.map(option => (
-                                <SelectItem key={String(option.value)} value={String(option.value)}>{option.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+            <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtros">
+                <div className="space-y-6 pt-2">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-gray-700">Rol</label>
+                        <Select value={selectedRole} onValueChange={setSelectedRole}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Todos los roles" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los roles</SelectItem>
+                                {roleOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-gray-700">Estatus</label>
+                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Todos los estatus" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los estatus</SelectItem>
+                                {statusOptions.map(option => (
+                                    <SelectItem key={String(option.value)} value={String(option.value)}>{option.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-100 flex justify-end">
+                        <button
+                            onClick={() => { setSelectedRole('all'); setSelectedStatus('all'); }}
+                            className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+                        >
+                            Limpiar filtros
+                        </button>
+                    </div>
                 </div>
             </FilterSidebar>
 

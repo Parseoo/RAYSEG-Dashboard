@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface TooltipProps {
   children: React.ReactNode;
@@ -10,28 +10,14 @@ interface TooltipProps {
 
 export default function Tooltip({ children, content, position = 'top' }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
 
   const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(true);
-    }, 200);
+    setIsVisible(true);
   };
 
   const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
     setIsVisible(false);
   };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   const getPositionClasses = () => {
     switch (position) {
@@ -57,7 +43,7 @@ export default function Tooltip({ children, content, position = 'top' }: Tooltip
       {children}
       {isVisible && (
         <div
-          className={`absolute z-50 ${getPositionClasses()} whitespace-nowrap`}
+          className={`absolute z-50 ${getPositionClasses()} whitespace-nowrap pointer-events-none`}
           role="tooltip"
         >
           <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg">

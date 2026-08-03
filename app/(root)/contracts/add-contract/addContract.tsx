@@ -9,7 +9,9 @@ import AddPreferencesClient from './addPreferencesContract';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { useRouter } from 'next/navigation';
 
-const AddClient = () => {
+import { ClientProvider } from '../../clients/clientContext';
+
+const AddClientContent = () => {
   const router = useRouter();
 
   return (
@@ -40,12 +42,12 @@ const AddClient = () => {
             <button 
               type='button'
               onClick={() => router.push('/contracts')}
-              className='bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium'
+              className='bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md'
             >
               <X size={20} /> Cancelar
             </button>
             <button type='button'
-              className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium'>
+              className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium shadow-md'>
               <Save size={20} /> Guardar Contrato
             </button>
           </div>
@@ -54,5 +56,11 @@ const AddClient = () => {
     </>
   )
 }
+
+const AddClient = () => (
+  <ClientProvider>
+    <AddClientContent />
+  </ClientProvider>
+);
 
 export default AddClient;

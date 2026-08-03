@@ -10,7 +10,7 @@ import { isTokenExpired } from '@/lib/utils/checkTokenExpiration';
 
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { isLogin, token, logout, _hasHydrated } = useUserStore()
+  const { isLogin, token, logout, _hasHydrated, isSessionExpired, setSessionExpired } = useUserStore()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -24,19 +24,37 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     if (token && isTokenExpired(token)) {
       console.log('Token expirado, cerrando sesión...');
       logout();
-      clearAuthHeader();
+      setSessionExpired(true);
       localStorage.removeItem('jwtToken');
       localStorage.removeItem('refresh_token');
-      router.push('/sign-in');
     }
-  }, [_hasHydrated, token, logout, router]);
+  }, [_hasHydrated, token, logout, setSessionExpired]);
 
   // Redirigir a /sign-in si no está logueado (solo después de que Zustand esté listo)
   useEffect(() => {
     if (_hasHydrated && !isLogin) {
-      router.push('/sign-in');
+      if (isSessionExpired) {
+        router.push('/sign-in?session_expired=true');
+      } else {
+        router.push('/sign-in');
+      }
     }
-  }, [_hasHydrated, isLogin, router]);
+  }, [_hasHydrated, isLogin, isSessionExpired, router]);
+
+  const isExpired = token ? isTokenExpired(token) : false;
+  const isAuthenticated = isLogin && !isExpired;
+
+  if (!_hasHydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-200">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className='flex flex-col h-screen'>
@@ -50,7 +68,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
     </div>
   )
-
 }
 
 export default Layout

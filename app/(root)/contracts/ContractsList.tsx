@@ -146,7 +146,7 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
               </button>
               <Link href='/clients/add-client' className='w-full sm:w-auto'>
                 <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
                   <FileText size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Nuevo Contrato</span><span className='sm:hidden'>Nuevo</span>
                 </button>
               </Link>

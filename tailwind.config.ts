@@ -110,8 +110,6 @@ const config = {
   },
   plugins: [require("tailwindcss-animate")],
   safelist: [
-    { pattern: /^w-\[.*px\]/ },
-    { pattern: /^w-\[.*%\]/ },
     'w-6',
     'h-6',
     'lucide',

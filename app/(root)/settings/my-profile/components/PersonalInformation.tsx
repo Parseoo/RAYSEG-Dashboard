@@ -27,12 +27,8 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
                     <span className="text-gray-900 font-semibold text-right">{user?.email}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between border-b pb-3 border-gray-100 last:border-0 last:pb-0">
-                    <span className="text-gray-500 font-medium">Teléfono móvil</span>
-                    <span className="text-gray-900 font-semibold text-right">{user?.phone || '+52 55 1234 5678'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row justify-between border-b pb-3 border-gray-100 last:border-0 last:pb-0">
-                    <span className="text-gray-500 font-medium">Teléfono oficina</span>
-                    <span className="text-gray-900 font-semibold text-right">+52 55 9876 5432 ext. 101</span>
+                    <span className="text-gray-500 font-medium">Teléfono</span>
+                    <span className="text-gray-900 font-semibold text-right">{user?.phone}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between border-b pb-3 border-gray-100 last:border-0 last:pb-0">
                     <span className="text-gray-500 font-medium">ID de Agente</span>

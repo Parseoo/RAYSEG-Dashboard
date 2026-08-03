@@ -1,10 +1,12 @@
-import React from 'react';
+"use client"
+import React, { useRef } from 'react';
 import Breadcrumb from "@/components/ui/breadcrumb"
 
-import { MapPinned, Save } from "lucide-react"
 import { AddLocations } from './addLocations';
 
 const ContentWebLocationsPage = () => {
+    const onClearRef = useRef<(() => void) | null>(null);
+
     return (
         <>
             <Breadcrumb items={[
@@ -22,24 +24,10 @@ const ContentWebLocationsPage = () => {
 
                     </div>
                     <div className='flex flex-col gap-6'>
-                        <AddLocations />
+                        <AddLocations onClearRef={onClearRef} />
                     </div>
 
-                    <div className="flex items-center mt-6">
 
-                        <div className="flex flex-col sm:flex-row items-center gap-4 justify-end w-full">
-                            <button
-                                type="button"
-                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">Cancelar
-                            </button>
-
-                            <button
-                                type="button"
-                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
-                                <Save size={20} /> Guardar
-                            </button>
-                        </div>
-                    </div>
 
                 </div>
             </div>

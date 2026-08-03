@@ -5,10 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
+import Image from 'next/image';
+import { getUserImageUrl } from '@/lib/utils';
 import { ViewPermissions } from '../add-user/viewPermissions';
 import { GetUsersById } from '@/lib/api/user-api';
+import { GetListRoles } from '@/lib/api/permission-api';
 import { UserResponse } from '@/lib/@type';
-import { typeOptions } from '../selectUsers';
 
 export default function UserDetailPage() {
     const params = useParams();
@@ -18,6 +20,7 @@ export default function UserDetailPage() {
     const [userData, setUserData] = useState<UserResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [roles, setRoles] = useState<any[]>([]);
 
     useEffect(() => {
         if (!userId) return;
@@ -37,6 +40,29 @@ export default function UserDetailPage() {
 
         fetchUser();
     }, [userId]);
+
+    // Fetch roles from API
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const res = await GetListRoles();
+                const items = res.data?.items || res.data?.catalogItems || res.data?.data || [];
+                setRoles(items);
+            } catch (error) {
+                console.error("Error fetching roles:", error);
+            }
+        };
+        fetchRoles();
+    }, []);
+
+    // Get role name from API roles
+    const getRoleName = (role: any) => {
+        if (typeof role === 'object' && role !== null) {
+            return role.name;
+        }
+        const found = roles.find(r => String(r.id) === String(role));
+        return found ? found.name : role;
+    };
 
     if (loading) {
         return (
@@ -63,7 +89,7 @@ export default function UserDetailPage() {
         );
     }
 
-    const userRoleLabel = userData.role ? (typeOptions.find(opt => opt.value === userData.role)?.label || userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Usuario');
+    const userRoleLabel = userData.role ? getRoleName(userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Usuario');
 
     return (
         <>
@@ -101,7 +127,29 @@ export default function UserDetailPage() {
 
             {/* INFORMACIÓN DEL USUARIO */}
             <div className='bg-white rounded-lg p-5 mb-6 shadow-md border border-slate-200'>
-                <h2 className='text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4'>INFORMACIÓN DEL USUARIO</h2>
+                <div className='flex items-center gap-4 mb-5 pb-4 border-b border-slate-100'>
+                    <div className='relative w-16 h-16 rounded-full overflow-hidden bg-slate-100 shrink-0 border'>
+                        <Image 
+                            src={getUserImageUrl(userData.profile_picture)} 
+                            alt={userData.name} 
+                            fill
+                            sizes="64px"
+                            unoptimized={true}
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                if (target && !target.src.endsWith('/user.svg')) {
+                                    target.src = '/user.svg';
+                                }
+                            }}
+                            className='object-cover'
+                        />
+                    </div>
+                    <div>
+                        <h1 className='text-lg font-bold text-gray-900'>{userData.name} {userData.paternal_last_name} {userData.maternal_last_name || ''}</h1>
+                        <p className='text-sm text-gray-500'>{userData.email}</p>
+                    </div>
+                </div>
+                <h2 className='text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4'>INFORMACIÓN DETALLADA</h2>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Nombre completo</p>
@@ -118,6 +166,22 @@ export default function UserDetailPage() {
                     <div>
                         <p className='text-xs text-gray-500 mb-1'>Fecha de actualización</p>
                         <p className='text-sm font-medium text-gray-800'>{new Date(userData.updated_at).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                        <p className='text-xs text-gray-500 mb-1'>Estado</p>
+                        <p className='text-sm font-medium text-gray-800'>{userData.address?.state || '-'}</p>
+                    </div>
+                    <div>
+                        <p className='text-xs text-gray-500 mb-1'>Ciudad</p>
+                        <p className='text-sm font-medium text-gray-800'>{userData.address?.city || '-'}</p>
+                    </div>
+                    <div>
+                        <p className='text-xs text-gray-500 mb-1'>Colonia</p>
+                        <p className='text-sm font-medium text-gray-800'>{userData.address?.neighborhood || '-'}</p>
+                    </div>
+                    <div>
+                        <p className='text-xs text-gray-500 mb-1'>Código postal</p>
+                        <p className='text-sm font-medium text-gray-800'>{userData.address?.postal_code || '-'}</p>
                     </div>
                 </div>
             </div>

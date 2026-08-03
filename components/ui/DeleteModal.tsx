@@ -19,6 +19,7 @@ interface DeleteModalProps {
     variant?: 'delete' | 'warning';
     message?: string;
     warningText?: string;
+    customDeletePhrase?: string;
 }
 
 export default function DeleteModal({
@@ -32,6 +33,7 @@ export default function DeleteModal({
     variant = 'delete',
     message,
     warningText,
+    customDeletePhrase,
 }: DeleteModalProps) {
     useEffect(() => {
         if (isOpen) {
@@ -56,7 +58,7 @@ export default function DeleteModal({
                 onClick={onClose}
             >
                 <div
-                    className="bg-white rounded-[5px] shadow-2xl max-w-md w-full"
+                    className="bg-white rounded-[5px] shadow-2xl max-w-lg w-full"
                     style={{ animation: 'scaleIn 0.2s ease-out' }}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -90,14 +92,17 @@ export default function DeleteModal({
                         {!isWarning && itemName && (
                             <>
                                 <p className="text-gray-700">
-                                    ¿Estás seguro de que deseas eliminar a <span className="font-semibold text-gray-900">{itemName}</span>? Esta acción no se puede deshacer.
+                                    {customDeletePhrase
+                                        ? <>¿Estás seguro de que deseas {customDeletePhrase} <span className="font-semibold text-gray-900">{itemName}</span>? Esta acción no se puede deshacer.</>
+                                        : <>¿Estás seguro de que deseas eliminar a <span className="font-semibold text-gray-900">{itemName}</span>? Esta acción no se puede deshacer.</>
+                                    }
                                 </p>
                                 {itemDetails.length > 0 && (
                                     <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 border border-gray-200">
                                         {itemDetails.map((detail, idx) => (
-                                            <div key={idx} className="flex justify-between text-sm">
-                                                <span className="text-gray-500">{detail.label}:</span>
-                                                <span className="font-medium text-gray-800">{detail.value}</span>
+                                            <div key={idx} className="flex justify-between text-sm gap-2">
+                                                <span className="text-gray-500 shrink-0">{detail.label}:</span>
+                                                <span className="font-medium text-gray-800 text-right break-words">{detail.value}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -123,7 +128,7 @@ export default function DeleteModal({
                         {isWarning && (
                             <button
                                 onClick={onClose}
-                                className="flex-1 px-4 py-2 bg-primary_color text-white rounded-[5px] hover:opacity-90 transition-all font-medium text-sm"
+                                className="flex-1 px-4 py-2 bg-primary_color text-white rounded-[5px] hover:opacity-90 transition-all font-medium text-sm shadow-md"
                             >
                                 Entendido
                             </button>

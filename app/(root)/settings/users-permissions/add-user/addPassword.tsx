@@ -32,12 +32,12 @@ export const AddPassword = ({ user, setUser, errors }: AddPasswordProps) => {
                 <div className="mt-4">
                     <DynamicInputs inputs={inputsWithState} withBgWhite={true} />
                 </div>
-                <div className="flex items-center gap-2 mt-3">
+                {/*<div className="flex items-center gap-2 mt-3">
                     <Checkbox className="w-4 h-4" />
                     <p className="text-gray-500">
                         Envia por correo eléctrónico usuario y contraseña.
                     </p>
-                </div>
+                </div>*/}
             </div>
         </>
 

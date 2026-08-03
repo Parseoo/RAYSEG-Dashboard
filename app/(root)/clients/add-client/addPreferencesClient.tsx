@@ -1,127 +1,137 @@
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useClient } from '../clientContext';
+import { normalizeInterest } from '@/lib/utils/catalog';
 
 export const AddPreferencesClient = () => {
     const { state, updateField, mainInterestTypes, targetPropertyTypes, paymentMethodTypes } = useClient();
 
-    const interestOptions = mainInterestTypes.map(item => ({
-        label: item.name,
-        value: (item.value || item.name).toLowerCase()
-    }));
+    const defaultInterestOptions = [
+        { label: 'Compra', value: 'compra' },
+        { label: 'Renta', value: 'renta' },
+        { label: 'Venta', value: 'venta' }
+    ];
+
+    const interestOptions = mainInterestTypes && mainInterestTypes.length > 0
+        ? mainInterestTypes.map(item => ({
+            label: item.name,
+            value: normalizeInterest(item.value || item.name) || item.name
+        }))
+        : defaultInterestOptions;
 
     const propertyTypeOptions = targetPropertyTypes.map(item => ({
         label: item.name,
-        value: (item.value || item.name).toLowerCase()
+        value: item.value || item.name
     }));
 
     const paymentOptions = paymentMethodTypes.map(item => ({
         label: item.name,
-        value: (item.value || item.name).toLowerCase()
+        value: item.name
     }));
 
-    const isRenta = state.interes_principal === 'renta' || state.interes_principal === 'quiero_rentar';
-    const isVenta = state.interes_principal === 'venta' || state.interes_principal === 'quiero_vender';
-    const isCompra = state.interes_principal === 'compra' || state.interes_principal === 'quiero_comprar';
+    const currentInterest = normalizeInterest(state.main_interest);
+    const isRenta = currentInterest === 'renta' || currentInterest === 'quiero_rentar' || currentInterest === 'rent';
+    const isVenta = currentInterest === 'venta' || currentInterest === 'quiero_vender' || currentInterest === 'sale';
+    const isCompra = currentInterest === 'compra' || currentInterest === 'quiero_comprar' || currentInterest === 'buy';
 
-    // Construcción dinámica de inputs según el interés
+    // Grupo 1: Interés principal + Tipo de propiedad
     const baseInputs: InputFieldConfig[] = [
         {
             type: 'select',
-            id: 'interes_principal',
+            id: 'main_interest',
             label: 'Interés principal',
             placeholder: 'Seleccione una opción',
             group: 1,
             options: interestOptions
+        },
+        {
+            type: 'select',
+            id: 'target_property_type',
+            label: 'Tipo de propiedad objetivo',
+            placeholder: 'Seleccione un tipo',
+            group: 1,
+            options: propertyTypeOptions
         }
     ];
 
     let specificInputs: InputFieldConfig[] = [];
 
-    if (state.interes_principal) {
-        specificInputs.push({
-            type: 'select',
-            id: 'tipo_propiedad_objetivo',
-            label: 'Tipo de propiedad objetivo',
-            placeholder: 'Seleccione un tipo',
-            group: 1,
-            options: propertyTypeOptions
-        });
-
-        // Presupuesto / Precio esperado
-        specificInputs.push(
-            { 
-                type: 'number', 
-                id: 'presupuesto_min', 
-                label: isVenta || isRenta ? 'Precio mínimo esperado' : 'Presupuesto mínimo', 
-                placeholder: 'Ej: 1,000,000', 
-                group: 2 
-            },
-            { 
-                type: 'number', 
-                id: 'presupuesto_max', 
-                label: isVenta || isRenta ? 'Precio máximo esperado' : 'Presupuesto máximo', 
-                placeholder: 'Ej: 3,500,000', 
-                group: 2 
-            }
-        );
-
-        // Características de la propiedad
+    if (currentInterest) {
+        // Grupo 2: Presupuesto
         specificInputs.push(
             {
                 type: 'number',
-                id: 'recamaras',
+                id: 'budget_min',
+                label: isVenta || isRenta ? 'Precio mínimo' : 'Presupuesto mínimo',
+                placeholder: 'Ej: 1,000,000',
+                group: 2
+            },
+            {
+                type: 'number',
+                id: 'budget_max',
+                label: isVenta || isRenta ? 'Precio máximo' : 'Presupuesto máximo',
+                placeholder: 'Ej: 3,500,000',
+                group: 2
+            }
+        );
+
+        // Grupo 3: Características
+        specificInputs.push(
+            {
+                type: 'number',
+                id: 'bedrooms',
                 label: 'Recámaras',
                 placeholder: 'Ej: 2',
                 group: 3
             },
-            { 
-                type: 'number', 
-                id: 'banos', 
-                label: 'Baños', 
-                placeholder: 'Ej: 2', 
-                group: 3 
+            {
+                type: 'number',
+                id: 'bathrooms',
+                label: 'Baños',
+                placeholder: 'Ej: 2',
+                group: 3
             },
-            { 
-                type: 'number', 
-                id: 'estacionamientos', 
-                label: 'Estacionamientos', 
-                placeholder: 'Ej: 1', 
-                group: 3 
+            {
+                type: 'number',
+                id: 'parking_spaces',
+                label: 'Estacionamientos',
+                placeholder: 'Ej: 1',
+                group: 3
             }
         );
 
-        // Condiciones de operación (solo para compra)
+        // Grupo 4: Tiempo estimado
+        specificInputs.push({
+            type: 'text',
+            id: 'estimated_time',
+            label: isVenta ? 'Tiempo estimado para vender' : (isRenta ? 'Tiempo estimado para rentar' : 'Tiempo estimado'),
+            placeholder: 'Ej: 1 mes, 3 meses',
+            group: 4
+        });
+
+        // Grupo 5: Forma de pago (solo para compra)
         if (isCompra) {
             specificInputs.push({
                 type: 'select',
-                id: 'forma_pago',
+                id: 'payment_method',
                 label: 'Forma de pago',
                 placeholder: 'Seleccione una opción',
-                group: 6,
+                group: 5,
                 options: paymentOptions
             });
         }
-
-        // Tiempo estimado
-        specificInputs.push({
-            type: 'text',
-            id: 'tiempo_estimado',
-            label: isVenta ? 'Tiempo estimado para vender' : (isRenta ? 'Tiempo estimado para rentar' : 'Tiempo estimado para compra/renta'),
-            placeholder: 'Ej: 1 mes, 3 meses, 6 meses',
-            group: 6
-        });
     }
 
-    const inputs = [...baseInputs, ...specificInputs];
+    const allInputs = [...baseInputs, ...specificInputs];
 
-    const numericFields = ['presupuesto_min', 'presupuesto_max', 'recamaras', 'banos', 'estacionamientos'];
+    const numericFields = ['budget_min', 'budget_max', 'bedrooms', 'bathrooms', 'parking_spaces'];
 
-    const mappedInputs = inputs.map(input => ({
+    const mappedInputs = allInputs.map(input => ({
         ...input,
-        value: (state as any)[input.id] || '',
+        value: input.id === 'main_interest' ? currentInterest : ((state as any)[input.id] || ''),
         onChange: (e: any) => {
             const val = typeof e === 'string' ? e : e.target.value;
-            updateField(input.id, numericFields.includes(input.id) ? (parseFloat(val) || 0) : val);
+            const finalVal = input.id === 'main_interest' ? normalizeInterest(val) : val;
+            updateField(input.id, numericFields.includes(input.id) ? (parseFloat(finalVal) || 0) : finalVal);
         }
     }));
 

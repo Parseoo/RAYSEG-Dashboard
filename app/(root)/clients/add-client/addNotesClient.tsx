@@ -1,37 +1,59 @@
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useClient } from '../clientContext';
+import { useMemo } from 'react';
 
 export const AddNotesClient = () => {
-    const { state, updateField, leadSourceTypes } = useClient();
+    const { state, updateField, clientOriginTypes, leadSourceTypes } = useClient();
 
-    const leadSourceOptions = leadSourceTypes.map(item => ({
-        label: item.name,
-        value: (item.value || item.name).toLowerCase()
-    }));
+    const leadSourceOptions = useMemo(() => {
+        const catalog = (clientOriginTypes && clientOriginTypes.length > 0)
+            ? clientOriginTypes
+            : (leadSourceTypes && leadSourceTypes.length > 0)
+                ? leadSourceTypes
+                : [
+                    { name: 'Facebook' },
+                    { name: 'Instagram' },
+                    { name: 'Sitio Web' },
+                    { name: 'Recomendación' },
+                    { name: 'Llamada' },
+                    { name: 'WhatsApp' },
+                    { name: 'Portal Inmobiliario' },
+                    { name: 'Otro' }
+                ];
+        return catalog
+            .map((item: any) => {
+                const label = item.name || item.label || item.value || (typeof item === 'string' ? item : '');
+                return label ? { label: String(label), value: String(label) } : null;
+            })
+            .filter(Boolean) as { label: string; value: string }[];
+    }, [clientOriginTypes, leadSourceTypes]);
 
     // Configuración de los inputs
-    const inputs: InputFieldConfig[] = [
-        { 
-            type: 'select', 
-            id: 'origen_prospecto', 
-            label: 'Origen del prospecto', 
-            placeholder: 'Seleccione una opción', 
-            group: 1, 
+    const baseInputs: InputFieldConfig[] = useMemo(() => [
+        {
+            type: 'select',
+            id: 'lead_source',
+            label: 'Origen del prospecto',
+            placeholder: 'Seleccione una opción',
+            group: 1,
             options: leadSourceOptions
         },
-        /* { 
-            type: 'select', 
-            id: 'agente_id', 
-            label: 'Responsable', 
-            placeholder: 'Seleccionar agente', 
-            group: 1, 
-            options: [
-                { label: 'Agente 1', value: '1' },
-                { label: 'Agente 2', value: '2' },
-            ]
-        }, */
-        { type: 'textarea', id: 'notas_internas', label: 'Notas internas', placeholder: 'Escribe aquí las notas internas del cliente...', group: 2 },
-    ];
+        { type: 'textarea', id: 'internal_notes', label: 'Notas internas', placeholder: 'Escribe aquí las notas internas del cliente...', group: 2 },
+    ], [leadSourceOptions]);
+
+    // Recalcular inputs cuando lead_source cambie
+    const inputs = useMemo(() => {
+        const isOtro = state.lead_source?.toLowerCase() === 'otro';
+        const otherSourceInput: InputFieldConfig | null = isOtro ? {
+            type: 'text',
+            id: 'other_source',
+            label: 'Otra fuente',
+            placeholder: 'Especifique otra fuente del prospecto',
+            group: 1
+        } : null;
+
+        return otherSourceInput ? [...baseInputs.slice(0, 1), otherSourceInput, ...baseInputs.slice(1)] : baseInputs;
+    }, [state.lead_source]);
 
     const mappedInputs = inputs.map(input => ({
         ...input,

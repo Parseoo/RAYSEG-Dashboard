@@ -3,20 +3,28 @@
 import { DynamicInputs } from "@/components/ui/Input"
 import { inputsPrivacyNotice } from "../inputConfig"
 import { Info } from "lucide-react"
+import { RichTextEditor } from "@/components/ui/RichTextEditor"
 
-import React, { useState } from "react"
+import React from "react"
 
-export const AddPrivacyNotice = () => {
-    const [privacyData, setPrivacyData] = useState<Record<string, string>>({});
+interface AddPrivacyNoticeProps {
+    data: {
+        privacy_title: string;
+        privacy_content: string;
+    };
+    onChange: (id: string, value: string) => void;
+}
 
-    const mappedInputs = inputsPrivacyNotice.map(input => ({
-        ...input,
-        value: privacyData[input.id] || "",
+export const AddPrivacyNotice = ({ data, onChange }: AddPrivacyNoticeProps) => {
+    const titleInput = inputsPrivacyNotice[0]
+    const mappedTitleInput = {
+        ...titleInput,
+        value: (data as any)[titleInput.id] || "",
         onChange: (val: any) => {
             const value = val?.target ? val.target.value : val;
-            setPrivacyData(prev => ({ ...prev, [input.id]: value }));
+            onChange(titleInput.id, value);
         }
-    }));
+    }
 
     return (
         <>
@@ -41,9 +49,19 @@ export const AddPrivacyNotice = () => {
                     Configura el título y el texto que conforman el aviso de privacidad.
                 </p>
 
+                <div className="mt-4">
+                    <DynamicInputs inputs={[mappedTitleInput]} withBgWhite={true} />
+                </div>
 
                 <div className="mt-4">
-                    <DynamicInputs inputs={mappedInputs} withBgWhite={true} />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {inputsPrivacyNotice[1].label}
+                    </label>
+                    <RichTextEditor
+                        value={data.privacy_content || ""}
+                        onChange={(value) => onChange("privacy_content", value)}
+                        placeholder="Escribe el contenido del aviso de privacidad..."
+                    />
                 </div>
 
                 <p className="text-sm text-gray-500 mt-2 self-end text-right">

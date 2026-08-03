@@ -1,5 +1,5 @@
 import { InputFieldConfig } from "@/components/ui/Input";
-import { Facebook, Instagram, Linkedin, Phone } from "lucide-react";
+import { Facebook, Instagram, Linkedin, MessageSquare } from "lucide-react";
 import { inputsAddContact } from '../agents/add-agent/inputs.data';
 
 // Configuración de los inputs para la sección de home/banner
@@ -56,10 +56,7 @@ export const inputsServiceItem: InputFieldConfig[] = [
 // Configuración de los inputs para la sección de localización
 export const inputsLocation: InputFieldConfig[] = [
     {
-        type: 'select', id: 'typeProperty', label: 'Tipo de propiedad', placeholder: 'Seleccionar', group: 1, options: [
-            { label: 'Departamento', value: 'departamento' },
-            { label: 'Casa', value: 'casa' },
-        ]
+        type: 'select', id: 'typeProperty', label: 'Tipo de propiedad', placeholder: 'Seleccionar', group: 1, options: []
     },
     {
         type: 'text',
@@ -168,7 +165,7 @@ export const inputsSocialMedia: InputFieldConfig[] = [
         type: 'url',
         id: 'whatsapp',
         placeholder: 'https://wa.me/5211234567890',
-        icon: Phone
+        icon: MessageSquare
     }
 ];
 
@@ -185,13 +182,13 @@ export const inputsTextFooter: InputFieldConfig[] = [
 export const inputsPrivacyNotice: InputFieldConfig[] = [
     {
         type: 'text',
-        id: 'titlePrivacy',
+        id: 'privacy_title',
         label: 'Titulo de la página',
         placeholder: 'Aviso de Privacidad',
     },
     {
         type: 'textarea',
-        id: 'textContent',
+        id: 'privacy_content',
         label: 'Contenido del aviso',
         placeholder: 'AVISO DE PRIVACIDAD. De acuerdo con lo establecido',
         rows: 4
@@ -201,13 +198,13 @@ export const inputsPrivacyNotice: InputFieldConfig[] = [
 export const inputsAddTermsConditions: InputFieldConfig[] = [
     {
         type: 'text',
-        id: 'titlePrivacy',
+        id: 'terms_title',
         label: 'Titulo del documento',
         placeholder: 'Términos y condiciones de uso',
     },
     {
         type: 'textarea',
-        id: 'textContent',
+        id: 'terms_content',
         label: 'Contenido del documento',
         placeholder: 'TERMINOS Y CONDICIONES',
         rows: 4

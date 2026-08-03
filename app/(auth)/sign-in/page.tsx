@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,7 +8,7 @@ import { useUserStore } from '@/lib/store/userStore';
 import { LoginApi, setAuthHeader } from '@/lib/api/auth/auth-api';
 import { LoginForm } from '@/lib/@type';
 
-export default function LoginPage() {
+function LoginFormComponent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,7 +39,6 @@ export default function LoginPage() {
       };
 
       const response = await LoginApi(loginData);
-      console.log('Login Response:', response);
 
       if (response.data && (response.data.tokens.access || response.data.tokens)) {
         const user = response.data.user;
@@ -62,11 +61,20 @@ export default function LoginPage() {
           maternal_last_name: user.maternal_last_name,
           is_active: user.is_active,
           is_staff: user.is_staff,
-          is_superuser: user.is_superuser
+          is_superuser: user.is_superuser,
+          role: user.role,
+          phone: user.phone,
+          state: user.state,
+          city: user.city,
+          created_at: user.created_at,
+          updated_at: user.updated_at
         }, accessToken);
 
-        if (refreshToken) {
-          localStorage.setItem('refresh_token', refreshToken);
+        // Persist refresh token (access token is stored by Zustand persist)
+        if (typeof window !== 'undefined') {
+          if (refreshToken) {
+            localStorage.setItem('refresh_token', refreshToken);
+          }
         }
 
         router.push('/');
@@ -76,7 +84,9 @@ export default function LoginPage() {
     } catch (err: any) {
       if (err.response) {
         const status = err.response.status;
-        const serverMessage = err.response.data?.message || err.response.data?.error || err.response.data?.detail;
+        const rawDetail = err.response.data?.message || err.response.data?.error || err.response.data?.detail;
+        // Asegurar que serverMessage sea string (puede ser objeto si el backend retorna detail como JSON)
+        const serverMessage = typeof rawDetail === 'string' ? rawDetail : JSON.stringify(rawDetail);
 
         if (status === 401) {
           setError(serverMessage || 'Credenciales incorrectas. Verifica tu email y contraseña.');
@@ -87,10 +97,12 @@ export default function LoginPage() {
         } else {
           setError(serverMessage || `Error del servidor (${status})`);
         }
+      } else if (err.isNetworkError || err.name === 'NetworkError' || err.message?.includes('Failed to fetch') || err.message?.includes('Error de conexión')) {
+        setError('No se pudo conectar con el servidor backend en http://localhost:8001. Verifica que el backend esté en ejecución.');
       } else if (err.request) {
         setError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
       } else {
-        setError('Error al procesar la solicitud');
+        setError(err.message || 'Error al procesar la solicitud');
       }
     } finally {
       setIsLoading(false);
@@ -223,3 +235,13 @@ export default function LoginPage() {
     </div>
   );
 }
+
+function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div></div>}>
+      <LoginFormComponent />
+    </Suspense>
+  );
+}
+
+export default LoginPage;

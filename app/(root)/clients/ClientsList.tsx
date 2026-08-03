@@ -17,8 +17,10 @@ import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
 import { GetAllClients, DeleteClient, DesactiveClient } from '@/lib/api/client-api';
+import { GetEstados } from '@/lib/api/property/property-api';
 import { Pagination as PaginationType } from '@/lib/@type';
 import { Pagination } from '@/components/ui/Pagination';
+import { formatInterestLabel, normalizeInterest } from '@/lib/utils/catalog';
 
 const headers = [
   'Cliente',
@@ -26,8 +28,9 @@ const headers = [
   'Tipo',
   'Estado',
   'Interés principal',
-  'Propiedades vinculadas',
+  'Origen',
   'Agente',
+  'Creado en',
   'Acciones'
 ];
 
@@ -54,7 +57,6 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   const [selectedAgent, setSelectedAgent] = useState("all");
   const [selectedSource, setSelectedSource] = useState("all");
   const [selectedInterest, setSelectedInterest] = useState("all");
-  const [selectedState, setSelectedState] = useState("all");
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -62,16 +64,16 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     if (selectedType !== 'all') count++;
     if (selectedSource !== 'all') count++;
     if (selectedInterest !== 'all') count++;
-    if (selectedState !== 'all') count++;
+    if (selectedAgent !== 'all') count++;
     return count;
-  }, [selectedStatus, selectedType, selectedSource, selectedInterest, selectedState]);
+  }, [selectedStatus, selectedType, selectedSource, selectedInterest, selectedAgent]);
 
   const handleClearFilters = () => {
     setSelectedStatus("all");
     setSelectedType("all");
     setSelectedSource("all");
     setSelectedInterest("all");
-    setSelectedState("all");
+    setSelectedAgent("all");
     setIsFilterOpen(false);
   };
 
@@ -87,17 +89,31 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   ]);
   const [sourceOptions, setSourceOptions] = useState<any[]>([]);
   const [interestOptions, setInterestOptions] = useState<any[]>([]);
+  const [agentOptions, setAgentOptions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const [segmentRes, statusRes, sourceRes, interestRes] = await Promise.all([
-          GetCatalogByName('client-segment'),
-          GetCatalogByName('client-status'),
-          GetCatalogByName('lead-source'),
-          GetCatalogByName('main-interest')
+        const { GetAllUsers } = await import('@/lib/api/user-api');
+
+        // Helper to fetch catalog safely (ignora errores 404)
+        const safeCatalog = async (name: string) => {
+          try {
+            return await GetCatalogByName(name);
+          } catch (e: any) {
+            if (e?.response?.status === 404) return null;
+            throw e;
+          }
+        };
+
+        const [segmentRes, statusRes, sourceRes, interestRes, usersRes] = await Promise.all([
+          safeCatalog('client-type'),
+          safeCatalog('client-status'),
+          safeCatalog('client-origin'),
+          safeCatalog('operation-type') || safeCatalog('primary_interest'),
+          GetAllUsers({ perPage: 100 })
         ]);
-        
+
         const extractItems = (res: any) => {
           if (!res?.data) return [];
           if (res.data.items) return res.data.items;
@@ -106,11 +122,11 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
           return [];
         };
 
-        const mapOptions = (items: any[]) => items.map((i: any) => ({ value: (i.value || i.name).toLowerCase(), label: i.name }));
+        const mapOptions = (items: any[]) => items.map((i: any) => ({ value: i.name, label: i.name }));
 
         const types = extractItems(segmentRes);
         if (types.length > 0) setTypeOptions(mapOptions(types));
-        
+
         const statuses = extractItems(statusRes);
         if (statuses.length > 0) setStatusOptions(mapOptions(statuses));
 
@@ -118,7 +134,28 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         if (sources.length > 0) setSourceOptions(mapOptions(sources));
 
         const interests = extractItems(interestRes);
-        if (interests.length > 0) setInterestOptions(mapOptions(interests));
+        if (interests.length > 0) {
+          setInterestOptions(interests.map((i: any) => ({
+            value: normalizeInterest(i.value || i.name) || i.name,
+            label: i.name || formatInterestLabel(i.value)
+          })));
+        } else {
+          setInterestOptions([
+            { value: 'compra', label: 'Compra' },
+            { value: 'renta', label: 'Renta' },
+            { value: 'venta', label: 'Venta' }
+          ]);
+        }
+
+        // Extraer agentes del listado de usuarios
+        const users = usersRes?.data?.users || [];
+        const agents = users
+          .filter((u: any) => u.role === 'Agente' || u.role?.name === 'Agente' || String(u.role).toLowerCase().includes('agente'))
+          .map((u: any) => ({
+            label: `${u.name || ''} ${u.paternal_last_name || ''} ${u.maternal_last_name || ''}`.trim().replace(/\s+/g, ' '),
+            value: String(u.user_id || u.id)
+          }));
+        if (agents.length > 0) setAgentOptions(agents);
 
       } catch (err) {
         console.error("Error fetching filters:", err);
@@ -159,21 +196,20 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     return clients.filter(c => {
       const term = searchTerm.toLowerCase().trim();
       const matchesSearch = !term ||
-        c.nombre?.toLowerCase().includes(term) ||
-        c.contacto?.email?.toLowerCase().includes(term) ||
-        c.contacto?.telefono?.toLowerCase().includes(term) ||
-        c.identificacion_fiscal?.toLowerCase().includes(term);
+        c.name?.toLowerCase().includes(term) ||
+        c.contact?.email?.toLowerCase().includes(term) ||
+        c.contact?.phone?.toLowerCase().includes(term) ||
+        c.tax_id?.toLowerCase().includes(term);
 
-      const matchesStatus = selectedStatus === "all" || c.estatus === selectedStatus;
-      const matchesType = selectedType === "all" || c.tipo_cliente === selectedType;
-      const matchesAgent = selectedAgent === "all" || String(c.agente?.id || c.agente_id) === selectedAgent;
-      const matchesSource = selectedSource === "all" || c.origen_prospecto === selectedSource;
-      const matchesInterest = selectedInterest === "all" || c.interes_principal === selectedInterest;
-      const matchesState = selectedState === "all" || c.direccion?.estado?.toLowerCase() === selectedState.toLowerCase();
+      const matchesStatus = selectedStatus === "all" || c.client_status === selectedStatus;
+      const matchesType = selectedType === "all" || c.client_type === selectedType;
+      const matchesAgent = selectedAgent === "all" || String(c.agent?.id || c.agent_id) === selectedAgent;
+      const matchesSource = selectedSource === "all" || c.lead_source === selectedSource;
+      const matchesInterest = selectedInterest === "all" || normalizeInterest(c.main_interest) === normalizeInterest(selectedInterest);
 
-      return matchesSearch && matchesStatus && matchesType && matchesAgent && matchesSource && matchesInterest && matchesState;
+      return matchesSearch && matchesStatus && matchesType && matchesAgent && matchesSource && matchesInterest;
     });
-  }, [clients, searchTerm, selectedStatus, selectedType, selectedAgent, selectedSource, selectedInterest, selectedState]);
+  }, [clients, searchTerm, selectedStatus, selectedType, selectedAgent, selectedSource, selectedInterest]);
 
   const handleDeleteClick = (item: any) => {
     setDeleteModal({ isOpen: true, item });
@@ -183,12 +219,21 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     if (!deleteModal.item) return;
     setIsDeleting(true);
     try {
-      // Usamos DesactiveClient como funcionalidad de "eliminación" (soft delete)
-      await DesactiveClient(deleteModal.item.id, { estatus: "inactivo" });
-      setClients(prev => prev.filter(c => c.id !== deleteModal.item.id));
-      showToast.success("El cliente ha sido desactivado correctamente.");
+      const hasLinkedProperty = deleteModal.item.property || deleteModal.item.property_id || deleteModal.item.linked_properties > 0;
+
+      if (hasLinkedProperty) {
+        // Si tiene propiedad vinculada, solo lo desactivamos (soft delete)
+        await DesactiveClient(deleteModal.item.id, { client_status: "inactivo" });
+        setClients(prev => prev.filter(c => c.id !== deleteModal.item.id));
+        showToast.success("El cliente tiene propiedades vinculadas, ha sido desactivado correctamente.");
+      } else {
+        // Si no tiene propiedades vinculadas, lo eliminamos completamente
+        await DeleteClient(deleteModal.item.id);
+        setClients(prev => prev.filter(c => c.id !== deleteModal.item.id));
+        showToast.success("El cliente ha sido eliminado correctamente.");
+      }
     } catch (error: any) {
-      showToast.error(error?.response?.data?.detail || "Error al desactivar el cliente");
+      showToast.error(error?.response?.data?.detail || "Error al procesar la solicitud");
     } finally {
       setIsDeleting(false);
       setDeleteModal({ isOpen: false, item: null });
@@ -199,41 +244,42 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
-          <Image
-            src={'/user.svg'}
-            alt={row.nombre || 'Cliente'}
-            width={40}
-            height={40}
-            className='rounded-full object-cover w-[40px] h-[40px] bg-slate-100 p-1'
-          />
+          <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center'>
+            <Image
+              src={'/user.svg'}
+              alt={row.name || 'Cliente'}
+              width={28}
+              height={28}
+              className='object-contain'
+            />
+          </div>
           <div>
-            <p className='font-medium text-sm'>{row.nombre || '-'}</p>
-            <p className='text-xs text-gray-500'>{row.identificacion_fiscal || '-'}</p>
+            <p className='font-medium text-sm'>{row.name || '-'}</p>
+            <p className='text-xs text-gray-500'>CLI-{row.id}</p>
           </div>
         </div>
       </td>
       <td className='py-4 px-4'>
         <div>
-          <p className='text-sm'>{row.contacto?.email || '-'}</p>
-          <p className='text-xs text-gray-500'>{row.contacto?.telefono || '-'}</p>
+          <p className='text-sm'>{row.contact?.email || '-'}</p>
+          <p className='text-xs text-gray-500'>{row.contact?.phone || '-'}</p>
         </div>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.tipo_cliente || '-'}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.client_type || '-'}</td>
       <td className='py-4 px-4'>
         <Tag
-          status={row.estatus}
-          variant={row.estatus === 'activo' ? 'emerald' : 'red'}
+          status={row.client_status}
+          variant={row.client_status === 'activo' ? 'emerald' : 'red'}
         >
-          {row.estatus || 'Unknown'}
+          {row.client_status || 'Unknown'}
         </Tag>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{row.interes_principal || '-'}</td>
-      <td className='py-4 px-4'>
-        <span className='text-sm text-gray-700'>
-          {row.propiedades_vinculadas ?? row.propiedad?.title ?? (row.propiedad_id ? `ID: ${row.propiedad_id}` : '0')} vinculadas
-        </span>
+      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{formatInterestLabel(row.main_interest)}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.origin || '-'}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.agent?.name || row.agent_id || '-'}</td>
+      <td className='py-4 px-4 text-sm text-gray-500'>
+        {row.created_date ? new Date(row.created_date).toLocaleDateString('es-MX', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.agente?.nombre || row.agente_id || '-'}</td>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
           <Tooltip content="Ver detalle">
@@ -264,14 +310,14 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   );
 
   const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-wrap max-w-full">
       <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{label}:</span>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 py-1">
         <button
           onClick={() => onChange('all')}
-          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 whitespace-nowrap ${
+          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
             selectedValue === 'all'
-              ? 'bg-primary_color text-white font-medium shadow-sm'
+              ? 'bg-primary_color text-white font-medium shadow-md'
               : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
           }`}
         >
@@ -281,9 +327,9 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 whitespace-nowrap ${
+            className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
               selectedValue === opt.value
-                ? 'bg-primary_color text-white font-medium shadow-sm'
+                ? 'bg-primary_color text-white font-medium shadow-md'
                 : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
             }`}
           >
@@ -312,10 +358,10 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
               <button
                 type='button'
                 onClick={() => setIsFilterOpen(true)}
-                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
-                title="Filtros"
+                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2'
               >
                 <SlidersHorizontal className='w-5 h-5' />
+                <span className='text-sm text-gray-600'>Filtros</span>
                 {activeFiltersCount > 0 && (
                   <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
                     {activeFiltersCount}
@@ -324,7 +370,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
               </button>
               <Link href='/clients/add-client' className='w-full sm:w-auto'>
                 <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
                   <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Cliente</span><span className='sm:hidden'>Agregar</span>
                 </button>
               </Link>
@@ -332,93 +378,76 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
           </div>
 
           <div className='mb-6 space-y-6'>
-            {/* Buscador y Estatus Lado a Lado */}
-            <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
-              <Search 
-                title='Buscar por nombre, email, teléfono, RFC o CURP...' 
-                className='max-w-[450px] w-full' 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className='flex-shrink-0 flex items-center justify-start lg:justify-end min-w-max gap-3'>
-                <FilterPills 
-                  label="Estatus" 
-                  options={statusOptions} 
-                  selectedValue={selectedStatus} 
-                  onChange={setSelectedStatus} 
+            {/* Buscador y Estatus al lado derecho */}
+            <div className='flex flex-col sm:flex-row sm:items-end gap-4 w-full'>
+              <div className='max-w-[420px] w-full'>
+                <Search
+                  title='Buscar por nombre, email, teléfono, RFC o CURP'
+                  className='w-full'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-            </div>
-
-            {/* Píldoras de Filtro Tipo de Cliente */}
-            <div className='py-1'>
-              <FilterPills 
-                label="Tipo de cliente" 
-                options={typeOptions} 
-                selectedValue={selectedType} 
-                onChange={setSelectedType} 
-              />
-            </div>
-
-            {/* Filtros Secundarios Desplegables */}
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-6'>
-              {/* Responsable comentado en todas las partes de la selección */}
-              {/* <div className='flex flex-col pb-2 sm:pb-0'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Responsable</label>
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
-                    <SelectValue placeholder='Todos los agentes' />
+              <div className='flex flex-col w-full sm:w-[200px]'>
+                <label className="text-xs text-gray-500 mb-1 font-semibold">Estatus</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Todos los estatus' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los agentes</SelectItem>
-                    {responsibleOptions.map(opt => (
+                    <SelectItem value="all">Todos los estatus</SelectItem>
+                    {statusOptions.map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div> */}
+              </div>
+            </div>
+
+            {/* Píldoras de Filtros - Tipo de cliente e Interés principal */}
+            <div className='flex flex-col xl:flex-row xl:items-center gap-6 w-full py-1'>
+              <FilterPills
+                label="Tipo de cliente"
+                options={typeOptions}
+                selectedValue={selectedType}
+                onChange={setSelectedType}
+              />
+              <FilterPills
+                label="Interés principal"
+                options={interestOptions}
+                selectedValue={selectedInterest}
+                onChange={setSelectedInterest}
+              />
+            </div>
+
+            {/* Filtros Secundarios Desplegables: Agente y Origen del prospecto */}
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+              <div className='flex flex-col pb-2 sm:pb-0'>
+                <label className="text-xs text-gray-500 mb-1 font-semibold">Agente</label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Todos los agentes' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los agentes</SelectItem>
+                    {agentOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className='flex flex-col pb-2 sm:pb-0'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Origen</label>
+                <label className="text-xs text-gray-500 mb-1 font-semibold">Origen del prospecto</label>
                 <Select value={selectedSource} onValueChange={setSelectedSource}>
-                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
-                    <SelectValue placeholder='Todos' />
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Seleccione una opción' />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     {sourceOptions.map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className='flex flex-col pb-2 lg:pb-0'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Interés</label>
-                <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
-                    <SelectValue placeholder='Cualquier operación' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Cualquier operación</SelectItem>
-                    {interestOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className='flex flex-col pb-2 lg:pb-0'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Estado de la República</label>
-                <Select value={selectedState} onValueChange={setSelectedState}>
-                  <SelectTrigger className='w-full border-0 bg-transparent p-0 h-auto font-medium text-gray-900 focus:ring-0 focus:ring-offset-0 hover:text-blue-600 shadow-none'>
-                    <SelectValue placeholder='Todos los estados' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="cdmx">Ciudad de México</SelectItem>
-                    <SelectItem value="jalisco">Jalisco</SelectItem>
-                    <SelectItem value="nuevo_leon">Nuevo León</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -515,22 +544,6 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
                   </Select>
                 </div>
               )}
-              {selectedState !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado de la República</label>
-                  <Select value={selectedState} onValueChange={setSelectedState}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="cdmx">Ciudad de México</SelectItem>
-                      <SelectItem value="jalisco">Jalisco</SelectItem>
-                      <SelectItem value="nuevo_leon">Nuevo León</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -542,12 +555,13 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         onClose={() => setDeleteModal({ isOpen: false, item: null })}
         onConfirm={handleDeleteConfirm}
         title="Eliminar Cliente"
-        itemName={deleteModal.item?.nombre || ''}
+        itemName={deleteModal.item?.name || ''}
         itemDetails={deleteModal.item ? [
-          { label: 'Email', value: deleteModal.item.contacto?.email || '-' },
-          { label: 'Tipo', value: deleteModal.item.tipo_cliente || '-' },
-          { label: 'Interés', value: deleteModal.item.interes_principal || '-' },
-          { label: 'Teléfono', value: deleteModal.item.contacto?.telefono || '-' }
+          { label: 'Email', value: deleteModal.item.contact?.email || '-' },
+          { label: 'Tipo', value: deleteModal.item.client_type || '-' },
+          { label: 'Interés', value: formatInterestLabel(deleteModal.item.main_interest) },
+          { label: 'Teléfono', value: deleteModal.item.contact?.phone || '-' },
+          { label: 'Origen', value: deleteModal.item.origin || '-' }
         ] : []}
         isDeleting={isDeleting}
       />

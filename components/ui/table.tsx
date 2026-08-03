@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 {/* Define la interface de props para la tabla */}
@@ -28,7 +28,9 @@ const getValueByHeader = (item: any, header: string): any => {
         return item.type || item.tipo || '';
     }
     if (h === 'operacion') {
-        return item.operation_type || item.operation || '';
+        const op = item.operation_type || item.operation;
+        if (typeof op === 'object' && op !== null) return op.name || '';
+        return op || '';
     }
     if (h === 'precio' || h === 'monto') {
         return parseFloat(String(item.price || item.precio || item.monto || 0).replace(/[^0-9.]/g, '')) || 0;
@@ -154,61 +156,68 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
     const currentData = sortedData.slice(startIndex, endIndex)
 
     return (
-        <div className='w-full mt-6 overflow-x-auto'>
-            <table className='w-full border-collapse rounded-lg overflow-hidden shadow-sm'>
-                <thead>
-                    <tr className='bg-slate-100 rounded-t-lg'>
-                        {headers.map((header, index) => {
-                            const h = header.toLowerCase();
-                            const isSortable = h !== 'acciones' && h !== 'imagen' && h !== 'imagenes';
-                            const isCurrent = sortHeader === header;
+        <div className='w-full mt-6'>
+            <div className='w-full overflow-x-auto border border-gray-200 rounded-lg shadow-sm'>
+                <table className='w-full border-collapse overflow-hidden bg-white'>
+                    <thead>
+                        <tr className='bg-slate-100 border-b border-gray-200'>
+                            {headers.map((header, index) => {
+                                const h = header.toLowerCase();
+                                const isSortable = h !== 'acciones' && h !== 'imagen' && h !== 'imagenes';
+                                const isCurrent = sortHeader === header;
 
-                            return (
-                                <th 
-                                    key={index} 
-                                    onClick={() => isSortable && handleSort(header)}
-                                    className={`py-3 px-4 font-semibold text-sm text-gray-700 select-none text-left ${
-                                        isSortable ? 'cursor-pointer hover:bg-slate-200 transition-colors' : ''
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <span>{header}</span>
-                                        {isSortable && (
-                                            <span className="text-gray-400">
-                                                {isCurrent && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
-                                                {isCurrent && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
-                                                {!isCurrent && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
-                                            </span>
-                                        )}
-                                    </div>
-                                </th>
-                            )
-                        })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {isLoading ? (
-                        <tr>
-                            <td colSpan={headers.length} className='text-center py-8 text-gray-500'>Cargando...</td>
+                                return (
+                                    <th
+                                        key={index}
+                                        onClick={() => isSortable && handleSort(header)}
+                                        className={`py-2 px-3 font-medium text-xs text-gray-700 select-none text-left whitespace-nowrap ${
+                                            isSortable ? 'cursor-pointer hover:bg-slate-200 transition-colors' : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <span>{header}</span>
+                                            {isSortable && (
+                                                <span className="text-gray-400">
+                                                    {isCurrent && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                    {isCurrent && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                    {!isCurrent && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </th>
+                                )
+                            })}
                         </tr>
-                    ) : (
-                        <>
-                            {currentData.length > 0 ? (
-                                currentData.map((item, index) => renderRow(item, index))
-                            ) : (
-                                <tr>
-                                    <td colSpan={headers.length} className='text-center py-8 text-gray-500'>
-                                        No hay registros disponibles
-                                    </td>
-                                </tr>
-                            )}
-                        </>
-                    )}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={headers.length} className='text-center py-12'>
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <Loader2 className="w-8 h-8 text-primary_color animate-spin" />
+                                        <p className="text-sm text-gray-500 font-medium">Cargando información...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            <>
+                                {currentData.length > 0 ? (
+                                    currentData.map((item, index) => renderRow(item, index))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={headers.length} className='text-center py-8 text-gray-500'>
+                                            No hay registros disponibles
+                                        </td>
+                                    </tr>
+                                )}
+                            </>
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
             {/* Paginación */}
-            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-200'>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4'>
                 <div className='text-xs sm:text-sm text-gray-600'>
                     Mostrando {totalItems > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, totalItems)} de {totalItems} registros
                 </div>

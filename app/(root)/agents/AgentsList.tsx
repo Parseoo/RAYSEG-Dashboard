@@ -149,13 +149,12 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
                 type='button'
                 onClick={() => setIsFilterOpen(true)}
                 className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm'
-                title="Filtros"
               >
                 <SlidersHorizontal className='w-5 h-5' />
               </button>
               <Link href='/agents/add-agent' className='w-full sm:w-auto'>
                 <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm sm:text-base'>
+                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
                   <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Agente</span><span className='sm:hidden'>Agregar</span>
                 </button>
               </Link>
@@ -163,7 +162,7 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
           </div>
 
           <div className='mb-5'>
-            <Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='max-w-[450px] w-full' />
+            <Search title='Buscar por nombre, email, teléfono, RFC o CURP' className='max-w-[420px] w-full' />
           </div>
           <Table data={tableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
         </div>

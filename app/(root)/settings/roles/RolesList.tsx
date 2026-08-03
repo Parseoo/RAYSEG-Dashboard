@@ -67,8 +67,11 @@ function RolesList() {
 
     const handleSaveRole = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newRole.name.trim()) return;
-        
+        if (!newRole.name.trim()) {
+            showToast.warning("Por favor ingrese el nombre del rol");
+            return;
+        }
+
         setIsCreating(true);
         try {
             if (editingRole) {
@@ -104,22 +107,21 @@ function RolesList() {
                     {role.description || <span className='italic text-slate-300'>Sin descripción</span>}
                 </td>
                 <td className='py-4 px-4'>
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        role.is_system_role ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${role.is_system_role ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
                         {role.is_system_role ? 'Sí' : 'No'}
                     </span>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {role.created_at ? new Date(role.created_at).toLocaleString() : "-"}
+                    {role.created_at ? new Date(role.created_at).toLocaleString('es-MX', { timeZone: 'UTC' }) : "-"}
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {role.updated_at ? new Date(role.updated_at).toLocaleString() : "-"}
+                    {role.updated_at ? new Date(role.updated_at).toLocaleString('es-MX', { timeZone: 'UTC' }) : "-"}
                 </td>
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
                         <Tooltip content="Editar Info">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setEditingRole(role);
                                     setNewRole({ name: role.name, description: role.description || '' });
@@ -146,40 +148,34 @@ function RolesList() {
     };
 
     return (
-        <div className='space-y-6 pb-10'>
-            <Breadcrumb
-                items={[
-                    { label: 'Inicio', href: '/' },
-                    { label: 'Configuración', href: '/settings' },
-                    { label: 'Roles', href: '/settings/roles', active: true }
-                ]}
-            />
-
-            <div className='bg-white w-full rounded-lg p-6 sm:p-8 shadow-xl border border-slate-200'>
-                <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8'>
-                    <div className='flex items-center gap-4'>
+        <>
+            <Breadcrumb items={[
+                { label: 'Inicio', href: '/' },
+                { label: 'Configuración', href: '/settings' },
+                { label: 'Roles', href: '/settings/roles', active: true }
+            ]} />
+            <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
+                <div className='w-full h-full'>
+                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
                         <div>
-                            <h1 className='text-2xl font-extrabold text-slate-900 mb-1'>Gestión de Roles</h1>
-                            <p className='text-gray-500 text-sm'>Administra los niveles de acceso y perfiles del sistema.</p>
+                            <h1 className='text-black font-[700] text-xl sm:text-2xl'>Gestión de Roles</h1>
+                            <p className='text-sm sm:text-md text-gray-500'>Administra los niveles de acceso y perfiles del sistema.</p>
+                        </div>
+                        <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+                            <button
+                                onClick={() => {
+                                    setEditingRole(null);
+                                    setNewRole({ name: '', description: '' });
+                                    setIsCreateModalOpen(true);
+                                }}
+                                className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'
+                            >
+                                <Plus size={18} />
+                                <span>Crear Nuevo Rol</span>
+                            </button>
                         </div>
                     </div>
-                    
-                    <button 
-                        onClick={() => {
-                            setEditingRole(null);
-                            setNewRole({ name: '', description: '' });
-                            setIsCreateModalOpen(true);
-                        }}
-                        className='bg-primary_color text-white px-6 h-[44px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all font-bold text-sm shadow-lg'
-                    >
-                        <Plus size={18} />
-                        <span>Crear Nuevo Rol</span>
-                    </button>
-                </div>
-
-                <div className='bg-slate-50 rounded-lg border border-slate-100 overflow-hidden'>
                     <Table data={roles} headers={headers} renderRow={renderRow} isLoading={loading} />
-                    
                     {!loading && roles.length === 0 && (
                         <div className='py-20 flex flex-col items-center justify-center text-center'>
                             <p className='text-slate-500 font-medium'>No se encontraron roles configurados.</p>
@@ -199,38 +195,38 @@ function RolesList() {
                             </button>
                         </div>
                         <form onSubmit={handleSaveRole} className='p-6 space-y-4'>
-                            <InputField 
+                            <InputField
                                 input={{
                                     type: 'text',
                                     id: 'role-name',
                                     label: 'Nombre del Rol',
-                                    placeholder: 'Ej: Supervisor, Auditor...',
+                                    placeholder: 'Ej: Agente, Gerente de ventas, Administrador',
                                     value: newRole.name,
-                                    onChange: (e: any) => setNewRole({...newRole, name: e.target.value}),
+                                    onChange: (e: any) => setNewRole({ ...newRole, name: e.target.value }),
                                     required: true
                                 }}
                             />
-                            <InputField 
+                            <InputField
                                 input={{
                                     type: 'text',
                                     id: 'role-desc',
                                     label: 'Descripción (Opcional)',
-                                    placeholder: 'Describe brevemente las responsabilidades del rol',
+                                    placeholder: 'Ej. Gestiona propiedades y clientes.',
                                     value: newRole.description,
-                                    onChange: (e: any) => setNewRole({...newRole, description: e.target.value})
+                                    onChange: (e: any) => setNewRole({ ...newRole, description: e.target.value })
                                 }}
                             />
                             <div className='pt-4 flex gap-3'>
-                                <button 
+                                <button
                                     type='button'
                                     onClick={() => setIsCreateModalOpen(false)}
-                                    className='flex-1 py-2.5 px-4 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors'
+                                    className='flex-1 py-2.5 px-4 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all shadow-md'
                                 >
                                     Cancelar
                                 </button>
-                                <button 
+                                <button
                                     type='submit'
-                                    disabled={isCreating || !newRole.name.trim()}
+                                    disabled={isCreating}
                                     className='flex-1 py-2.5 px-4 rounded-lg font-bold text-white bg-primary_color hover:opacity-90 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2'
                                 >
                                     {isCreating ? <Loader2 className='animate-spin' size={18} /> : null}
@@ -250,7 +246,7 @@ function RolesList() {
                 itemName={deleteModal.item?.name}
                 isDeleting={isDeleting}
             />
-        </div>
+        </>
     );
 }
 

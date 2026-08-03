@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Breadcrumb from "@/components/ui/breadcrumb";
-import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissions } from "@/lib/api/permission-api";
+import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsGrouped } from "@/lib/api/permission-api";
 import AddPermissions from "../users-permissions/add-user/addPermissions";
 import { UserForm } from "@/lib/@type";
 import { Permission } from "@/lib/@type-permission";
@@ -16,6 +16,7 @@ const PermissionsPage = () => {
     const [isLoadingRoles, setIsLoadingRoles] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [allSystemPermissions, setAllSystemPermissions] = useState<Permission[]>([]);
+    const [groupedPermissions, setGroupedPermissions] = useState<Record<string, any> | undefined>(undefined);
     const [dummyUser, setDummyUser] = useState<UserForm>({
         email: "",
         name: "",
@@ -34,7 +35,7 @@ const PermissionsPage = () => {
                 setIsLoadingRoles(true);
                 const [rolesRes, permsRes] = await Promise.all([
                     GetListRoles(),
-                    GetListPermissions()
+                    GetListPermissionsGrouped()
                 ]);
                 
                 const extractData = (res: any) => {
@@ -43,7 +44,23 @@ const PermissionsPage = () => {
                 };
 
                 setRoles(extractData(rolesRes));
-                setAllSystemPermissions(extractData(permsRes));
+                const groupedData = permsRes.data || {};
+                const allPermsFlat: Permission[] = [];
+                Object.keys(groupedData).forEach(key => {
+                    const group = groupedData[key];
+                    const permissionsList = Array.isArray(group) ? group : (group.permissions || []);
+                    permissionsList.forEach((p: any) => {
+                        allPermsFlat.push({
+                            id: p.id,
+                            name: p.name,
+                            codename: p.codename,
+                            model: p.model || key,
+                            is_system_role: false
+                        });
+                    });
+                });
+                setAllSystemPermissions(allPermsFlat);
+                setGroupedPermissions(groupedData);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
                 showToast.error("Error al cargar datos iniciales");
@@ -72,24 +89,24 @@ const PermissionsPage = () => {
                     const parts = p.codename.split('_');
                     const action = parts[0];
                     const model = parts.slice(1).join('_');
-                    
+
                     if (model && action) {
-                        const sectionId = model === 'property' ? 'propiedades' : 
+                        const sectionId = model === 'property' ? 'propiedades' :
                                         model === 'client' ? 'clientes' :
                                         model === 'agent' ? 'agentes' :
                                         model === 'contract' ? 'contratos' :
-                                        model === 'user' ? 'ajustes-usuarios' : 
+                                        model === 'user' ? 'ajustes-usuarios' :
                                         model === 'lead' ? 'leads-contacto' :
                                         model === 'propertyimage' ? 'imagenes-propiedades' : model;
-                        
+
                         uiPerms[sectionId] = true;
                         if (!uiPerms[`${sectionId}_actions`]) uiPerms[`${sectionId}_actions`] = [];
-                        
+
                         const actionId = action === 'view' ? 'ver-lista' :
                                         action === 'add' ? 'crear' :
                                         action === 'change' ? 'editar' :
                                         action === 'delete' ? 'eliminar' : action;
-                        
+
                         if (!uiPerms[`${sectionId}_actions`].includes(actionId)) {
                             uiPerms[`${sectionId}_actions`].push(actionId);
                         }
@@ -120,12 +137,12 @@ const PermissionsPage = () => {
                 if (key.endsWith('_actions') && Array.isArray(uiPerms[key])) {
                     const sectionId = key.replace('_actions', '');
                     const actions = uiPerms[key] as string[];
-                    
-                    const model = sectionId === 'propiedades' ? 'property' : 
+
+                    const model = sectionId === 'propiedades' ? 'property' :
                                  sectionId === 'clientes' ? 'client' :
                                  sectionId === 'agentes' ? 'agent' :
                                  sectionId === 'contratos' ? 'contract' :
-                                 sectionId === 'ajustes-usuarios' ? 'user' : 
+                                 sectionId === 'ajustes-usuarios' ? 'user' :
                                  sectionId === 'leads-contacto' ? 'lead' :
                                  sectionId === 'imagenes-propiedades' ? 'propertyimage' : sectionId;
 
@@ -134,7 +151,7 @@ const PermissionsPage = () => {
                                      actionId === 'crear' ? 'add' :
                                      actionId === 'editar' ? 'change' :
                                      actionId === 'eliminar' ? 'delete' : actionId;
-                        
+
                         const codename = `${verb}_${model}`;
                         const foundPerm = allSystemPermissions.find(p => p.codename === codename);
                         if (foundPerm) {
@@ -209,11 +226,13 @@ const PermissionsPage = () => {
 
                     {selectedRoleId ? (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <AddPermissions 
-                                user={dummyUser} 
-                                setUser={setDummyUser as any} 
-                                isLoading={false} 
-                                withoutCard={true} 
+                            <AddPermissions
+                                user={dummyUser}
+                                setUser={setDummyUser as any}
+                                isLoading={false}
+                                withoutCard={true}
+                                groupedPermissions={groupedPermissions}
+                                isFetchingPermissions={isLoadingRoles}
                             />
                         </div>
                     ) : (

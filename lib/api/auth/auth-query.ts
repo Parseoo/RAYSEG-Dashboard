@@ -33,14 +33,13 @@ export const useLogin = () => {
         // Update store
         login(user, accessToken);
 
-        // Persist tokens
+        // Persist refresh token (access token stored by Zustand persist)
         if (typeof window !== 'undefined') {
           if (refreshToken) {
             localStorage.setItem('refresh_token', refreshToken);
           }
         }
 
-        console.log('Login successful');
         router.push('/');
       } else {
         // Force error if response structure is invalid

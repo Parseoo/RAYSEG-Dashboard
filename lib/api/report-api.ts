@@ -4,12 +4,35 @@ export async function GetAllReports() {
     return httpClient.get('/api/reports');
 }
 
-export async function GetReportsProperties() {
-    return httpClient.get('/api/reports/properties');
+export async function GetReportsProperties(params?: ClientsReportParams) {
+    const query = new URLSearchParams();
+    if (params) {
+        if (params.year !== undefined && params.year !== null && params.year !== 0) query.append('year', String(params.year));
+        if (params.month !== undefined && params.month !== null && params.month !== 0) query.append('month', String(params.month));
+        if (params.date_from) query.append('date_from', params.date_from);
+        if (params.date_to) query.append('date_to', params.date_to);
+    }
+    const queryString = query.toString();
+    return httpClient.get(`/api/reports/properties${queryString ? `?${queryString}` : ''}`);
 }
 
-export async function GetReportsClients() {
-    return httpClient.get('/api/reports/clients');
+export interface ClientsReportParams {
+    year?: number;
+    month?: number;
+    date_from?: string;
+    date_to?: string;
+}
+
+export async function GetReportsClients(params?: ClientsReportParams) {
+    const query = new URLSearchParams();
+    if (params) {
+        if (params.year !== undefined && params.year !== null && params.year !== 0) query.append('year', String(params.year));
+        if (params.month !== undefined && params.month !== null && params.month !== 0) query.append('month', String(params.month));
+        if (params.date_from) query.append('date_from', params.date_from);
+        if (params.date_to) query.append('date_to', params.date_to);
+    }
+    const queryString = query.toString();
+    return httpClient.get(`/api/reports/clients${queryString ? `?${queryString}` : ''}`);
 }
 
 export async function GetReportsClientsPDF() {

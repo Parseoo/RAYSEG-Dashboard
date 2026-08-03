@@ -1,6 +1,6 @@
 export const statusOptions = [
-    { value: true, label: 'Activo' },          // Usuario operativo
-    { value: false, label: 'Inactivo' },      // Deshabilitado temporalmente
+    { value: "true", label: 'Activo' },          // Usuario operativo
+    { value: "false", label: 'Inactivo' },      // Deshabilitado temporalmente
 ];
 
 export const typeOptions = [

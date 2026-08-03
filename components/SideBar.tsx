@@ -26,6 +26,7 @@ import {
   UserCog,
   Shield,
   Key,
+  Library,
 } from 'lucide-react';
 
 type MenuItemBase = {
@@ -75,7 +76,8 @@ export const menuItems: MenuItem[] = [
     children: [
       { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: UserCog, label: 'Usuarios' },
       { href: '/settings/roles', path: '/settings/roles', icon: Shield, label: 'Roles' },
-      { href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos' },
+      //{ href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos' },
+      { href: '/catalogs', path: '/catalogs', icon: Library, label: 'Catálogos' },
     ]
   },
 ]
@@ -83,7 +85,15 @@ export const menuItems: MenuItem[] = [
 // Componente para renderizar el menú (reutilizable)
 const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const path = usePathname()
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuItems.forEach(item => {
+      if ('children' in item && item.children) {
+        initial[item.label] = true;
+      }
+    });
+    return initial;
+  });
   const { user } = useUserStore();
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
@@ -93,7 +103,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => ({
       ...prev,
-      [label]: !prev[label]
+      [label]: !(prev[label] ?? true)
     }));
   };
 
@@ -104,7 +114,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
         if (isChildActive) {
           setOpenMenus(prev => {
-            if (prev[item.label]) return prev;
+            if (prev[item.label] !== undefined) return prev;
             return { ...prev, [item.label]: true };
           });
         }
@@ -130,7 +140,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         const hasChildren = 'children' in item && item.children && item.children.length > 0;
         const itemPath = 'path' in item ? item.path : undefined;
         const isItemActive = isActive(itemPath);
-        const isOpen = openMenus[item.label] || false;
+        const isOpen = openMenus[item.label] ?? true;
 
         const Icon = item.icon;
 
@@ -232,7 +242,7 @@ const MenuContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
 export const SideBar = () => {
   return (
-    <nav className='hidden bg-white lg:flex flex-col w-[250px] h-screen pr-4 pl-4 text-second_text_color'>
+    <nav className='hidden bg-white lg:flex flex-col w-[250px] h-full pr-4 pl-4 text-second_text_color relative z-10 shadow-xl'>
       <div className='flex-1 overflow-y-auto pt-4 pb-6'>
         <MenuContent />
       </div>

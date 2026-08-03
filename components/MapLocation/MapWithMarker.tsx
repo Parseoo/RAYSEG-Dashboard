@@ -23,9 +23,10 @@ interface MapWithMarkerProps {
     markers?: MapMarker[];
     markerPosition?: { lat: number; lng: number } | null;
     address?: string;
+    onMarkerDragEnd?: (lat: number, lng: number) => void;
 }
 
-export default function MapWithMarker({ markers, markerPosition, address }: MapWithMarkerProps) {
+export default function MapWithMarker({ markers, markerPosition, address, onMarkerDragEnd }: MapWithMarkerProps) {
     const mapRef          = useRef<L.Map | null>(null);
     const layerRef        = useRef<L.LayerGroup | null>(null);
     const singleMarkerRef = useRef<L.Marker | null>(null);
@@ -106,40 +107,73 @@ export default function MapWithMarker({ markers, markerPosition, address }: MapW
     // ── Modo single (búsqueda manual) – solo cuando no hay markers ───────────
     useEffect(() => {
         if (!mapRef.current) return;
-        if (markers && markers.length > 0) return;
-
-        if (singleMarkerRef.current) {
-            singleMarkerRef.current.remove();
-            singleMarkerRef.current = null;
-        }
-
+        
+        // Si hay markerPosition, lo mostramos SIEMPRE. Ocultamos los multi-markers (markers) 
+        // para dar prioridad a la edición de la posición.
         if (markerPosition) {
-            singleMarkerRef.current = L.marker(
+            if (layerRef.current) {
+                layerRef.current.clearLayers();
+            }
+            if (singleMarkerRef.current) {
+                singleMarkerRef.current.remove();
+                singleMarkerRef.current = null;
+            }
+
+            const marker = L.marker(
                 [markerPosition.lat, markerPosition.lng],
-                { icon: createFaviconIcon() }
+                { 
+                    icon: createFaviconIcon(),
+                    draggable: !!onMarkerDragEnd 
+                }
             )
                 .addTo(mapRef.current)
                 .bindPopup(`
                     <div style="padding:8px">
-                        <strong>📍 Ubicación</strong>
+                        <strong>📍 Ubicación a fijar</strong>
                         <p style="margin:4px 0;color:#666">${address ?? ''}</p>
                         <p style="margin:0;font-size:0.75rem;color:#999">
-                            Lat: ${markerPosition.lat.toFixed(6)}<br/>
-                            Lng: ${markerPosition.lng.toFixed(6)}
+                            Arrastra el pin para afinar la ubicación.
                         </p>
                     </div>
                 `)
                 .openPopup();
 
-            mapRef.current.flyTo([markerPosition.lat, markerPosition.lng], 15, { duration: 1.5 });
+            if (onMarkerDragEnd) {
+                marker.on('dragend', (e) => {
+                    const pos = e.target.getLatLng();
+                    onMarkerDragEnd(pos.lat, pos.lng);
+                    marker.openPopup();
+                });
+            }
+
+            singleMarkerRef.current = marker;
+            mapRef.current.flyTo([markerPosition.lat, markerPosition.lng], 16, { duration: 1.5 });
+        } else if (markers && markers.length > 0) {
+            // Si no hay markerPosition y sí hay markers, renderizamos los markers normales
+            if (singleMarkerRef.current) {
+                singleMarkerRef.current.remove();
+                singleMarkerRef.current = null;
+            }
+            if (layerRef.current) {
+                renderMarkers(mapRef.current, layerRef.current, markers);
+            }
+        } else {
+            // No hay ni markerPosition ni markers
+            if (singleMarkerRef.current) {
+                singleMarkerRef.current.remove();
+                singleMarkerRef.current = null;
+            }
+            if (layerRef.current) {
+                layerRef.current.clearLayers();
+            }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [markerPosition, address, markers]);
+    }, [markerPosition, address, markers, onMarkerDragEnd]);
 
     return (
         <div
             ref={mapContainerRef}
-            className="w-full h-[500px] rounded-xl shadow-md"
+            className="w-full h-[500px] rounded-xl shadow-md relative z-0"
         />
     );
 }

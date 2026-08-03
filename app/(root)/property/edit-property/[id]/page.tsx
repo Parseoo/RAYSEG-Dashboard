@@ -1,8 +1,9 @@
 import React from 'react';
 import AddProperty from '../../add-property/addProperty';
 
-const Page = ({ params }: { params: { id: string } }) => {
-  return <AddProperty propertyId={params.id} />;
+const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
+  return <AddProperty propertyId={id} />;
 };
 
 export default Page;

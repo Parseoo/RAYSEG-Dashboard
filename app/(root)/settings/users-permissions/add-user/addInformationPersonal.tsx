@@ -5,6 +5,7 @@ import { DynamicInputs, InputFieldConfig } from "@/components/ui/Input"
 import { ProfileImageUpload } from "@/components/ui/ProfileImageUpload"
 import { UserForm } from "@/lib/@type"
 import { GetCatalogByName } from "@/lib/api/catalog-api"
+import { GetEstados, GetCiudades } from '@/lib/api/property/property-api'
 import { GetListRoles } from "@/lib/api/permission-api"
 import { ItemResponse } from "@/lib/@type"
 
@@ -18,7 +19,8 @@ interface AddInformationPersonalProps {
 
 export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, rolesData = [] }: AddInformationPersonalProps) => {
     const [roleTypes, setRoleTypes] = useState<any[]>(rolesData);
-    const [statusTypes, setStatusTypes] = useState<ItemResponse[]>([]);
+    const [estadosOptions, setEstadosOptions] = useState<any[]>([]);
+    const [ciudadesOptions, setCiudadesOptions] = useState<{ label: string; value: string }[]>([]);
 
     useEffect(() => {
         if (rolesData.length > 0) {
@@ -27,36 +29,69 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
     }, [rolesData]);
 
     useEffect(() => {
-        const fetchCatalogs = async () => {
+        const fetchEstados = async () => {
             try {
-                const statusRes = await GetCatalogByName('user-status');
+                const res = await GetEstados();
+                const raw: any = res?.data || res;
+                let arr: any[] = [];
+                if (Array.isArray(raw)) arr = raw;
+                else if (raw?.data && Array.isArray(raw.data)) arr = raw.data;
 
-                const extractItems = (res: any): any[] => {
-                    if (!res?.data) return [];
-                    if (res.data.items) return res.data.items;
-                    if (res.data.catalogItems) return res.data.catalogItems;
-                    if (Array.isArray(res.data)) return res.data;
-                    if (res.data.data && Array.isArray(res.data.data)) return res.data.data;
-                    return [];
-                };
-
-                setStatusTypes(extractItems(statusRes));
-            } catch (error) {
-                console.error("Error fetching user catalogs:", error);
+                if (arr.length > 0) {
+                    const mapped = arr.map((e: any) => ({
+                        label: e.estado || e.nombre || e.name || String(e),
+                        value: e.estado || e.nombre || e.name || String(e),
+                        code: e.codigo_estado || e.clave || e.id || String(e)
+                    }));
+                    setEstadosOptions(mapped);
+                }
+            } catch (err) {
+                console.error('Error fetching estados for users form:', err);
             }
         };
-
-        fetchCatalogs();
+        fetchEstados();
     }, []);
+
+    useEffect(() => {
+        const fetchCiudades = async () => {
+            const currentEstado = user.estado;
+            if (!currentEstado) {
+                setCiudadesOptions([]);
+                return;
+            }
+            try {
+                let stateCode = currentEstado;
+                const matched = estadosOptions.find(e => e.value.toLowerCase() === currentEstado.toLowerCase());
+                if (matched) {
+                    stateCode = matched.code;
+                }
+                const response = await GetCiudades(stateCode);
+                const raw: any = response?.data || response;
+                let ciudadesData: any[] = [];
+                if (Array.isArray(raw)) ciudadesData = raw;
+                else if (raw?.data && Array.isArray(raw.data)) ciudadesData = raw.data;
+
+                if (ciudadesData.length > 0) {
+                    setCiudadesOptions(ciudadesData.map((item: any) => ({
+                        label: item.ciudad || item.nombre || String(item),
+                        value: item.ciudad || item.nombre || String(item)
+                    })));
+                } else {
+                    setCiudadesOptions([]);
+                }
+            } catch (err) {
+                console.error('Error fetching ciudades for user form:', err);
+                setCiudadesOptions([]);
+            }
+        };
+        if (estadosOptions.length > 0) {
+            fetchCiudades();
+        }
+    }, [user.estado, estadosOptions]);
 
     const roleOptions = roleTypes.map(item => ({
         label: item.name,
-        value: String(item.id || item.catalogItemID || item.name).toLowerCase()
-    }));
-
-    const statusOptions = statusTypes.map(item => ({
-        label: item.name,
-        value: (item.value || item.name).toLowerCase()
+        value: item.id || item.catalogItemID  // Usar el ID numérico directamente
     }));
 
     const inputs: InputFieldConfig[] = [
@@ -64,15 +99,17 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             type: 'text',
             id: 'name',
             label: 'Nombre(s)',
-            placeholder: 'Nombre del agente',
-            group: 1
+            placeholder: 'Nombre',
+            group: 1,
+            required: true
         },
         {
             type: 'text',
             id: 'paternal_last_name',
             label: 'Apellido paterno',
             placeholder: 'Apellido paterno',
-            group: 1
+            group: 1,
+            required: true
         },
         {
             type: 'text',
@@ -86,7 +123,8 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             id: 'email',
             label: 'Correo electrónico',
             placeholder: 'agente@rayseg.com',
-            group: 2
+            group: 2,
+            required: true
         },
         {
             type: 'tel',
@@ -97,19 +135,50 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
         },
         {
             type: 'select',
+            id: 'estado',
+            label: 'Estado',
+            placeholder: 'Seleccione un estado',
+            group: 5,
+            options: [], // se poblará dinámicamente
+            required: true
+        },
+        {
+            type: 'select',
+            id: 'ciudad',
+            label: 'Ciudad',
+            placeholder: 'Seleccione una ciudad',
+            group: 5,
+            options: ciudadesOptions,
+            required: true
+        },
+        {
+            type: 'text',
+            id: 'colonia',
+            label: 'Colonia',
+            placeholder: 'Colonia',
+            group: 5
+        },
+        {
+            type: 'text',
+            id: 'codigo_postal',
+            label: 'Código postal',
+            placeholder: 'Código postal',
+            group: 5
+        },
+        {
+            type: 'select',
             id: 'role',
             label: 'Rol',
             placeholder: 'Seleccione un rol',
             group: 3,
-            options: roleOptions
+            options: roleOptions,
+            required: true
         },
         {
-            type: 'select',
+            type: 'switch',
             id: 'is_active',
-            label: 'Estatus',
-            placeholder: 'Seleccione el estatus',
-            group: 3,
-            options: statusOptions
+            label: 'Estatus del usuario',
+            group: 3
         },
         {
             type: 'textarea',
@@ -117,27 +186,22 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             label: 'Notas internas',
             placeholder: 'Información adicional sobre este usuario (zona de atención, tipo de propiedades, etc).',
             group: 4
-        },
+        }
     ];
 
     const inputsWithState = inputs.map(input => ({
         ...input,
+        options: input.id === 'estado' ? estadosOptions : (input.id === 'ciudad' ? ciudadesOptions : (input as any).options),
         value: user[input.id as keyof UserForm] as string | boolean,
         onChange: (e: any) => {
             const value = e.target ? e.target.value : e;
-
-            let finalValue = value;
-            if (input.id === 'is_active') {
-                // Convertir a booleano solo si es explícitamente "true" o "false"
-                // de lo contrario mantener como string para que coincida con la opción del catálogo
-                if (value === 'true' || value === true) finalValue = true;
-                else if (value === 'false' || value === false) finalValue = false;
-                else finalValue = value;
-                
-                console.log(`[AddInformationPersonal] Cambiando is_active: original='${value}', final=${finalValue}`);
-            }
-
-            setUser(prev => ({ ...prev, [input.id]: finalValue }));
+            setUser(prev => {
+                const updated = { ...prev, [input.id]: value };
+                if (input.id === 'estado') {
+                    updated.ciudad = ''; // Limpiar ciudad al cambiar estado
+                }
+                return updated;
+            });
         },
         error: errors[input.id as keyof UserForm] as string | undefined
     }));
@@ -152,7 +216,10 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
                             <p className='text-md text-gray-500'>Identificación principal del cliente y tipo de relación.</p>
 
                             <div className='mt-6 mb-4'>
-                                <ProfileImageUpload onImageChange={onImageChange ?? ((file) => console.log(file))} />
+                                <ProfileImageUpload 
+                                    currentImage={user.profile_picture}
+                                    onImageChange={onImageChange ?? ((file) => console.log(file))} 
+                                />
                             </div>
 
                             <div className='mt-4'>

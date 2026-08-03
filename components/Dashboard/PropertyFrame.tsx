@@ -5,6 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Tag } from '@/components/ui/badges';
 import { GetAllProperties } from '@/lib/api/property/property-api';
+import { GetPropertyOperationTypes } from '@/lib/api/catalog-api';
+import { resolveCatalogDisplayValue } from '@/lib/utils/catalog';
+import { ItemResponse } from '@/lib/@type';
 import { Loader2 } from 'lucide-react';
 
 const formatPrice = (price: string) => {
@@ -13,14 +16,25 @@ const formatPrice = (price: string) => {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
 };
 
-const formatOperationType = (op: string) => {
-  const map: Record<string, string> = { sale: 'Venta', rent: 'Renta', both: 'Venta/Renta' };
-  return map[op] || op;
-};
-
 export const PropertyList = () => {
   const [properties, setProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [operationCatalog, setOperationCatalog] = useState<ItemResponse[]>([]);
+
+  useEffect(() => {
+    GetPropertyOperationTypes()
+      .then((res: any) => {
+        if (!res?.data) return;
+        const items = res.data.items || res.data.catalogItems || [];
+        setOperationCatalog(items);
+      })
+      .catch((err) => console.error('Error fetching operation catalog:', err));
+  }, []);
+
+  const formatOperationType = (op: any) => {
+    if (typeof op === 'object' && op !== null) return op.name || '-';
+    return resolveCatalogDisplayValue(op, operationCatalog) || op || '-';
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -42,7 +56,7 @@ export const PropertyList = () => {
     <section className='w-full mt-6 rounded-lg bg-white p-5 shadow-md'>
       <div className='flex items-center justify-between mb-4'>
         <h2 className='font-[600] text-xl'>Lista de Propiedades</h2>
-        <Link href="/property" className='text-sm text-primary_color font-medium hover:underline'>Ver todas</Link>
+        <Link href="/property" className='px-4 py-2 bg-primary_color text-white rounded-lg font-medium text-sm shadow-md hover:opacity-90 transition-opacity'>Ver todas</Link>
       </div>
 
       {isLoading ? (
@@ -52,12 +66,12 @@ export const PropertyList = () => {
       ) : properties.length === 0 ? (
         <p className="text-center text-gray-400 py-12 text-sm">No hay propiedades registradas</p>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="w-full overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <table className="w-full text-left border-collapse overflow-hidden">
             <thead>
-              <tr className="border-b border-slate-100">
+              <tr className="border-b border-gray-200 bg-slate-100">
                 {['Propiedad', 'Tipo', 'Operación', 'Precio', 'Estatus', 'Publicación', 'Fecha alta'].map(h => (
-                  <th key={h} className="py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  <th key={h} className="py-2 px-3 text-xs font-medium text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>

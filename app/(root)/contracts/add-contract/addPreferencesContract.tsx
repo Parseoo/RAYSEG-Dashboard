@@ -1,19 +1,20 @@
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useClient } from '../../clients/clientContext';
-
+import { normalizeInterest } from '@/lib/utils/catalog';
 
 export const AddPreferencesClient = () => {
 
     const { state, updateField, mainInterestTypes, targetPropertyTypes, paymentMethodTypes } = useClient();
 
-       const propertyTypeOptions = targetPropertyTypes.map(item => ({
+    const propertyTypeOptions = targetPropertyTypes.map(item => ({
         label: item.name,
         value: (item.value || item.name).toLowerCase()
     }));
 
-        const isRenta = state.interes_principal === 'renta' || state.interes_principal === 'quiero_rentar';
-    const isVenta = state.interes_principal === 'venta' || state.interes_principal === 'quiero_vender';
-    const isCompra = state.interes_principal === 'compra' || state.interes_principal === 'quiero_comprar';
+    const currentInterest = normalizeInterest((state as any).interes || state.main_interest);
+    const isRenta = currentInterest === 'renta' || currentInterest === 'quiero_rentar' || currentInterest === 'rent';
+    const isVenta = currentInterest === 'venta' || currentInterest === 'quiero_vender' || currentInterest === 'sale';
+    const isCompra = currentInterest === 'compra' || currentInterest === 'quiero_comprar' || currentInterest === 'buy';
 
     // Construcción dinámica de inputs según el interés
     const baseInputs: InputFieldConfig[] = [
@@ -33,13 +34,10 @@ export const AddPreferencesClient = () => {
 
     let specificInputs: InputFieldConfig[] = [];
 
-    // The id used in contracts seems to be 'interes', mapping it back to context
-    const currentInterest = (state as any).interes || state.interes_principal;
-
     if (currentInterest) {
         specificInputs.push({
             type: 'select',
-            id: 'tipo_propiedad',
+            id: 'target_property_type',
             label: 'Tipo de propiedad objetivo',
             placeholder: 'Seleccione un tipo',
             group: 1,
@@ -50,14 +48,14 @@ export const AddPreferencesClient = () => {
         specificInputs.push(
             { 
                 type: 'number', 
-                id: 'presupuesto_min', 
+                id: 'budget_min', 
                 label: 'Presupuesto mínimo', 
                 placeholder: 'Ej: 1,000,000', 
                 group: 2 
             },
             { 
                 type: 'number', 
-                id: 'presupuesto_max', 
+                id: 'budget_max', 
                 label: 'Presupuesto máximo', 
                 placeholder: 'Ej: 3,500,000', 
                 group: 2 
@@ -68,21 +66,21 @@ export const AddPreferencesClient = () => {
         specificInputs.push(
             {
                 type: 'text',
-                id: 'recamaras',
+                id: 'bedrooms',
                 label: 'Recámaras',
                 placeholder: 'Ej: 2 a 4 recamaras',
                 group: 3
             },
             { 
                 type: 'number', 
-                id: 'banos', 
+                id: 'bathrooms', 
                 label: 'Baños', 
                 placeholder: 'Ej: 2', 
                 group: 3 
             },
             { 
                 type: 'number', 
-                id: 'estacionamientos', 
+                id: 'parking_spaces', 
                 label: 'Estacionamientos', 
                 placeholder: 'Ej: 1', 
                 group: 3 
@@ -129,7 +127,7 @@ export const AddPreferencesClient = () => {
         if (currentInterest === 'compra' || currentInterest === 'quiero_comprar') {
             specificInputs.push({
                 type: 'select',
-                id: 'forma_pago',
+                id: 'payment_method',
                 label: 'Forma de pago',
                 placeholder: 'Seleccione una opción',
                 group: 6,

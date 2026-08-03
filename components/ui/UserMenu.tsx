@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useRef } from 'react';
 import { User, LogOut, Settings } from 'lucide-react';
@@ -81,7 +81,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
                     <span className="text-sm font-medium text-gray-700">Mi perfil</span>
                 </button>
 
-                <button onClick={() => handleNavigation('/settings')} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-all text-left">
+                <button onClick={() => handleNavigation('/settings/users-permissions')} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-all text-left">
                     <Settings className="w-5 h-5 text-gray-600" />
                     <span className="text-sm font-medium text-gray-700">Configuración</span>
                 </button>

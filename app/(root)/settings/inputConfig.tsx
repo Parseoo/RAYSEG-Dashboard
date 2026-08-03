@@ -59,7 +59,7 @@ export const inputsSecurity: InputFieldConfig[] = [
     {
         type: 'password',
         id: 'currentPassword',
-        label: 'Contraseña actual',
+        label: 'Contraseña anterior',
         placeholder: '********',
         group: 1
     },
@@ -127,18 +127,7 @@ export const inputsUserPermissions: InputFieldConfig[] = [
             { label: 'Asesor de Ventas', value: 'venta' },
             { label: 'Asesor de Renta', value: 'renta' },
             { label: 'Administrador/a', value: 'admin' },
-            { label: 'Gerente / Dueño', value: 'editor' } 
-        ]
-    },
-    {
-        type: 'select',
-        id: 'is_active',
-        label: 'Estatus',
-        placeholder: 'Seleccione el estatus',
-        group: 3,
-        options: [
-            { label: 'Activo', value: true },
-            { label: 'Inactivo', value: false }
+            { label: 'Gerente / Dueño', value: 'editor' }
         ]
     },
     {
@@ -157,13 +146,15 @@ export const inputsPassword: InputFieldConfig[] = [
         id: 'password',
         label: 'Contraseña',
         placeholder: '********',
-        group: 1
+        group: 1,
+        required: true
     },
     {
         type: 'password',
         id: 'password_confirm',
         label: 'Confirmar contraseña',
         placeholder: '********',
-        group: 1
+        group: 1,
+        required: true
     },
 ];

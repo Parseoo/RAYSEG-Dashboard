@@ -95,7 +95,7 @@ export const SecuritySettings = () => {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSaving}
-                    className="bg-primary_color text-white h-[40px] px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium text-sm disabled:opacity-60"
+                    className="bg-primary_color text-white h-[40px] px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium shadow-md text-sm disabled:opacity-60"
                 >
                     <Save size={16} />
                     {isSaving ? 'Guardando...' : 'Actualizar contraseña'}

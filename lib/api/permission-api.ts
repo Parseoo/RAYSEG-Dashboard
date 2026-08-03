@@ -49,6 +49,11 @@ export async function GetListPermissions() {
     return httpClient.get<any>(`/api/rbac/permissions`);
 }
 
+// Listar todos los permisos disponibles desde auth_permission, agrupados por app_label
+export async function GetListPermissionsGrouped() {
+    return httpClient.get<any>(`/api/rbac/permissions/grouped`);
+}
+
 // Verificar los permisos del usuario actual
 export async function GetUserPermissions() {
     return httpClient.get<any>(`/api/rbac/permissions/check`);

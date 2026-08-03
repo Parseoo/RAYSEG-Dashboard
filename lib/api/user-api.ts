@@ -9,7 +9,7 @@ export interface UserListQuery {
     perPage?: number;
 }
 
-// Obtener todos los usuarios
+// Obtener la lista de usuarios
 export async function GetAllUsers(params?: UserListQuery) {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
@@ -27,7 +27,7 @@ export async function CreateUser(data: UserForm) {
     return httpClient.post<ResponseMessage>('/api/users', data);
 }
 
-export async function EditUser(user_id: number, data: UserForm) {
+export async function EditUser(user_id: number, data: Partial<UserForm>) {
     return httpClient.patch<ResponseMessage>(`/api/users/${user_id}`, data);
 }
 
@@ -41,7 +41,17 @@ export async function DeleteUser(user_id: number) {
     return httpClient.delete<ResponseMessage>(`/api/users/${user_id}`);
 }
 
-// Subir foto de perfil
-export async function UploadProfilePicture(user_id: number, image: string) {
-    return httpClient.post<ResponseMessage>(`/api/users/${user_id}/profile-picture`, { image });
+export interface UploadProfilePictureRequest {
+    image_data: string;
+}
+
+// Subir foto de perfil para un usuario usando base64 (solo administradores)
+export async function UploadProfilePicture(
+    user_id: number | string,
+    data: UploadProfilePictureRequest | { image_data: string } | string
+) {
+    const payload = typeof data === 'string'
+        ? { image_data: data }
+        : data;
+    return httpClient.post<UserResponse>(`/api/users/${user_id}/profile-picture`, payload);
 }

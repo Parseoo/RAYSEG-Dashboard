@@ -6,12 +6,30 @@ import { LucideIcon } from "lucide-react";
 
 // List of icons to show in the selector
 export const AVAILABLE_ICONS: (keyof typeof LucideIcons)[] = [
-    "Home", "Key", "Building", "Building2", "Landmark", "MapPin",
-    "User", "Users", "Phone", "Mail", "Search", "Heart",
-    "Star", "Check", "CheckCircle", "CirclePlus", "Plus",
-    "Shield", "Gavel", "Zap", "Hammer", "Truck", "Briefcase",
-    "Calendar", "DollarSign", "Wallet", "Handshake", "Scaling",
-    "Pencil", "FileText", "LayoutDashboard", "Layers"
+    "Home",         // Casa / Propiedad
+    "Building",     // Edificio / Departamento
+    "Building2",    // Condominio / Complejo
+    "Warehouse",    // Bodega / Industrial
+    "Store",        // Local Comercial / Tienda
+    "MapPin",       // Ubicación
+    "Bed",          // Habitación / Cama
+    "BedDouble",    // Recámara Principal
+    "Bath",         // Baño
+    "Car",          // Estacionamiento / Cochera
+    "Sofa",         // Amueblado / Sala
+    "Utensils",     // Cocina / Comedor
+    "Wifi",         // Internet / Conectividad
+    "Tv",           // TV / Cable
+    "Trees",        // Jardín / Áreas Verdes
+    "Waves",        // Alberca / Piscina
+    "Dumbbell",     // Gimnasio / Gym
+    "PawPrint",     // Acepta Mascotas / Pet-friendly
+    "Shield",       // Seguridad / Vigilancia 24-7
+    "Wind",         // Aire Acondicionado / Ventilación
+    "Flame",        // Calefacción / Gas
+    "Key",          // Control de Acceso / Llave
+    "Sparkles",     // Acabados de Lujo / Amenidades Premium
+    "Compass"       // Orientación / Dirección
 ];
 
 interface IconSelectorProps {

@@ -82,7 +82,7 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
             </button>
             <button
               onClick={handleApply}
-              className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+              className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-opacity font-medium shadow-md"
             >
               Filtrar
             </button>

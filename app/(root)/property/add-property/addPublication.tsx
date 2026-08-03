@@ -9,10 +9,10 @@ import { useProperty } from '../propertyContext';
 import { statusProperty } from '../../../../components/SelectProperties.data';
 
 export const AddPublicationProperty = () => {
-    const { state, updateField, statusCatalog } = useProperty();
+    const { state, updateField, publicationStatusCatalog } = useProperty();
 
     const statusPubliProperty = inputsPublicationProperty.map(input => {
-        const dynamicStatusCatalog = statusCatalog || [];
+        const dynamicStatusCatalog = publicationStatusCatalog || [];
         if (input.id === 'status_publication' && dynamicStatusCatalog.length > 0) {
             return {
                 ...input,
@@ -34,13 +34,13 @@ export const AddPublicationProperty = () => {
 
     return (
         <div className='w-full max-h-max rounded-lg p-5 mb-9 border'>
-            <h1 className='font-[500] text-lg'>Publicación</h1>
+            <h1 className='font-[500] text-lg'>Configuración de la publicación</h1>
             <p className='text-md text-gray-500'>Estatus de la publicación y descripción</p>
             <div className='mt-4'><DynamicInputs inputs={statusPubliProperty} withBgWhite={true} /></div>
             <button onClick={() => updateField('is_featured', !state.is_featured)} className='p-1.5 bg-white rounded-md transition-colors mt-3'>
                 <Star size={16} className='text-amber-400' fill={state.is_featured ? '#fbbf24' : 'none'} />
             </button> <span className='text-sm'>Propiedad destacada</span>
-            <p className='text-xs text-gray-500 ml-8'>Aparecera en la seccion principal de la web.</p>
+            <p className='text-xs text-gray-500 ml-8'>Destaca esta propiedad para mostrarla en la página principal del sitio web.</p>
         </div>
     )
 }

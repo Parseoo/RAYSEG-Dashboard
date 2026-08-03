@@ -1,23 +1,62 @@
 "use client"
 
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { AddFooter } from './addFooter';
-import { GetSettings, UpdateSettings } from '@/lib/api/config-api';
+import { GetFooter, UpdateFooter } from '@/lib/api/web-content-api';
 import { showToast } from 'nextjs-toast-notify';
+import { FooterResponse } from '@/lib/@type-web';
 
 const ContentWebFooterPage = () => {
     const [settings, setSettings] = useState<any>({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Mapeo de campos del API a campos del input
+    const apiToInputMap: Record<string, string> = {
+        physical_address: 'address',
+        primary_phone: 'phone',
+        secondary_phone: 'phoneSecondary',
+        email: 'email',
+        business_hours: 'businessHours',
+        facebook_url: 'facebook',
+        instagram_url: 'instagram',
+        linkedin_url: 'linkedin',
+        whatsapp_number: 'whatsapp',
+        footer_description: 'textFooter'
+    };
+
+    // Mapeo de campos del input al API
+    const inputToApiMap: Record<string, string> = {
+        address: 'physical_address',
+        phone: 'primary_phone',
+        phoneSecondary: 'secondary_phone',
+        email: 'email',
+        businessHours: 'business_hours',
+        facebook: 'facebook_url',
+        instagram: 'instagram_url',
+        linkedin: 'linkedin_url',
+        whatsapp: 'whatsapp_number',
+        textFooter: 'footer_description'
+    };
+
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await GetSettings();
-                const data = res.data?.data || res.data || {};
-                setSettings(data);
+                const res = await GetFooter();
+                const data = res.data || {};
+                // Convertir campos del API a campos del input
+                const mappedData: any = {};
+                Object.entries(data).forEach(([key, value]) => {
+                    const inputKey = apiToInputMap[key];
+                    if (inputKey) {
+                        mappedData[inputKey] = value;
+                    } else {
+                        mappedData[key] = value;
+                    }
+                });
+                setSettings(mappedData);
             } catch (error) {
                 console.error("Error fetching settings:", error);
                 showToast.error("Error al cargar la configuración");
@@ -35,7 +74,17 @@ const ContentWebFooterPage = () => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await UpdateSettings(settings);
+            // Convertir campos del input a campos del API
+            const apiData: any = {};
+            Object.entries(settings).forEach(([key, value]) => {
+                const apiKey = inputToApiMap[key];
+                if (apiKey) {
+                    apiData[apiKey] = value;
+                } else {
+                    apiData[key] = value;
+                }
+            });
+            await UpdateFooter(apiData);
             showToast.success("Configuración actualizada correctamente");
         } catch (error) {
             console.error("Error saving settings:", error);
@@ -78,15 +127,16 @@ const ContentWebFooterPage = () => {
                         <div className="flex flex-col sm:flex-row items-center gap-4 justify-end w-full">
                             <button
                                 type="button"
-                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium">
-                                Cancelar
+                                onClick={() => setSettings({})}
+                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md">
+                                <X size={20} /> Limpiar campos
                             </button>
 
                             <button
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium disabled:opacity-50">
+                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50">
                                 {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />} 
                                 Guardar
                             </button>

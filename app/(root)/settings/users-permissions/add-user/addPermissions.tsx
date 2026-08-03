@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ChevronDown, X, Check, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import { UserForm } from '@/lib/@type';
-import { GetListPermissions } from '@/lib/api/permission-api';
+import { GetListPermissionsGrouped } from '@/lib/api/permission-api';
 import { Permission } from '@/lib/@type-permission';
 
 interface PermissionSection {
@@ -16,58 +16,89 @@ interface PermissionSection {
 }
 
 const SECTION_METADATA: Record<string, { title: string, description: string, group?: string, order?: number }> = {
-    'reportes': { 
-        title: 'Reportes / Dashboard', 
-        description: 'Visualización de estadísticas, métricas y reportes del sistema.',
-        group: 'ANÁLISIS Y CONTROL',
+    'settings': {
+        title: 'Configuración',
+        description: 'Gestión de Settings y configuración general del sistema.',
+        group: 'CONFIGURACIÓN',
         order: 1
     },
-    'property': { 
-        title: 'Propiedades', 
-        description: 'Listado, creación y gestión de inmuebles.',
-        group: 'GESTIÓN INMOBILIARIA',
+    'reportes': {
+        title: 'Reportes / Dashboard',
+        description: 'Visualización de estadísticas, métricas y reportes del sistema.',
+        group: 'ANÁLISIS Y CONTROL',
         order: 2
     },
-    'propertyimage': { 
-        title: 'Imágenes de propiedades', 
-        description: 'Carga, cambio y eliminación de fotos.',
+    'propiedades': {
+        title: 'Propiedades',
+        description: 'Listado, creación y gestión de inmuebles.',
         group: 'GESTIÓN INMOBILIARIA',
         order: 3
     },
-    'client': { 
-        title: 'Clientes', 
-        description: 'Gestión de clientes, contactos y preferencias.',
+    'imagenes-propiedades': {
+        title: 'Imágenes de propiedades',
+        description: 'Carga, cambio y eliminación de fotos.',
         group: 'GESTIÓN INMOBILIARIA',
         order: 4
     },
-    'agent': { 
-        title: 'Agentes', 
-        description: 'Gestión de agentes inmobiliarios y sus datos.',
+    'clientes': {
+        title: 'Clientes',
+        description: 'Gestión de clientes, contactos y preferencias.',
         group: 'GESTIÓN INMOBILIARIA',
         order: 5
     },
-    'contract': { 
-        title: 'Contratos', 
-        description: 'Gestión de contratos de arrendamiento y venta.',
+    'agentes': {
+        title: 'Agentes',
+        description: 'Gestión de agentes inmobiliarios y sus datos.',
         group: 'GESTIÓN INMOBILIARIA',
         order: 6
     },
-    'lead': { 
-        title: 'Leads / Contacto', 
-        description: 'Mensajes recibidos desde la web.',
+    'contratos': {
+        title: 'Contratos',
+        description: 'Gestión de contratos de arrendamiento y venta.',
         group: 'GESTIÓN INMOBILIARIA',
         order: 7
     },
-    // Contenido Web (Ajustado a posibles nombres de modelo)
-    'webcontenthome': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
-    'webcontentservices': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
-    'webcontentlocation': { title: 'Contenido Web - Localización', description: 'Gestión de ubicaciones y zonas de cobertura.', group: 'PERMISOS EN CONTENIDO WEB', order: 12 },
-    'webcontentabout': { title: 'Contenido Web - Sobre Nosotros', description: 'Edición de la sección "Sobre Nosotros".', group: 'PERMISOS EN CONTENIDO WEB', order: 13 },
-    'webcontentfooter': { title: 'Contenido Web - Footer', description: 'Edición del pie de página y enlaces.', group: 'PERMISOS EN CONTENIDO WEB', order: 14 },
-    'webcontentlegal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
-    // Configuración
+    'leads-contacto': {
+        title: 'Leads / Contacto',
+        description: 'Mensajes recibidos desde la web.',
+        group: 'GESTIÓN INMOBILIARIA',
+        order: 8
+    },
+    'contenido-web-home': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
+    'contenido-web-servicios': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
+    'contenido-web-localizacion': { title: 'Contenido Web - Localización', description: 'Gestión de ubicaciones y zonas de cobertura.', group: 'PERMISOS EN CONTENIDO WEB', order: 12 },
+    'contenido-web-sobre-nosotros': { title: 'Contenido Web - Sobre Nosotros', description: 'Edición de la sección "Sobre Nosotros".', group: 'PERMISOS EN CONTENIDO WEB', order: 13 },
+    'contenido-web-footer': { title: 'Contenido Web - Footer', description: 'Edición del pie de página y enlaces.', group: 'PERMISOS EN CONTENIDO WEB', order: 14 },
+    'contenido-web-legal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
+    // API keys for WebContent (underscore format)
+    'webcontent': { title: 'Contenido Web', description: 'Gestión de contenido de la página web.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
+    'webcontent_home': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
+    'webcontent_servicios': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
+    'webcontent_localizacion': { title: 'Contenido Web - Localización', description: 'Gestión de ubicaciones y zonas de cobertura.', group: 'PERMISOS EN CONTENIDO WEB', order: 12 },
+    'webcontent_sobre_nosotros': { title: 'Contenido Web - Sobre Nosotros', description: 'Edición de la sección "Sobre Nosotros".', group: 'PERMISOS EN CONTENIDO WEB', order: 13 },
+    'webcontent_footer': { title: 'Contenido Web - Footer', description: 'Edición del pie de página y enlaces.', group: 'PERMISOS EN CONTENIDO WEB', order: 14 },
+    'webcontent_legal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
+    'webcontent_privacidad': { title: 'Contenido Web - Aviso de Privacidad', description: 'Gestión del aviso de privacidad.', group: 'PERMISOS EN CONTENIDO WEB', order: 16 },
+    'webcontent_terminos': { title: 'Contenido Web - Términos y Condiciones', description: 'Gestión de términos y condiciones.', group: 'PERMISOS EN CONTENIDO WEB', order: 17 },
+    'ajustes-usuarios': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'mi-perfil': { title: 'Mi Perfil', description: 'Gestión de datos personales y configuración de cuenta.', group: 'CONFIGURACIÓN', order: 21 },
+    // Underscore versions from API
+    'property': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
+    'client': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
+    'agent': { title: 'Agentes', description: 'Gestión de agentes inmobiliarios y sus datos.', group: 'GESTIÓN INMOBILIARIA', order: 6 },
+    'contract': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
+    'lead': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
+    'propertyimage': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
     'user': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
-    'profile': { title: 'Mi Perfil', description: 'Gestión de datos personales y configuración de cuenta.', group: 'CONFIGURACIÓN', order: 21 },
+    // Plural forms from API
+    'clients': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
+    'properties': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
+    'agents': { title: 'Agentes', description: 'Gestión de agentes inmobiliarios y sus datos.', group: 'GESTIÓN INMOBILIARIA', order: 6 },
+    'contracts': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
+    'leads': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
+    'propertyimages': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
+    'users': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'reports': { title: 'Reportes / Dashboard', description: 'Visualización de estadísticas, métricas y reportes del sistema.', group: 'ANÁLISIS Y CONTROL', order: 2 },
 };
 
 const getTagColor = (label: string) => {
@@ -248,80 +279,140 @@ interface AddPermissionsProps {
     setUser: React.Dispatch<React.SetStateAction<UserForm>>;
     isLoading: boolean;
     withoutCard?: boolean;
+    groupedPermissions?: Record<string, any>;
+    isFetchingPermissions?: boolean;
 }
 
-function AddPermissions({ user, setUser, isLoading, withoutCard = false }: AddPermissionsProps) {
+function buildPermissionSections(groupedData: Record<string, any>): PermissionSection[] {
+    console.log("buildPermissionSections keys:", Object.keys(groupedData));
+    const dynamicSections: PermissionSection[] = Object.keys(groupedData).map(modelName => {
+        const group = groupedData[modelName];
+        // Support both { permissions: [...] } format and direct array [...]
+        const permissionsList = Array.isArray(group)
+            ? group
+            : (group.permissions || []);
+
+        // Prioritize SECTION_METADATA translations over API's title/description
+        const sectionEntry = SECTION_METADATA[modelName];
+        const metadata = sectionEntry ? {
+            title: sectionEntry.title,
+            description: sectionEntry.description,
+            group: sectionEntry.group || 'OTROS PERMISOS',
+            order: sectionEntry.order || 99
+        } : {
+            title: modelName.charAt(0).toUpperCase() + modelName.slice(1).replace(/-/g, ' ').replace(/_/g, ' '),
+            description: group.description || `Gestión de ${modelName}.`,
+            group: 'OTROS PERMISOS',
+            order: 99
+        };
+
+        const actions: { id: string; label: string; codename: string }[] = [];
+        permissionsList.forEach((p: any) => {
+            const parts = p.codename.split('_');
+            const action = parts[0];
+
+            let label = p.name || p.codename;
+            if (action === 'view') label = 'Ver lista / detalle';
+            else if (action === 'add') label = 'Crear';
+            else if (action === 'change') label = 'Editar';
+            else if (action === 'delete') label = 'Eliminar';
+            else if (action === 'export') label = 'Exportar';
+            else if (action === 'upload') label = 'Subir';
+            else if (action === 'assign') label = 'Asignar';
+            else if (action === 'list') label = 'Ver lista';
+            else if (action === 'retrieve') label = 'Ver detalle';
+            else if (action === 'create') label = 'Crear';
+            else if (action === 'update') label = 'Actualizar';
+            else if (action === 'partial_update') label = 'Editar parcialmente';
+            else if (action === 'destroy') label = 'Eliminar';
+            else if (action === 'read') label = 'Leer';
+            else if (action === 'write') label = 'Escribir';
+
+            const actionId = action === 'view' || action === 'list' || action === 'retrieve' ? 'ver-lista' :
+                            action === 'add' || action === 'create' ? 'crear' :
+                            action === 'change' || action === 'update' || action === 'partial_update' ? 'editar' :
+                            action === 'delete' || action === 'destroy' ? 'eliminar' :
+                            action === 'export' ? 'exportar' :
+                            action === 'upload' ? 'subir' :
+                            action === 'assign' ? 'asignar' :
+                            action === 'read' ? 'leer' :
+                            action === 'write' ? 'escribir' : action;
+
+            actions.push({ id: actionId, label, codename: p.codename });
+        });
+
+        const seen = new Set<string>();
+        const uniqueActions = actions.filter(a => {
+            if (seen.has(a.id)) return false;
+            seen.add(a.id);
+            return true;
+        });
+
+        return {
+            id: modelName,
+            title: metadata.title,
+            description: metadata.description,
+            group: metadata.group,
+            actions: uniqueActions,
+            order: metadata.order || 99
+        };
+    });
+
+    dynamicSections.sort((a, b) => (a.order || 99) - (b.order || 99));
+    return dynamicSections;
+}
+
+function AddPermissions({ user, setUser, isLoading, withoutCard = false, groupedPermissions, isFetchingPermissions: externalFetching }: AddPermissionsProps) {
     const [allSystemPermissions, setAllSystemPermissions] = useState<Permission[]>([]);
     const [isFetchingPermissions, setIsFetchingPermissions] = useState(true);
     const [sections, setSections] = useState<PermissionSection[]>([]);
 
     useEffect(() => {
+        if (groupedPermissions && Object.keys(groupedPermissions).length > 0) {
+            const allPerms: Permission[] = [];
+            Object.keys(groupedPermissions).forEach(modelName => {
+                const group = groupedPermissions[modelName];
+                const permissionsList = Array.isArray(group) ? group : (group.permissions || []);
+                permissionsList.forEach((p: any) => {
+                    allPerms.push({
+                        id: p.id,
+                        name: p.name,
+                        codename: p.codename,
+                        model: modelName,
+                        is_system_role: p.is_system_role || false
+                    });
+                });
+            });
+            setAllSystemPermissions(allPerms);
+            const builtSections = buildPermissionSections(groupedPermissions);
+            setSections(builtSections);
+            setIsFetchingPermissions(false);
+            return;
+        }
+
         const fetchAllPermissions = async () => {
             try {
                 setIsFetchingPermissions(true);
-                const res = await GetListPermissions();
-                
-                const extractData = (res: any) => {
-                    if (!res?.data) return [];
-                    return res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
-                };
+                const res = await GetListPermissionsGrouped();
+                const groupedData = res.data || {};
 
-                const perms = extractData(res);
-                setAllSystemPermissions(perms);
-
-                // Group permissions by model
-                const permsByModel: Record<string, Permission[]> = {};
-                perms.forEach((p: Permission) => {
-                    if (!permsByModel[p.model]) permsByModel[p.model] = [];
-                    permsByModel[p.model].push(p);
-                });
-
-                // Build sections dynamically from models found in API
-                const dynamicSections: PermissionSection[] = Object.keys(permsByModel).map(modelName => {
-                    const metadata = SECTION_METADATA[modelName] || {
-                        title: modelName.charAt(0).toUpperCase() + modelName.slice(1),
-                        description: `Gestión de ${modelName}.`,
-                        group: 'OTROS PERMISOS',
-                        order: 99
-                    };
-
-                    const modelPermissions = permsByModel[modelName];
-                    const actions = modelPermissions.map((p: Permission) => {
-                        const parts = p.codename.split('_');
-                        const action = parts[0];
-                        
-                        // Map labels to friendly names
-                        let label = p.name;
-                        if (action === 'view') label = 'Ver lista / detalle';
-                        else if (action === 'add') label = 'Crear';
-                        else if (action === 'change') label = 'Editar';
-                        else if (action === 'delete') label = 'Eliminar';
-                        
-                        const actionId = action === 'view' ? 'ver-lista' :
-                                        action === 'add' ? 'crear' :
-                                        action === 'change' ? 'editar' :
-                                        action === 'delete' ? 'eliminar' : action;
-
-                        return { id: actionId, label: label };
+                const allPerms: Permission[] = [];
+                Object.keys(groupedData).forEach(modelName => {
+                    const group = groupedData[modelName];
+                    const permissionsList = Array.isArray(group) ? group : (group.permissions || []);
+                    permissionsList.forEach((p: any) => {
+                        allPerms.push({
+                            id: p.id,
+                            name: p.name,
+                            codename: p.codename,
+                            model: modelName,
+                            is_system_role: p.is_system_role || false
+                        });
                     });
-
-                    // Deduplicate actions
-                    const uniqueActions = Array.from(new Map(actions.map(item => [item.id, item])).values());
-
-                    return {
-                        id: modelName,
-                        title: metadata.title,
-                        description: metadata.description,
-                        group: metadata.group,
-                        actions: uniqueActions,
-                        order: metadata.order || 99
-                    };
                 });
-
-                // Sort sections by order
-                dynamicSections.sort((a, b) => (a.order || 99) - (b.order || 99));
-
-                setSections(dynamicSections);
+                setAllSystemPermissions(allPerms);
+                const builtSections = buildPermissionSections(groupedData);
+                setSections(builtSections);
             } catch (error) {
                 console.error("Error fetching permissions:", error);
             } finally {
@@ -330,36 +421,19 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false }: AddPe
         };
 
         fetchAllPermissions();
-    }, []);
+    }, [groupedPermissions]);
+
+    const hasInitializedPermissions = React.useRef(false);
 
     useEffect(() => {
-        // Initialize permissions if empty
-        if (!user.permissions || Object.keys(user.permissions).length === 0) {
-            const initialPermissions: Record<string, boolean | string[]> = {
-                'reportes': true,
-                'propiedades': true,
-                'imagenes-propiedades': true,
-                'clientes': true,
-                'agentes': true,
-                'contratos': true,
-                'leads-contacto': true,
-                'contenido-web-home': false,
-                'contenido-web-servicios': false,
-                'contenido-web-localizacion': false,
-                'contenido-web-sobre-nosotros': false,
-                'contenido-web-footer': false,
-                'contenido-web-legal': false,
-                'mi-perfil': true,
-                'ajustes-usuarios': false
-            };
+        // Initialize permissions only once when sections are loaded and permissions are empty
+        if (!hasInitializedPermissions.current && sections.length > 0 && (!user.permissions || Object.keys(user.permissions).length === 0)) {
+            hasInitializedPermissions.current = true;
+            const initialPermissions: Record<string, boolean | string[]> = {};
 
             sections.forEach(section => {
-                if (initialPermissions[section.id] === true) {
-                    initialPermissions[`${section.id}_actions`] = [
-                        ...section.actions.map(a => a.id),
-                        ...(section.subActions?.map(a => a.id) || [])
-                    ];
-                }
+                initialPermissions[section.id] = false;
+                initialPermissions[`${section.id}_actions`] = [];
             });
 
             setUser((prev: UserForm) => ({ ...prev, permissions: initialPermissions }));
@@ -411,68 +485,78 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false }: AddPe
                         <p className="text-slate-500 font-medium">Cargando permisos del sistema...</p>
                     </div>
                 ) : (
-                    <div className='bg-slate-50 w-full rounded-xl p-6 border border-slate-100 shadow-sm mb-10'>
-                        <div className='mb-6'>
-                            <h2 className='text-lg font-bold text-slate-800 tracking-tight'>Módulos y Pantallas Visibles</h2>
-                            <p className='text-sm text-slate-500'>Activa los módulos que el usuario podrá ver en el sistema.</p>
-                        </div>
+                    <div className='space-y-4'>
+                        {!isFetchingPermissions && sections.map((section) => {
+                            const isEnabled = user.permissions?.[section.id] ?? false;
+                            const selectedActions = (user.permissions?.[`${section.id}_actions`] as string[]) ?? [];
 
-                        <div className='bg-white rounded-lg p-6 border border-slate-200 shadow-sm'>
-                            <div className='flex flex-wrap gap-3'>
-                                {sections.map(section => {
-                                    const isEnabled = user.permissions?.[section.id] ?? false;
-                                    return (
-                                        <div 
-                                            key={section.id}
-                                            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all cursor-pointer select-none ${
-                                                isEnabled 
-                                                ? 'bg-blue-50 border-blue-200 text-blue-700 ring-2 ring-blue-100 shadow-sm' 
-                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300'
-                                            }`}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                toggleSection(section.id, !isEnabled);
-                                            }}
-                                        >
-                                            <div className="pointer-events-none">
-                                                <Switch 
-                                                    checked={isEnabled as boolean} 
-                                                    onChange={() => {}} // Handled by parent div
+                            return (
+                                <div
+                                    key={section.id}
+                                    className='bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all'
+                                >
+                                    {/* Module Header */}
+                                    <div
+                                        className={`flex items-center justify-between px-5 py-4 cursor-pointer transition-all ${
+                                            isEnabled
+                                            ? 'bg-blue-50 border-b border-blue-100'
+                                            : 'bg-slate-50 hover:bg-slate-100'
+                                        }`}
+                                        onClick={() => toggleSection(section.id, !isEnabled)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <span onClick={(e) => e.stopPropagation()}>
+                                                <Switch
+                                                    checked={isEnabled as boolean}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSection(section.id, !isEnabled);
+                                                    }}
                                                 />
+                                            </span>
+                                            <div>
+                                                <h3 className={`text-sm font-bold ${isEnabled ? 'text-blue-700' : 'text-slate-600'}`}>
+                                                    {section.title}
+                                                </h3>
+                                                <p className='text-xs text-slate-400'>{section.description}</p>
                                             </div>
-                                            <span className='text-xs font-bold whitespace-nowrap'>{section.title}</span>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                                        <ChevronDown
+                                            size={18}
+                                            className={`text-slate-400 transition-transform ${isEnabled ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+
+                                    {/* Permissions Panel - Only show when enabled */}
+                                    {isEnabled && (
+                                        <div className='p-5 bg-slate-50 border-t border-slate-100'>
+                                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de gestión</p>
+                                            <MultiSelectPermissions
+                                                options={section.actions}
+                                                selectedValues={selectedActions.filter(a => section.actions.some(sa => sa.id === a))}
+                                                onChange={(vals) => handleActionsChange(section.id, vals)}
+                                            />
+
+                                            {section.subActions && (
+                                                <div className='mt-4 pt-4 border-t border-slate-200'>
+                                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de publicación / web</p>
+                                                    <MultiSelectPermissions
+                                                        options={section.subActions}
+                                                        selectedValues={selectedActions.filter(a => section.subActions?.some(sa => sa.id === a))}
+                                                        onChange={(vals) => {
+                                                            const mainActions = selectedActions.filter(a => section.actions.some(sa => sa.id === a));
+                                                            handleActionsChange(section.id, [...mainActions, ...vals]);
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
-
-                <div className='space-y-8'>
-                    {!isFetchingPermissions && sections.filter(section => user.permissions?.[section.id]).map((section, index, filteredArray) => {
-                        const showGroupHeader = section.group && (index === 0 || filteredArray[index - 1].group !== section.group);
-                        const isEnabled = user.permissions?.[section.id] ?? false;
-                        const selectedActions = (user.permissions?.[`${section.id}_actions`] as string[]) ?? [];
-                        
-                        return (
-                            <React.Fragment key={section.id}>
-                                {showGroupHeader && (
-                                    <div className="pt-6 mb-4 flex items-center gap-4">
-                                        <h2 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] whitespace-nowrap">{section.group}</h2>
-                                        <div className="h-px w-full bg-slate-100" />
-                                    </div>
-                                )}
-                                <PermissionCard
-                                    section={section}
-                                    isEnabled={isEnabled as boolean}
-                                    selectedActions={selectedActions}
-                                    onActionsChange={handleActionsChange}
-                                />
-                            </React.Fragment>
-                        );
-                    })}
-                </div>
             </div>
         </div>
     )

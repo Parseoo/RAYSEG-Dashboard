@@ -21,25 +21,16 @@ export const ProfessionalProfile = ({ user }: ProfessionalProfileProps) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">12</div>
+                    <div className="text-2xl font-bold text-blue-600">{user?.properties_created_count}</div>
                     <div className="text-xs text-gray-500 font-medium">Propiedades Activas</div>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">45</div>
-                    <div className="text-xs text-gray-500 font-medium">Leads Totales</div>
+                    <div className="text-2xl font-bold text-blue-600">{user?.clients_created_count}</div>
+                    <div className="text-xs text-gray-500 font-medium">Clientes Potenciales</div>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
                     <div className="text-2xl font-bold text-blue-600">4.9</div>
                     <div className="text-xs text-gray-500 font-medium">Calificación</div>
-                </div>
-            </div>
-
-            <div className="mt-auto">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Certificaciones</h3>
-                <div className="flex flex-wrap gap-2">
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-medium">AMPI Certificado</span>
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-medium">Luxury Real Estate</span>
-                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-medium">Gestión Hipotecaria</span>
                 </div>
             </div>
         </div>

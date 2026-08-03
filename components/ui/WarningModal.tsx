@@ -67,7 +67,7 @@ export default function WarningModal({
                     <div className="border-t border-gray-200 p-5 flex gap-3">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-all font-medium"
+                            className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-md"
                         >
                             Entendido
                         </button>
