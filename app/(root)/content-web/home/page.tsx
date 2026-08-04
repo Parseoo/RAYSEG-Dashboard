@@ -14,7 +14,8 @@ const ContentWebHomePage = () => {
   return (
     <>
       <Breadcrumb items={[
-        { label: 'Contenido Web', href: '/content-web' },
+        { label: 'Inicio', href: '/' },
+        { label: 'Contenido Web', href: '/content-web/home' },
         { label: 'Home', href: '/content-web/home', active: true }
       ]} />
 

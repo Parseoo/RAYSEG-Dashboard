@@ -9,6 +9,7 @@ import { GetPropertyOperationTypes } from '@/lib/api/catalog-api';
 import { resolveCatalogDisplayValue } from '@/lib/utils/catalog';
 import { ItemResponse } from '@/lib/@type';
 import { Loader2 } from 'lucide-react';
+import { getImageUrl } from '@/lib/utils';
 
 const formatPrice = (price: string) => {
   const num = parseFloat(price);
@@ -76,25 +77,54 @@ export const PropertyList = () => {
               </tr>
             </thead>
             <tbody>
-              {properties.map((property: any) => (
-                <tr key={property.property_id} className='border-b border-slate-100 hover:bg-slate-50 transition-colors'>
-                  <td className='py-3 px-4'>
-                    <div className='flex items-center gap-3'>
-                      <Image src={'/property.svg'} alt={property.title || 'Property'} width={44} height={44} className='rounded-lg object-cover w-[44px] h-[44px]' />
-                      <div>
-                        <p className='font-medium text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
-                        <p className='text-xs text-gray-400'>{property.number_mls || '-'}</p>
+              {properties.map((property: any) => {
+                const images = property.images;
+                let imageUrl = '/property.jpg';
+                if (images && Array.isArray(images) && images.length > 0) {
+                  const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
+                  const imgPath = mainImage?.image || mainImage?.file || mainImage?.image_url || mainImage?.url || mainImage?.src || (typeof mainImage === 'string' ? mainImage : null);
+                  if (imgPath) imageUrl = getImageUrl(imgPath);
+                } else if (property.main_image || property.mainImage || property.main_image_url) {
+                  const mainImg = property.main_image || property.mainImage || property.main_image_url;
+                  const imgPath = typeof mainImg === 'string' ? mainImg : (mainImg?.image || mainImg?.file || mainImg?.url);
+                  if (imgPath) imageUrl = getImageUrl(imgPath);
+                }
+
+                return (
+                  <tr key={property.property_id} className='border-b border-slate-100 hover:bg-slate-50 transition-colors'>
+                    <td className='py-3 px-4 min-w-[200px]'>
+                      <div className='flex items-center gap-3'>
+                        <div className='relative w-[68px] h-[48px] rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-200 shadow-sm'>
+                          <Image
+                            src={imageUrl}
+                            alt={property.title || 'Property'}
+                            fill
+                            sizes="68px"
+                            unoptimized={true}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
+                                target.src = '/property.jpg';
+                              }
+                            }}
+                            className='object-cover'
+                          />
+                        </div>
+                        <div className='min-w-0'>
+                          <p className='font-medium text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
+                          <p className='text-xs text-gray-400'>{property.number_mls || '-'}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className='py-3 px-4 text-sm text-gray-600'>{property.property_type?.name || '-'}</td>
-                  <td className='py-3 px-4 text-sm text-gray-600'>{formatOperationType(property.operation_type)}</td>
-                  <td className='py-3 px-4 text-sm font-semibold text-gray-800'>{formatPrice(property.price)}</td>
-                  <td className='py-3 px-4'><Tag status={property.property_status} statusType='property'>{property.property_status || '-'}</Tag></td>
-                  <td className='py-3 px-4'><Tag status={property.property_post_status?.name} statusType='publication'>{property.property_post_status?.name || '-'}</Tag></td>
-                  <td className='py-3 px-4 text-sm text-gray-500'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
-                </tr>
-              ))}
+                    </td>
+                    <td className='py-3 px-4 text-sm text-gray-600'>{property.property_type?.name || '-'}</td>
+                    <td className='py-3 px-4 text-sm text-gray-600'>{formatOperationType(property.operation_type)}</td>
+                    <td className='py-3 px-4 text-sm font-semibold text-gray-800'>{formatPrice(property.price)}</td>
+                    <td className='py-3 px-4'><Tag status={property.property_status} statusType='property'>{property.property_status || '-'}</Tag></td>
+                    <td className='py-3 px-4'><Tag status={property.property_post_status?.name} statusType='publication'>{property.property_post_status?.name || '-'}</Tag></td>
+                    <td className='py-3 px-4 text-sm text-gray-500'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

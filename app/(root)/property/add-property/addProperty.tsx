@@ -122,8 +122,8 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         property_type: resolveCatalogApiValue(state.property_type, propertyTypes)?.toString() || null,
         operation_type: resolveCatalogApiValue(state.operation_type, operationCatalog)?.toString() || null,
         terrain_type: resolveCatalogApiValue(state.terrain_type, terrainTypeCatalog)?.toString() || null,
-        terrain_size: state.terrain_size ? parseFloat(String(state.terrain_size)) : null,
-        construction_size: state.construction_size ? parseFloat(String(state.construction_size)) : null,
+        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : null,
+        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : null,
         rooms: state.rooms ? parseInt(String(state.rooms)) : null,
         bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : null,
         parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : null,
@@ -144,8 +144,12 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
           zip_code: state.postal_code
         },
         amenities: state.amenities.map(a => String(a)),
-        images: state.images,
-        plans: state.plans,
+        images: (state.images || []).map((img: any) => ({
+          fileID: img.fileID,
+          file: img.file,
+          is_main: Boolean(img.is_main)
+        })),
+        plans: (state.plans || []).filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:')),
         ambientes: state.ambientes ? parseInt(String(state.ambientes)) : null
       };
 
@@ -193,8 +197,8 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         property_status: resolveCatalogApiValue(state.property_status, propertyStateCatalog)?.toString() || null,
         property_post_status: resolveCatalogApiValue(state.status_publication, publicationStatusCatalog)?.toString() || null,
         terrain_type: resolveCatalogApiValue(state.terrain_type, terrainTypeCatalog)?.toString() || null,
-        terrain_size: state.terrain_size ? parseFloat(String(state.terrain_size)) : null,
-        construction_size: state.construction_size ? parseFloat(String(state.construction_size)) : null,
+        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : null,
+        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : null,
         rooms: state.rooms ? parseInt(String(state.rooms)) : null,
         bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : null,
         parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : null,
@@ -213,8 +217,12 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
           zip_code: state.postal_code
         },
         amenities: state.amenities.map(a => String(a)),
-        images: state.images,
-        plans: state.plans,
+        images: (state.images || []).map((img: any) => ({
+          fileID: img.fileID,
+          file: img.file,
+          is_main: Boolean(img.is_main)
+        })),
+        plans: (state.plans || []).filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:')),
         ambientes: state.ambientes ? parseInt(String(state.ambientes)) : null
       };
 
@@ -257,19 +265,25 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
               <p className='text-md text-gray-500'>{isEdit ? 'Actualiza la información de tu propiedad' : 'Carga rápida en secciones: datos básicos, ubicación, detalles y medios'}</p>
             </div>
           </div>
-          <div className='flex flex-col gap-3'>
-            <div className='flex flex-col sm:flex-row gap-3'>
-              <div className='w-full'><AddDataProperty /></div>
-              <div className='w-full'><AddLocationProperty /></div>
+          <div className='flex flex-col gap-4'>
+            <div className='flex flex-col lg:flex-row gap-4'>
+              <div className='w-full lg:w-1/2'><AddDataProperty /></div>
+              <div className='w-full lg:w-1/2'><AddLocationProperty /></div>
             </div>
-            <div className='w-full flex flex-col gap-3'>
+            <div className='w-full flex flex-col gap-4'>
               <AddDetailProperty />
               <AddMultimediaProperty />
               <AddPublicationProperty />
             </div>
           </div>
-          <div className='flex items-center gap-4 justify-end'>
-            <button type='button' onClick={() => router.push('/property')} className='bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md'><X size={20} /> Cancelar</button>
+          <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 justify-end mt-6 pt-4 border-t border-gray-100'>
+            <button
+              type='button'
+              onClick={() => router.push('/property')}
+              className='bg-slate-100 w-full sm:w-auto sm:min-w-[150px] h-[42px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium text-sm text-gray-700 shadow-sm'
+            >
+              <X size={18} /> Cancelar
+            </button>
             <button
               type='button'
               onClick={() => {
@@ -281,9 +295,9 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
                 }
               }}
               disabled={isSaving}
-              className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium shadow-md disabled:opacity-60'
+              className='bg-primary_color text-white w-full sm:w-auto sm:min-w-[180px] h-[42px] rounded-lg flex items-center justify-center gap-2 px-5 hover:opacity-90 transition-all font-medium text-sm shadow-md disabled:opacity-60'
             >
-              <ArrowUpToLine size={20} /> {isEdit ? 'Actualizar' : 'Publicar'}
+              <ArrowUpToLine size={18} /> {isEdit ? 'Actualizar Propiedad' : 'Publicar Propiedad'}
             </button>
           </div>
         </div>

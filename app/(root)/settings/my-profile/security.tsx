@@ -69,18 +69,18 @@ export const SecuritySettings = () => {
     }
 
     return (
-        <div className='w-full max-h-max rounded-lg p-5 border'>
-            <div className="flex items-center gap-3 mb-1">
-                <div className="p-1.5 bg-slate-100 rounded-lg">
-                    <Lock size={18} className="text-slate-600" />
+        <div className='bg-white rounded-lg p-6 border shadow-sm'>
+            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <Lock size={20} />
                 </div>
                 <div>
-                    <h1 className='font-[500] text-lg'>Seguridad</h1>
-                    <p className='text-sm text-gray-500'>Cambia tu contraseña de acceso</p>
+                    <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
+                    <p className='text-xs text-gray-500'>Actualiza tu contraseña de inicio de sesión</p>
                 </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <PasswordField label="Contraseña actual" id="old_password" value={form.old_password} onChange={handleChange('old_password')} />
                 <PasswordField label="Nueva contraseña" id="new_password" value={form.new_password} onChange={handleChange('new_password')} />
                 <PasswordField label="Confirmar nueva contraseña" id="new_password_confirm" value={form.new_password_confirm} onChange={handleChange('new_password_confirm')} />

@@ -1,38 +1,104 @@
-"use client"
-import { User } from "@/lib/@type"
+"use client";
+
+import React from "react";
+import { User } from "@/lib/@type";
+import { Briefcase, FileText, Calendar, Clock, Building2, Users } from "lucide-react";
 
 interface ProfessionalProfileProps {
     user?: User | null;
 }
 
 export const ProfessionalProfile = ({ user }: ProfessionalProfileProps) => {
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "-";
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleDateString("es-MX", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }).replace(".", "");
+        } catch {
+            return dateString;
+        }
+    };
+
     return (
-        <div className="bg-white rounded-lg p-6 border shadow-sm h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-                <div className="text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
+        <div className="bg-white rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <Briefcase size={20} />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">Perfil Profesional</h2>
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900">Perfil Profesional y Notas</h2>
+                    <p className="text-xs text-gray-500">Detalles profesionales y notas internas</p>
+                </div>
             </div>
 
-            <p className="text-gray-600 mb-8 leading-relaxed text-sm">
-                {user?.description || "Especialista en propiedades residenciales de lujo y comerciales en la zona poniente de la Ciudad de México. Con más de 10 años de experiencia en el sector inmobiliario, enfocada en brindar un servicio personalizado y eficiente para la gestión de compra-venta y renta de inmuebles premium."}
-            </p>
+            {/* Notas internas del usuario */}
+            {user?.internal_notes && (
+                <div className="mb-5 p-4 bg-amber-50/70 border border-amber-200/70 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1 text-amber-800 font-semibold text-xs uppercase tracking-wider">
+                        <FileText size={14} className="text-amber-600" />
+                        Notas Internas del Sistema
+                    </div>
+                    <p className="text-sm text-amber-950 font-medium whitespace-pre-wrap">
+                        {user.internal_notes}
+                    </p>
+                </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{user?.properties_created_count}</div>
-                    <div className="text-xs text-gray-500 font-medium">Propiedades Activas</div>
+            {/* Descripción / Bio */}
+            <div className="mb-6">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">
+                    Descripción profesional
+                </span>
+                <p className="text-gray-700 leading-relaxed text-sm bg-slate-50 p-3.5 rounded-lg border border-slate-100">
+                    {user?.description || "Agente inmobiliario especializado en la gestión, asesoría y comercialización de inmuebles residenciales y comerciales en la región de Guanajuato."}
+                </p>
+            </div>
+
+            {/* Métricas / Estadísticas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 flex items-center gap-3">
+                    <div className="p-2.5 bg-blue-100 text-blue-700 rounded-lg">
+                        <Building2 size={20} />
+                    </div>
+                    <div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {user?.properties_created_count ?? 0}
+                        </div>
+                        <div className="text-xs text-gray-500 font-medium">Propiedades asignadas</div>
+                    </div>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{user?.clients_created_count}</div>
-                    <div className="text-xs text-gray-500 font-medium">Clientes Potenciales</div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-lg">
+                        <Users size={20} />
+                    </div>
+                    <div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {user?.clients_created_count ?? 0}
+                        </div>
+                        <div className="text-xs text-gray-500 font-medium">Clientes registrados</div>
+                    </div>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">4.9</div>
-                    <div className="text-xs text-gray-500 font-medium">Calificación</div>
+            </div>
+
+            {/* Metadatos de auditoría */}
+            <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="flex items-center gap-2 text-gray-500">
+                    <Calendar size={14} className="text-gray-400 shrink-0" />
+                    <span>Alta: <strong className="text-gray-700">{formatDate(user?.created_at)}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500">
+                    <Clock size={14} className="text-gray-400 shrink-0" />
+                    <span>Actualizado: <strong className="text-gray-700">{formatDate(user?.updated_at)}</strong></span>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
+
+export default ProfessionalProfile;

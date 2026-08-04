@@ -105,7 +105,8 @@ const ContentWebFooterPage = () => {
     return (
         <>
             <Breadcrumb items={[
-                { label: 'Contenido Web', href: '/content-web' },
+                { label: 'Inicio', href: '/' },
+                { label: 'Contenido Web', href: '/content-web/home' },
                 { label: 'Footer', href: '/content-web/footer', active: true }
             ]} />
 

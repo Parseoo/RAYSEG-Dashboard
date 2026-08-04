@@ -67,16 +67,45 @@ export function mapPropertyApiToFormState(
     note: (data as any).note || '',
     is_featured: data.is_featured || false,
     amenities: data.amenities?.map((a) => String(a.catalogItemID)) || [],
-    images:
-      data.images?.map((img) => ({
-        fileID: img.property_image_id,
-        file: img.image,
-        is_main: img.is_main,
-      })) || [],
-    plans:
-      data.plans?.map((p) => ({
-        fileID: p.property_plan_id,
-        file: p.plan,
-      })) || [],
+    images: (() => {
+      const rawImages: any[] = Array.isArray(data.images) && data.images.length > 0
+        ? data.images
+        : (data as any).property_images || (data as any).photos || ((data as any).main_image ? [{ image: (data as any).main_image, is_main: true }] : ((data as any).main_image_url ? [{ image: (data as any).main_image_url, is_main: true }] : []));
+
+      if (!Array.isArray(rawImages)) return [];
+
+      return rawImages.map((img: any, idx: number) => {
+        const filePath = typeof img === 'string'
+          ? img
+          : (img?.image || img?.file || img?.url || img?.image_url || img?.src || '');
+        const isMain = img?.is_main === true || img?.is_main === 1 || img?.is_main === 'true' || img?.isMain === true || (idx === 0 && !rawImages.some((i: any) => i?.is_main === true || i?.isMain === true));
+        const fileId = Number(img?.property_image_id || img?.id || img?.fileID || (Date.now() + idx));
+
+        return {
+          fileID: fileId,
+          file: filePath,
+          is_main: isMain,
+        };
+      }).filter((item) => Boolean(item.file));
+    })(),
+    plans: (() => {
+      const rawPlans: any[] = Array.isArray(data.plans) && data.plans.length > 0
+        ? data.plans
+        : (data as any).property_plans || ((data as any).plan ? [{ plan: (data as any).plan }] : []);
+
+      if (!Array.isArray(rawPlans)) return [];
+
+      return rawPlans.map((p: any, idx: number) => {
+        const filePath = typeof p === 'string'
+          ? p
+          : (p?.plan || p?.file || p?.url || p?.plan_url || p?.src || '');
+        const fileId = Number(p?.property_plan_id || p?.id || p?.fileID || (Date.now() + idx));
+
+        return {
+          fileID: fileId,
+          file: filePath,
+        };
+      }).filter((item) => Boolean(item.file));
+    })(),
   };
 }

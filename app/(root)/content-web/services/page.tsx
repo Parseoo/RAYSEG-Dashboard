@@ -26,8 +26,9 @@ const ContentWebServiciosPage = () => {
     return (
         <>
             <Breadcrumb items={[
-                { label: 'Contenido Web', href: '/content-web' },
-                { label: 'Servicios', href: '/content-web/servicios', active: true }
+                { label: 'Inicio', href: '/' },
+                { label: 'Contenido Web', href: '/content-web/home' },
+                { label: 'Servicios', href: '/content-web/services', active: true }
             ]} />
 
             <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>

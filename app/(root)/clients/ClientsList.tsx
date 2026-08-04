@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User } from 'lucide-react';
 import { responsibleOptions } from '../../../components/selectClients.data';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import Search from '../../../components/ui/Search';
@@ -21,6 +21,7 @@ import { GetEstados } from '@/lib/api/property/property-api';
 import { Pagination as PaginationType } from '@/lib/@type';
 import { Pagination } from '@/components/ui/Pagination';
 import { formatInterestLabel, normalizeInterest } from '@/lib/utils/catalog';
+import { getUserImageUrl } from '@/lib/utils';
 
 const headers = [
   'Cliente',
@@ -244,14 +245,25 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
-          <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center'>
-            <Image
-              src={'/user.svg'}
-              alt={row.name || 'Cliente'}
-              width={28}
-              height={28}
-              className='object-contain'
-            />
+          <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
+            {row.profile_picture ? (
+              <Image
+                src={getUserImageUrl(row.profile_picture)}
+                alt={row.name || 'Cliente'}
+                fill
+                sizes="48px"
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target && !target.src.endsWith('/user.svg')) {
+                    target.src = '/user.svg';
+                  }
+                }}
+                className='object-cover'
+              />
+            ) : (
+              <User className="w-6 h-6 text-slate-500" />
+            )}
           </div>
           <div>
             <p className='font-medium text-sm'>{row.name || '-'}</p>

@@ -156,14 +156,14 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             id: 'colonia',
             label: 'Colonia',
             placeholder: 'Colonia',
-            group: 5
+            group: 6
         },
         {
             type: 'text',
             id: 'codigo_postal',
             label: 'Código postal',
             placeholder: 'Código postal',
-            group: 5
+            group: 6
         },
         {
             type: 'select',
@@ -207,28 +207,20 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
     }));
 
     return (
-        <>
-            <div className='bg-white w-full max-h-max rounded-lg'>
-                <div className='w-full h-full'>
-                    <div className='flex gap-3'>
-                        <div className='w-full max-h-max rounded-lg p-5 mb-5 border'>
-                            <h1 className='font-[500] text-lg'>Información personal</h1>
-                            <p className='text-md text-gray-500'>Identificación principal del cliente y tipo de relación.</p>
+        <div className='w-full max-h-max rounded-xl p-4 sm:p-6 mb-5 border border-slate-200 bg-white shadow-sm'>
+            <h2 className='font-semibold text-lg text-gray-900'>Información personal</h2>
+            <p className='text-sm text-gray-500 mt-0.5'>Datos de identificación del usuario y su rol en la plataforma.</p>
 
-                            <div className='mt-6 mb-4'>
-                                <ProfileImageUpload 
-                                    currentImage={user.profile_picture}
-                                    onImageChange={onImageChange ?? ((file) => console.log(file))} 
-                                />
-                            </div>
-
-                            <div className='mt-4'>
-                                <DynamicInputs inputs={inputsWithState} withBgWhite={true} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div className='mt-5 mb-6'>
+                <ProfileImageUpload 
+                    currentImage={user.profile_picture}
+                    onImageChange={onImageChange ?? ((file) => console.log(file))} 
+                />
             </div>
-        </>
+
+            <div className='mt-4'>
+                <DynamicInputs inputs={inputsWithState} withBgWhite={true} />
+            </div>
+        </div>
     )
 }

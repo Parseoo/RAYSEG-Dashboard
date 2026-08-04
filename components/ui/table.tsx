@@ -10,6 +10,7 @@ interface TableProps<T> {
     headers: string[]
     renderRow: (item: T, index: number) => React.ReactNode
     isLoading: boolean
+    hidePagination?: boolean
 }
 
 // Mapper de valores para ordenación genérica
@@ -87,37 +88,35 @@ const getValueByHeader = (item: any, header: string): any => {
         }
         return item.responsable || '';
     }
+    if (h === 'creado en' || h === 'creado' || h === 'fecha') {
+        return item.created_at || item.createdAt || item.fecha || '';
+    }
+    if (h === 'publicacion web' || h === 'publicacion' || h === 'web') {
+        return item.is_active || item.is_published || item.status || '';
+    }
 
-    // 2. Caídas dinámicas por propiedad
-    const cleanKey = h.replace(/\s+/g, '_');
-    if (item[cleanKey] !== undefined) return item[cleanKey];
-
-    const camelKey = h.replace(/\s+(.)/g, (_, c) => c.toUpperCase());
-    if (item[camelKey] !== undefined) return item[camelKey];
+    // 2. Búsqueda directa o anidada en keys del objeto
+    const exactKey = Object.keys(item).find(k => k.toLowerCase() === h);
+    if (exactKey && item[exactKey] !== undefined && item[exactKey] !== null) {
+        if (typeof item[exactKey] === 'object') return item[exactKey].name || item[exactKey].title || '';
+        return item[exactKey];
+    }
 
     return '';
 };
 
-{/* Implementa la tabla */}
-export const Table = <T extends any>({ data = [], headers, renderRow, isLoading }: TableProps<T>) => {
+export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination = false }: TableProps<T>) => {
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
-    
-    // Estados de ordenación
-    const [sortHeader, setSortHeader] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+    const [sortHeader, setSortHeader] = useState<string | null>(null)
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
     const handleSort = (header: string) => {
-        const h = header.toLowerCase();
-        if (h === 'acciones' || h === 'imagen' || h === 'imagenes') return;
-
         if (sortHeader === header) {
             if (sortDirection === 'asc') {
                 setSortDirection('desc');
-            } else if (sortDirection === 'desc') {
-                setSortHeader(null);
-                setSortDirection(null);
             } else {
+                setSortHeader(null);
                 setSortDirection('asc');
             }
         } else {
@@ -126,17 +125,33 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
         }
     };
 
-    // Ordenar los datos antes de paginar
     const sortedData = useMemo(() => {
-        if (!sortHeader || !sortDirection) return data;
+        if (!sortHeader || !data || data.length === 0) return data || [];
 
         return [...data].sort((a, b) => {
             const valA = getValueByHeader(a, sortHeader);
             const valB = getValueByHeader(b, sortHeader);
 
+            if (valA === '' || valA === null || valA === undefined) return 1;
+            if (valB === '' || valB === null || valB === undefined) return -1;
+
             // Ordenación de números
             if (typeof valA === 'number' && typeof valB === 'number') {
                 return sortDirection === 'asc' ? valA - valB : valB - valA;
+            }
+
+            // Ordenación de booleanos
+            if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+                return sortDirection === 'asc' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
+            }
+
+            // Ordenación de fechas
+            const isDateA = !isNaN(Date.parse(valA)) && isNaN(Number(valA));
+            const isDateB = !isNaN(Date.parse(valB)) && isNaN(Number(valB));
+            if (isDateA && isDateB) {
+                const dateA = new Date(valA).getTime();
+                const dateB = new Date(valB).getTime();
+                return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
             }
 
             // Ordenación de cadenas
@@ -153,7 +168,7 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
     const totalPages = Math.ceil(totalItems / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    const currentData = sortedData.slice(startIndex, endIndex)
+    const currentData = hidePagination ? sortedData : sortedData.slice(startIndex, endIndex)
 
     return (
         <div className='w-full mt-6'>
@@ -217,48 +232,50 @@ export const Table = <T extends any>({ data = [], headers, renderRow, isLoading 
             </div>
 
             {/* Paginación */}
-            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4'>
-                <div className='text-xs sm:text-sm text-gray-600'>
-                    Mostrando {totalItems > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, totalItems)} de {totalItems} registros
-                </div>
-                <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto'>
-                    <div className='flex items-center gap-2'>
-                        <span className='text-xs sm:text-sm text-gray-600 whitespace-nowrap'>Por página:</span>
-                        <Select value={itemsPerPage.toString()} onValueChange={(value) => {
-                            setItemsPerPage(Number(value))
-                            setCurrentPage(1)
-                        }}>
-                            <SelectTrigger className='w-[80px] h-8'>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='10'>10</SelectItem>
-                                <SelectItem value='20'>20</SelectItem>
-                                <SelectItem value='50'>50</SelectItem>
-                            </SelectContent>
-                        </Select>
+            {!hidePagination && (
+                <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4'>
+                    <div className='text-xs sm:text-sm text-gray-600'>
+                        Mostrando {totalItems > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, totalItems)} de {totalItems} registros
                     </div>
-                    <div className='flex items-center gap-2 justify-center sm:justify-start'>
-                        <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}
-                            className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
-                            <ChevronLeft size={16} className='text-gray-700' />
-                        </button>
-                        {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                            const pageNum = i + 1
-                            return (
-                                <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
-                                ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'}`}>
-                                    {pageNum}
-                                </button>
-                            )
-                        })}
-                        <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}
-                            className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
-                            <ChevronRight size={16} className='text-gray-700' />
-                        </button>
+                    <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto'>
+                        <div className='flex items-center gap-2'>
+                            <span className='text-xs sm:text-sm text-gray-600 whitespace-nowrap'>Por página:</span>
+                            <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                                setItemsPerPage(Number(value))
+                                setCurrentPage(1)
+                            }}>
+                                <SelectTrigger className='w-[80px] h-8'>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='10'>10</SelectItem>
+                                    <SelectItem value='20'>20</SelectItem>
+                                    <SelectItem value='50'>50</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className='flex items-center gap-2 justify-center sm:justify-start'>
+                            <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}
+                                className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
+                                <ChevronLeft size={16} className='text-gray-700' />
+                            </button>
+                            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                                const pageNum = i + 1
+                                return (
+                                    <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
+                                    ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'}`}>
+                                        {pageNum}
+                                    </button>
+                                )
+                            })}
+                            <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}
+                                className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
+                                <ChevronRight size={16} className='text-gray-700' />
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

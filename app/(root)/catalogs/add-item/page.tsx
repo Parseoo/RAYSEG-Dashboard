@@ -147,7 +147,7 @@ export default function AddCatalogItemPage() {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Configuración', href: '/settings' },
+        { label: 'Configuración', href: '/settings/users-permissions' },
         { label: 'Catálogos', href: '/catalogs' },
         { label: 'Agregar ítem', href: `/catalogs/add-item?catalog=${encodeURIComponent(selectedCatalogName)}&catalogId=${selectedCatalogId}`, active: true }
       ]} />

@@ -317,45 +317,65 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   };
 
   const renderRow = (property: PropertyListItemResponse) => {
-    // Intentar obtener la imagen principal de varias fuentes
-    // 1. El campo main_image directo del backend
-    // 2. Buscar en images si existe y tiene is_main
-    // 3. Primera imagen disponible
-    let imageUrl = '/property.svg'; // Default
-
-    // Verificar si hay images en la respuesta (algunos endpoints lo incluyen)
+    // Priorizar la imagen marcada como principal (is_main === true) dentro del arreglo `images`
     const images = (property as any).images;
-    if (images && Array.isArray(images) && images.length > 0) {
-      const mainImage = images.find((img: any) => img.is_main) || images[0];
-      if (mainImage && mainImage.image) {
-        imageUrl = getImageUrl(mainImage.image);
-      }
-    }
+    let imageUrl = '/property.jpg'; // Default
 
-    // Si no se encontró imagen en images, intentar con main_image directo
-    const mainImageFromBackend = (property as any).main_image;
-    if (mainImageFromBackend) {
-      imageUrl = getImageUrl(mainImageFromBackend);
+    if (images && Array.isArray(images) && images.length > 0) {
+      const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
+      const imgPath = mainImage?.image || mainImage?.file || mainImage?.image_url || mainImage?.url || mainImage?.src || (typeof mainImage === 'string' ? mainImage : null);
+      if (imgPath) {
+        imageUrl = getImageUrl(imgPath);
+      }
+    } else if ((property as any).main_image) {
+      const mainImg = (property as any).main_image;
+      const imgPath = typeof mainImg === 'string' ? mainImg : (mainImg?.image || mainImg?.file || mainImg?.url || mainImg?.image_url);
+      if (imgPath) {
+        imageUrl = getImageUrl(imgPath);
+      }
+    } else if ((property as any).main_image_url) {
+      imageUrl = getImageUrl((property as any).main_image_url);
+    } else if ((property as any).mainImage) {
+      const mainImg = (property as any).mainImage;
+      const imgPath = typeof mainImg === 'string' ? mainImg : (mainImg?.image || mainImg?.file || mainImg?.url || mainImg?.image_url);
+      if (imgPath) {
+        imageUrl = getImageUrl(imgPath);
+      }
     }
 
     return (
       <tr key={property.property_id} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
-        <td className='py-4 px-4'>
-          <div className='flex items-center gap-3'>
-            <Image src={imageUrl} alt={property.title || 'Property'} width={60} height={60} className='rounded-lg object-cover w-[60px] h-[60px]' />
-            <div>
-              <p className='font-medium text-sm text-gray-900'>{property.title || '-'}</p>
+        <td className='py-4 px-4 min-w-[220px]'>
+          <div className='flex items-center gap-3.5'>
+            <div className='relative w-[84px] h-[58px] rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-200 shadow-sm'>
+              <Image
+                src={imageUrl}
+                alt={property.title || 'Property'}
+                fill
+                sizes="84px"
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
+                    target.src = '/property.jpg';
+                  }
+                }}
+                className='object-cover'
+              />
+            </div>
+            <div className='min-w-0'>
+              <p className='font-medium text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
               <p className='text-xs text-gray-500'>{property.number_mls || '-'}</p>
             </div>
           </div>
         </td>
-        <td className='py-4 px-4 text-sm text-gray-700'>{property.property_type?.name || '-'}</td>
-        <td className='py-4 px-4 text-sm text-gray-700'>{formatOperationType(property.operation_type)}</td>
-        <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{formatPrice(property.price)}</td>
-        <td className='py-4 px-4'><Tag status={property.property_status} statusType='property'>{property.property_status || '-'}</Tag></td>
-        <td className='py-4 px-4'><Tag status={property.property_post_status?.name} statusType='publication'>{property.property_post_status?.name || '-'}</Tag></td>
-        <td className='py-4 px-4 text-sm text-gray-700'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
-        <td className='py-4 px-4'>
+        <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{property.property_type?.name || '-'}</td>
+        <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{formatOperationType(property.operation_type)}</td>
+        <td className='py-4 px-4 text-sm text-gray-700 font-medium whitespace-nowrap'>{formatPrice(property.price)}</td>
+        <td className='py-4 px-4 whitespace-nowrap'><Tag status={property.property_status} statusType='property'>{property.property_status || '-'}</Tag></td>
+        <td className='py-4 px-4 whitespace-nowrap'><Tag status={property.property_post_status?.name} statusType='publication'>{property.property_post_status?.name || '-'}</Tag></td>
+        <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
+        <td className='py-4 px-4 whitespace-nowrap'>
           <div className='flex items-center justify-center'>
             {property.is_featured ? (
               <Star size={20} fill="#eab308" stroke="#eab308" />
@@ -364,16 +384,16 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             )}
           </div>
         </td>
-        <td className='py-4 px-4'>
+        <td className='py-4 px-4 whitespace-nowrap'>
           <div className='flex items-center gap-2'>
             <Tooltip content="Ver detalle">
-              <Link href={`/property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300'><Eye size={16} className='text-gray-600' /></button></Link>
+              <Link href={`/property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Eye size={16} className='text-gray-600' /></button></Link>
             </Tooltip>
             <Tooltip content="Editar">
-              <Link href={`/property/edit-property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300'><Pencil size={16} className='text-gray-600' /></button></Link>
+              <Link href={`/property/edit-property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Pencil size={16} className='text-gray-600' /></button></Link>
             </Tooltip>
             <Tooltip content="Eliminar">
-              <button onClick={() => handleDeleteClick(property)} className='p-1.5 bg-red-500 rounded-md hover:bg-red-600'><Trash2 size={16} className='text-white' /></button>
+              <button onClick={() => handleDeleteClick(property)} className='p-1.5 bg-red-500 rounded-md hover:bg-red-600 transition-colors'><Trash2 size={16} className='text-white' /></button>
             </Tooltip>
           </div>
         </td>
@@ -386,50 +406,52 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Propiedades', href: '/property', active: true }]} />
       <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
         <div className='w-full h-full'>
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
+          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5'>
             <div>
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
-              <p className='text-sm sm:text-md text-gray-500'>Listado principal de propiedades</p>
+              <p className='text-xs sm:text-sm text-gray-500'>Listado principal de propiedades</p>
             </div>
-            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+            <div className='flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto'>
               <button
                 type='button'
                 onClick={() => setIsFilterOpen(true)}
-                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2'
+                className='h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2 shrink-0 font-medium text-xs sm:text-sm'
               >
-                <SlidersHorizontal className='w-5 h-5' />
-                <span className='text-sm text-gray-600'>Filtros</span>
+                <SlidersHorizontal className='w-4 h-4 sm:w-4.5 sm:h-4.5' />
+                <span>Filtros</span>
                 {activeFiltersCount > 0 && (
                   <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
                     {activeFiltersCount}
                   </span>
                 )}
               </button>
-              <Link href="/property/add-property" className='w-full sm:w-auto'>
-                <button type="button" className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base">
-                  <Plus size={18} className="sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Agregar Propiedad</span><span className="sm:hidden">Agregar</span>
+              <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
+                <button type="button" className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[170px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-xs sm:text-sm whitespace-nowrap">
+                  <Plus size={18} /> <span>Agregar Propiedad</span>
                 </button>
               </Link>
               <button
                 type='button'
                 onClick={() => setIsPdfModalOpen(true)}
-                className='bg-red-50 text-red-600 border border-red-200 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-red-100 transition-colors font-medium text-sm sm:text-base'
+                className='flex-1 sm:flex-initial bg-red-50 text-red-600 border border-red-200 w-full sm:w-auto sm:min-w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:bg-red-100 transition-colors font-medium text-xs sm:text-sm whitespace-nowrap'
               >
-                <FileDown size={20} /> Generar PDF
+                <FileDown size={18} /> <span>Generar PDF</span>
               </button>
             </div>
           </div>
 
-          <div className="mb-6 space-y-6">
-            {/* Buscador y Ciudad */}
+          <div className="mb-6 space-y-5">
+            {/* Buscador y Estado de Propiedad */}
             <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
-              <Search
-                title="Buscar por título, descripción, dirección (ciudad, colonia, calle)"
-                className="max-w-[580px] w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className='flex items-center justify-start lg:justify-end w-full lg:w-auto gap-3'>
+              <div className='flex-1 min-w-0'>
+                <Search
+                  title="Buscar por título, descripción, dirección (ciudad, colonia, calle)"
+                  className="w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className='flex items-center justify-start lg:justify-end w-full lg:w-auto'>
                 <FilterPills
                   label="Estado de propiedad"
                   options={operationProperty}
@@ -441,7 +463,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
             {/* Píldoras de Filtro Tipo de Propiedad y Estatus */}
             <div className='py-1 flex flex-col lg:flex-row gap-4 w-full'>
-              <div className='flex-grow'>
+              <div className='flex-grow min-w-0'>
                 <FilterPills
                   label="Tipo de propiedad"
                   options={propertyTypeOptions}
@@ -449,7 +471,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   onChange={setSelectedType}
                 />
               </div>
-              <div className='flex-grow'>
+              <div className='flex-grow min-w-0'>
                 <FilterPills
                   label="Estatus"
                   options={[
@@ -464,8 +486,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </div>
 
             {/* Filtros Secundarios Desplegables */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-              <div className='flex flex-col pb-2 sm:pb-0'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
+              <div className='flex flex-col'>
                 <label className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
                 <Select value={selectedEstado} onValueChange={setSelectedEstado}>
                   <SelectTrigger className='w-full'>
@@ -479,7 +501,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </SelectContent>
                 </Select>
               </div>
-              <div className='flex flex-col pb-2 sm:pb-0'>
+              <div className='flex flex-col'>
                 <label className="text-xs text-gray-500 mb-1 font-semibold">Ciudad</label>
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger className='w-full'>
@@ -496,7 +518,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </div>
           </div>
 
-          <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} />
+          <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} hidePagination={true} />
 
           {pagination.total_paginas > 1 && (
             <Pagination

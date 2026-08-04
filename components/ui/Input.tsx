@@ -81,7 +81,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                     className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all min-h-[100px] resize-y ${bgClass} ${errorClass} ${input.className || ''}`}
                 />
             ) : input.type === 'switch' ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 h-[42px]">
                     <Switch
                         checked={input.value === 'true' || input.value === true}
                         onLabel="Activo"
@@ -121,13 +121,13 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
     );
 
     return (
-        <div className='flex flex-col gap-2 flex-1'>
+        <div className='flex flex-col gap-2 flex-1 w-full min-w-0'>
             {Icon && !isInlineIcon ? (
                 <div className="flex items-start gap-3">
-                    <div className="bg-blue-50 p-2.5 rounded-md shadow-sm mt-1">
+                    <div className="bg-blue-50 p-2.5 rounded-md shadow-sm mt-1 shrink-0">
                         <Icon size={20} />
                     </div>
-                    <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                         <label htmlFor={input.id} className='text-sm font-medium text-gray-700'>
                             {input.label}
                             {input.required && <span className='text-red-500 ml-1'>*</span>}
@@ -139,7 +139,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                 <>
                     <label htmlFor={input.id} className='text-sm font-medium text-gray-700 flex items-center gap-2'>
                         {input.label}
-                        {isInlineIcon && Icon && <Icon size={18} className="text-blue-500" />}
+                        {isInlineIcon && Icon && <Icon size={18} className="text-blue-500 shrink-0" />}
                         {input.required && <span className='text-red-500 ml-1'>*</span>}
                     </label>
                     {renderInput()}
@@ -176,7 +176,7 @@ export const DynamicInputs = React.memo(({ inputs, withBgWhite = false }: Dynami
                 }
 
                 result.push(
-                    <div key={`group-${currentInput.group}-${i}`} className='flex gap-4'>
+                    <div key={`group-${currentInput.group}-${i}`} className='flex flex-col sm:flex-row gap-4 w-full'>
                         {groupInputs.map((groupInput) => (
                             <InputField key={groupInput.id} input={groupInput} withBgWhite={withBgWhite} />
                         ))}
@@ -184,7 +184,9 @@ export const DynamicInputs = React.memo(({ inputs, withBgWhite = false }: Dynami
                 );
             } else {
                 result.push(
-                    <InputField key={currentInput.id} input={currentInput} withBgWhite={withBgWhite} />
+                    <div key={currentInput.id} className='w-full'>
+                        <InputField input={currentInput} withBgWhite={withBgWhite} />
+                    </div>
                 );
                 processedIndices.add(i);
             }
@@ -193,7 +195,7 @@ export const DynamicInputs = React.memo(({ inputs, withBgWhite = false }: Dynami
         return result;
     }, [inputs, withBgWhite]);
 
-    return <div className='flex flex-col gap-4'>{renderInputs}</div>;
+    return <div className='flex flex-col gap-4 w-full'>{renderInputs}</div>;
 });
 
 DynamicInputs.displayName = 'DynamicInputs';

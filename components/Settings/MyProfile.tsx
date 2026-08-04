@@ -1,63 +1,68 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLogout } from '@/lib/api/auth/auth-query';
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { Save } from 'lucide-react';
 import { ProfileHeader } from '@/app/(root)/settings/my-profile/viewProfile';
 import { PersonalInformation } from '@/app/(root)/settings/my-profile/components/PersonalInformation';
+import { AddressInformation } from '@/app/(root)/settings/my-profile/components/AddressInformation';
 import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
 import SecuritySettings from '@/app/(root)/settings/my-profile/security';
 import { GetProfileApi } from '@/lib/api/auth/auth-api';
+import { useUserStore } from '@/lib/store/userStore';
 import { User } from '@/lib/@type';
 
-const MyProfile = () => { // trae la función logout desde el store global de usuario
-    const [user, setUser] = useState<User | null>(null);
-    const { mutate: logout } = useLogout();
+const MyProfile = () => {
+    const { user: storeUser } = useUserStore();
+    const [user, setUser] = useState<User | null>(storeUser || null);
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => { // función async para obtener el perfil del usuario
+    useEffect(() => {
         const fetchProfile = async () => {
             try {
-                // llamada al endpoint
-                const response = await GetProfileApi();
-                // valida que exista respuesta y datos
-                if (response && response.data) {
-                    console.log("response.data", response.data);
-                    // guarda los datos del usuario en el estado
-                    setUser(response.data);
+                const authResponse = await GetProfileApi();
+                const authData = ((authResponse?.data as any)?.data || authResponse?.data) as User;
+
+                if (authData) {
+                    setUser(authData);
+                    useUserStore.setState((state) => ({
+                        ...state,
+                        user: { ...state.user, ...authData }
+                    }));
                 }
             } catch (error) {
-                // muestra el error en consola si falla la petición
                 console.error("Error fetching profile", error);
+            } finally {
+                setLoading(false);
             }
         };
-        // ejecuta la función cuando el componente monta
+
         fetchProfile();
-    }, []); // array vacío: se ejecuta una sola vez
+    }, []);
 
     return (
-        <>
+        <div className="w-full max-w-[1440px] mx-auto pb-12">
             <Breadcrumb items={[
                 { label: 'Inicio', href: '/' },
-                { label: 'Configuración', href: '/settings', active: true },
-                { label: 'Mi Perfil', href: '/my-profile', active: true }
+                { label: 'Configuración', href: '/settings/users-permissions' },
+                { label: 'Mi Perfil', href: '/settings/my-profile', active: true }
             ]} />
-            <div className='w-full max-h-max mb-9'>
-                <div className="flex flex-col gap-6">
-                    <ProfileHeader user={user} />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <PersonalInformation user={user} />
-                        <ProfessionalProfile user={user} />
-                    </div>
+            <div className="flex flex-col gap-6">
+                <ProfileHeader user={user} />
 
-                    <div className="bg-white rounded-lg p-6 border shadow-sm">
-                        <SecuritySettings />
-                    </div>
+                {/* Información Personal y Ubicación lado a lado */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <PersonalInformation user={user} />
+                    <AddressInformation user={user} />
                 </div>
+
+                {/* Perfil Profesional y Notas a todo el ancho */}
+                <ProfessionalProfile user={user} />
+
+                {/* Seguridad y Acceso a todo el ancho */}
+                <SecuritySettings />
             </div>
-        </>
+        </div>
     );
 };
 
