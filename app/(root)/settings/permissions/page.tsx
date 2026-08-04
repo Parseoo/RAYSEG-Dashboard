@@ -183,7 +183,7 @@ const PermissionsPage = () => {
             <Breadcrumb
                 items={[
                     { label: "Inicio", href: "/" },
-                    { label: "Configuración", href: "/settings" },
+                    { label: "Configuración", href: "/settings/users-permissions" },
                     { label: "Permisos", href: "/settings/permissions", active: true },
                 ]}
             />

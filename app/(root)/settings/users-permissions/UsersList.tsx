@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal } from 'lucide-react';
+import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
@@ -205,21 +205,25 @@ function UsersList() {
         return (
             <tr key={user.id} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
                 <td className='py-4 px-4'>
-                    <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0'>
-                        <Image 
-                            src={getUserImageUrl(user.profile_picture)} 
-                            alt={fullName} 
-                            fill
-                            sizes="48px"
-                            unoptimized={true}
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target && !target.src.endsWith('/user.svg')) {
-                                    target.src = '/user.svg';
-                                }
-                            }}
-                            className='object-cover' 
-                        />
+                    <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
+                        {user.profile_picture ? (
+                            <Image 
+                                src={getUserImageUrl(user.profile_picture)} 
+                                alt={fullName} 
+                                fill
+                                sizes="48px"
+                                unoptimized={true}
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    if (target && !target.src.endsWith('/user.svg')) {
+                                        target.src = '/user.svg';
+                                    }
+                                }}
+                                className='object-cover' 
+                            />
+                        ) : (
+                            <User className="w-6 h-6 text-slate-500" />
+                        )}
                     </div>
                 </td>
                 <td className='py-4 px-4'>
@@ -278,7 +282,8 @@ function UsersList() {
             <Breadcrumb
                 items={[
                     { label: 'Inicio', href: '/' },
-                    { label: 'Usuarios y Permisos', href: '/settings/users-permissions', active: true }
+                    { label: 'Configuración', href: '/settings/users-permissions' },
+                    { label: 'Usuarios', href: '/settings/users-permissions', active: true }
                 ]}
             />
             <div className='bg-white w-full rounded-lg p-5 mb-9 shadow-md'>

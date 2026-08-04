@@ -10,8 +10,9 @@ const ContentWebLocationsPage = () => {
     return (
         <>
             <Breadcrumb items={[
-                { label: 'Contenido Web', href: '/content-web' },
-                { label: 'Localizacion', href: '/content-web/locations', active: true }
+                { label: 'Inicio', href: '/' },
+                { label: 'Contenido Web', href: '/content-web/home' },
+                { label: 'Localización', href: '/content-web/locations', active: true }
             ]} />
 
             <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>

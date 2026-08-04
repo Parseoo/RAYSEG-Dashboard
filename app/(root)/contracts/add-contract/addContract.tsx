@@ -18,8 +18,8 @@ const AddClientContent = () => {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Clientes', href: '/clients' },
-        { label: 'Agregar Cliente', href: '/clients/add-client', active: true }
+        { label: 'Contratos', href: '/contracts' },
+        { label: 'Agregar Contrato', href: '/contracts/add-contract', active: true }
       ]} />
       <div className='mb-3'>
         <button onClick={() => router.push('/contracts')} className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'>

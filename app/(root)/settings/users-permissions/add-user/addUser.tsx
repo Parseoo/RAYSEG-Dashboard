@@ -340,9 +340,9 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             <Breadcrumb
                 items={[
                     { label: "Inicio", href: "/" },
-                    { label: "Configuración", href: "/settings" },
+                    { label: "Configuración", href: "/settings/users-permissions" },
                     { label: "Usuarios", href: "/settings/users-permissions" },
-                    { label: isEdit ? "Editar Usuario" : "Agregar Usuario", href: isEdit ? "#" : "/settings/users-permissions/add-user", active: true },
+                    { label: isEdit ? "Editar Usuario" : "Agregar Usuario", href: isEdit ? `/settings/users-permissions/edit-user/${userId}` : "/settings/users-permissions/add-user", active: true },
                 ]}
             />
 
@@ -359,7 +359,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                             <div>
                                 <h1 className="font-[700] text-2xl">{isEdit ? "Editar usuario" : "Agregar usuario"}</h1>
                                 <p className="text-md text-gray-500">
-                                    {isEdit ? "Modifica los datos y permisos del usuario." : "Crea una cuenta para un nuevo integrante de tu inmobiliaria y define sus permisos pantalla por pantalla."}
+                                    {isEdit ? "Modifica los datos y permisos del usuario." : "Crea una cuenta para un nuevo integrante de tu inmobiliaria y define sus datos y rol."}
                                 </p>
                             </div>
                         </div>
@@ -367,7 +367,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                         <AddInformationPersonal user={user} setUser={setUser} errors={errors} onImageChange={setProfileImage} rolesData={roles} />
                         <AddPassword user={user} setUser={setUser} errors={errors} />
 
-                        <div className="flex gap-4 justify-end mt-5">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-end mt-5">
                             <button type="button" onClick={() => router.push("/settings/users-permissions")}
                                 className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md">
                                 <X size={20} /> Cancelar

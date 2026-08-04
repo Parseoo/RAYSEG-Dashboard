@@ -23,7 +23,8 @@ const ContentWebAboutUsPage = () => {
     return (
         <>
             <Breadcrumb items={[
-                { label: 'Contenido Web', href: '/content-web' },
+                { label: 'Inicio', href: '/' },
+                { label: 'Contenido Web', href: '/content-web/home' },
                 { label: 'Sobre Nosotros', href: '/content-web/about-us', active: true }
             ]} />
 

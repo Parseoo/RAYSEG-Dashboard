@@ -151,7 +151,7 @@ export default function CatalogItemDetailPage() {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Configuración', href: '/settings' },
+        { label: 'Configuración', href: '/settings/users-permissions' },
         { label: 'Catálogos', href: '/catalogs' },
         { label: itemData.name || `Ítem #${itemId}`, href: `/catalogs/item/${itemId}?catalog=${encodeURIComponent(catalogName)}`, active: true }
       ]} />

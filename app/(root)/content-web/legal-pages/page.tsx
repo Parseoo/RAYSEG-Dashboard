@@ -74,7 +74,8 @@ const ContentWebPrivacyNoticePage = () => {
     return (
         <>
             <Breadcrumb items={[
-                { label: 'Contenido Web', href: '/content-web' },
+                { label: 'Inicio', href: '/' },
+                { label: 'Contenido Web', href: '/content-web/home' },
                 { label: 'Páginas Legales', href: '/content-web/legal-pages', active: true }
             ]} />
 

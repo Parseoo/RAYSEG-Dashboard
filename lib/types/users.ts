@@ -23,11 +23,11 @@ export interface UserResponse {
 }
 
 export interface Address {
-  street: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  postal_code: string;
+  street?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
 }
 
 export interface User {
@@ -41,9 +41,13 @@ export interface User {
   is_superuser: boolean;
   created_at: string;
   updated_at: string;
-  role?: string;
+  role?: string | Role;
+  role_id?: number;
   state?: string;
   city?: string;
+  address?: Address | null;
+  profile_picture?: string | null;
+  internal_notes?: string | null;
   last_access_date?: string;
   last_password_change?: string;
   phone?: string;
@@ -113,11 +117,19 @@ export interface AuthUserResponse {
   phone?: string;
   rfc?: string;
   description?: string;
-  role?: string;
+  role?: string | Role;
+  role_id?: number;
+  address?: Address | null;
+  profile_picture?: string | null;
+  internal_notes?: string | null;
   state?: string;
   city?: string;
   created_at: string;
   updated_at: string;
+  last_access_date?: string;
+  last_password_change?: string;
+  properties_created_count?: number;
+  clients_created_count?: number;
 }
 
 // Users

@@ -105,7 +105,7 @@ export default function EditCatalogItemPage() {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Configuración', href: '/settings' },
+        { label: 'Configuración', href: '/settings/users-permissions' },
         { label: 'Catálogos', href: '/catalogs' },
         { label: `Editar ítem #${itemId}`, href: `/catalogs/edit-item/${itemId}`, active: true }
       ]} />

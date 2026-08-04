@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { useLogout } from '@/lib/api/auth/auth-query';
+import { getUserImageUrl } from '@/lib/utils';
 
 interface UserMenuProps {
     isOpen: boolean;
@@ -57,10 +59,25 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
             <div className="p-4 bg-slate-50 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                     <div className="relative">
-                        <div className="bg-black w-14 h-14 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                            <span className="text-white text-xl font-bold">
-                                {user?.name?.charAt(0) || 'U'}
-                            </span>
+                        <div className="bg-slate-100 w-14 h-14 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-200 relative">
+                            {user?.profile_picture ? (
+                                <Image
+                                    src={getUserImageUrl(user.profile_picture)}
+                                    alt={user?.name || "Usuario"}
+                                    fill
+                                    sizes="56px"
+                                    unoptimized={true}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        if (target && !target.src.endsWith('/user.svg')) {
+                                            target.src = '/user.svg';
+                                        }
+                                    }}
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <User className="w-7 h-7 text-slate-500" />
+                            )}
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">

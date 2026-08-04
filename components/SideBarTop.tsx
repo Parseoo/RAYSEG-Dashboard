@@ -4,10 +4,11 @@ import { useUserStore } from '@/lib/store/userStore';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { NotificationsModal } from '@/components/ui/NotificationsModal';
 import { UserMenu } from '@/components/ui/UserMenu';
+import { getUserImageUrl } from '@/lib/utils';
 
 interface SideBarTopProps {
   onMenuClick?: () => void;
@@ -94,7 +95,26 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className='flex items-center space-x-2 hover:bg-slate-50 p-2 rounded-lg transition-all'
                 >
-                  <div className='bg-black w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full flex-shrink-0'></div>
+                  <div className='bg-slate-100 w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-full border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0 relative'>
+                    {user?.profile_picture ? (
+                      <Image
+                        src={getUserImageUrl(user.profile_picture)}
+                        alt={user?.name || "Usuario"}
+                        fill
+                        sizes="40px"
+                        unoptimized={true}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target && !target.src.endsWith('/user.svg')) {
+                            target.src = '/user.svg';
+                          }
+                        }}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <User className='w-4 h-4 sm:w-5 sm:h-5 text-slate-500' />
+                    )}
+                  </div>
                   <div className='hidden md:block text-left'>
                     <p className='text-sm font-medium'>{user?.name || 'Usuario'}</p>
                     <p className='text-xs text-gray-500'>{displayRole}</p>

@@ -114,7 +114,7 @@ export default function ClientDetailPage() {
             <Breadcrumb items={[
                 { label: 'Inicio', href: '/' },
                 { label: 'Clientes', href: '/clients' },
-                { label: clientData.name || 'Detalle', href: `/clients/${clientId}`, active: true }
+                { label: `${clientData.name || ''} ${clientData.paternal_last_name || ''}`.trim() || 'Detalle del cliente', href: `/clients/${clientId}`, active: true }
             ]} />
 
             <div className='mb-6'>
@@ -229,7 +229,7 @@ export default function ClientDetailPage() {
                             const fullAddr = prop.location || addressObj.full_address || [addressObj.street, addressObj.street_number, addressObj.neighborhood, addressObj.city, addressObj.state].filter(Boolean).join(', ');
                             
                             // Images:
-                            let imgUrl = '/property.svg';
+                            let imgUrl = '/property.jpg';
                             if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
                                 const mainImg = prop.images.find((img: any) => img.is_main) || prop.images[0];
                                 if (mainImg && mainImg.image) {
@@ -250,6 +250,13 @@ export default function ClientDetailPage() {
                                             src={imgUrl}
                                             alt={prop.title || 'Propiedad'}
                                             fill
+                                            unoptimized={true}
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
+                                                    target.src = '/property.jpg';
+                                                }
+                                            }}
                                             className="object-cover"
                                             sizes="(max-width: 768px) 100vw, 128px"
                                         />

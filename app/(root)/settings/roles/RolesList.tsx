@@ -151,7 +151,7 @@ function RolesList() {
         <>
             <Breadcrumb items={[
                 { label: 'Inicio', href: '/' },
-                { label: 'Configuración', href: '/settings' },
+                { label: 'Configuración', href: '/settings/users-permissions' },
                 { label: 'Roles', href: '/settings/roles', active: true }
             ]} />
             <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>

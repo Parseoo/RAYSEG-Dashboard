@@ -126,7 +126,7 @@ function Clients({ data, isLoading }: { data: any[]; isLoading: boolean }) {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Clientes', href: '/clients', active: true }
+        { label: 'Contratos', href: '/contracts', active: true }
       ]} />
       <ClientsCard />
       <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>

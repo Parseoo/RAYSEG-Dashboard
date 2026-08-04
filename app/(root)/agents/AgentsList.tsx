@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User } from 'lucide-react';
 import { statusOptions, responsibleOptions } from '../../../components/selectClients.data';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -79,13 +79,26 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
-          <Image
-            src={row.image || '/property.svg'}
-            alt={row.name || 'Property'}
-            width={60}
-            height={60}
-            className='rounded-lg object-cover w-[60px] h-[60px]'
-          />
+          <div className='relative w-[48px] h-[48px] rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
+            {row.image && row.image !== '/user.svg' ? (
+              <Image
+                src={row.image}
+                alt={row.name || 'Agente'}
+                fill
+                sizes="48px"
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target && !target.src.endsWith('/user.svg')) {
+                    target.src = '/user.svg';
+                  }
+                }}
+                className='object-cover'
+              />
+            ) : (
+              <User className="w-6 h-6 text-slate-500" />
+            )}
+          </div>
           <div>
             <p className='font-medium text-sm'>{row.name}</p>
             <p className='text-xs text-gray-500'>{row.document}</p>

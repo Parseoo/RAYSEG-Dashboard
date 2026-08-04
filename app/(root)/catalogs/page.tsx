@@ -87,7 +87,7 @@ export default function CatalogsPage() {
     <>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
-        { label: 'Configuración', href: '/settings' },
+        { label: 'Configuración', href: '/settings/users-permissions' },
         { label: 'Catálogos', href: '/catalogs', active: true }
       ]} />
       
