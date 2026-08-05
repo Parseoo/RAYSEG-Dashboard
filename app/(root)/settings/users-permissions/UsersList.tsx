@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User } from 'lucide-react';
+import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User, MoreVertical } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
@@ -38,6 +38,7 @@ function UsersList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [roles, setRoles] = useState<any[]>([]);
+    const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
     const PER_PAGE = 10;
 
     const activeFiltersCount = useMemo(() => {
@@ -273,6 +274,109 @@ function UsersList() {
         );
     };
 
+    const toggleActionMenu = (id: string | number) => {
+        setOpenActionMenu(prev => prev === id ? null : id);
+    };
+
+    const renderMobileCard = (user: UserResponse) => {
+        const fullName = `${user.name} ${user.paternal_last_name ?? ""} ${user.maternal_last_name ?? ""}`.trim();
+        const roleName = typeof user.role === 'object' && user.role !== null
+            ? (user.role as any).name
+            : user.role;
+        const role = roleName || (user.is_superuser ? "SuperAdmin" : user.is_staff ? "Administrador" : "Usuario");
+
+        return (
+            <div key={user.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+                {/* Header: Image, Info and Actions */}
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
+                            {user.profile_picture ? (
+                                <Image 
+                                    src={getUserImageUrl(user.profile_picture)} 
+                                    alt={fullName} 
+                                    fill
+                                    sizes="48px"
+                                    unoptimized={true}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        if (target && !target.src.endsWith('/user.svg')) {
+                                            target.src = '/user.svg';
+                                        }
+                                    }}
+                                    className='object-cover' 
+                                />
+                            ) : (
+                                <User className="w-6 h-6 text-slate-500" />
+                            )}
+                        </div>
+                        <div>
+                            <p className='font-bold text-base text-gray-800'>{fullName}</p>
+                            <p className='text-xs text-gray-500'>{user.email}</p>
+                        </div>
+                    </div>
+                    
+                    {/* Actions Dropdown */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => toggleActionMenu(user.id)}
+                            className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                            <MoreVertical size={20} />
+                        </button>
+                        
+                        {openActionMenu === user.id && (
+                            <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+                                <Link href={`/settings/users-permissions/${user.id}`}>
+                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                                        <Eye size={16} /> Ver
+                                    </button>
+                                </Link>
+                                <Link href={`/settings/users-permissions/edit-user/${user.id}`}>
+                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                                        <Pencil size={16} /> Editar
+                                    </button>
+                                </Link>
+                                <button 
+                                    onClick={() => {
+                                        setOpenActionMenu(null);
+                                        handleDeleteClick(user);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} /> Eliminar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Contacto</p>
+                        <p className="truncate" title={user.email}>{user.email || '-'}</p>
+                        <p className="text-xs text-gray-600">{user.phone || '-'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Estatus</p>
+                        <Tag status={user.is_active ? 'Activo' : 'Inactivo'}>
+                            {user.is_active ? 'Activo' : 'Inactivo'}
+                        </Tag>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Rol</p>
+                        <p>{role}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado en</p>
+                        <p>{user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const deleteFullName = deleteModal.item
         ? `${deleteModal.item.name} ${deleteModal.item.paternal_last_name ?? ""} ${deleteModal.item.maternal_last_name ?? ""}`.trim()
         : "";
@@ -339,7 +443,26 @@ function UsersList() {
                         </div>
                     </div>
                 </div>
-                <Table data={filteredUsers} headers={headers} renderRow={renderRow} isLoading={loading} />
+
+                <div className="hidden md:block">
+                    <Table data={filteredUsers} headers={headers} renderRow={renderRow} isLoading={loading} />
+                </div>
+
+                <div className="md:hidden mt-4">
+                    {loading ? (
+                        <div className="flex justify-center items-center py-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+                        </div>
+                    ) : filteredUsers.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            {filteredUsers.map((user) => renderMobileCard(user))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                            No hay registros disponibles
+                        </div>
+                    )}
+                </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (

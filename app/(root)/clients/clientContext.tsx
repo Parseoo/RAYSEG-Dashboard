@@ -276,7 +276,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
         property: data.property?.id || data.property_id || 0,
         lead_source: data.lead_source_name || '',
         other_source: data.other_source || '',
-        profile_photo: data.profile_photo || '',
+        profile_photo: data.profile_photo || data.profile_picture || data.photo || data.image || '',
         accept_policies: data.accept_policies ?? true
       });
     } catch (error) {

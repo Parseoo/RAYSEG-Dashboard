@@ -4,6 +4,7 @@ import { DynamicInputs } from "@/components/ui/Input"
 import { inputsAddTermsConditions } from "../inputConfig"
 import { Info } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/RichTextEditor"
+import { formatDate } from "@/lib/utils"
 
 import React from "react"
 
@@ -11,11 +12,13 @@ interface AddTermsConditionsProps {
     data: {
         terms_title: string;
         terms_content: string;
+        updated_at?: string;
     };
+    updatedAt?: string;
     onChange: (id: string, value: string) => void;
 }
 
-export const AddTermsConditions = ({ data, onChange }: AddTermsConditionsProps) => {
+export const AddTermsConditions = ({ data, updatedAt, onChange }: AddTermsConditionsProps) => {
     const titleInput = inputsAddTermsConditions[0]
     const mappedTitleInput = {
         ...titleInput,
@@ -33,7 +36,7 @@ export const AddTermsConditions = ({ data, onChange }: AddTermsConditionsProps) 
                     <h1 className='font-[500] text-lg'>Datos de los Términos y Condiciones</h1>
                     <div className="flex items-center gap-2">
                         <Info className="flex-shrink-0 text-gray-500 w-4 h-4" />
-                        <p className="text-gray-500 text-sm">Última actualización: 05 Ene 2025</p>
+                        <p className="text-gray-500 text-sm">Última actualización: {formatDate(updatedAt || data.updated_at)}</p>
                     </div>
                 </div>
 

@@ -277,54 +277,58 @@ export const AddMultimediaProperty = () => {
 
       {openModal && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           onClick={() => setOpenModal(false)}
         >
-          <div
-            className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header modal */}
-            <div className="flex items-center justify-between p-3 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Vista previa</span>
-              <button
-                onClick={() => setOpenModal(false)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-1.5 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
+          {selectedImage && (
+            (() => {
+              const fileStr = typeof selectedImage.file === 'string' ? selectedImage.file : '';
+              const isPdf = fileStr.includes('application/pdf') || fileStr.toLowerCase().endsWith('.pdf') || fileStr.startsWith('data:application/pdf');
+              const modalUrl = getImageUrl(selectedImage.file);
 
-            {/* Content modal */}
-            <div className="p-3 sm:p-6 flex items-center justify-center max-h-[75vh] overflow-auto">
-              {selectedImage && (
-                (() => {
-                  const fileStr = typeof selectedImage.file === 'string' ? selectedImage.file : '';
-                  const isPdf = fileStr.includes('application/pdf') || fileStr.toLowerCase().endsWith('.pdf') || fileStr.startsWith('data:application/pdf');
-                  const modalUrl = getImageUrl(selectedImage.file);
+              if (isPdf) {
+                return (
+                  <div
+                    className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-700">Vista previa PDF</span>
+                      <button
+                        onClick={() => setOpenModal(false)}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-1.5 transition-colors"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <div className="p-3 sm:p-6 flex items-center justify-center max-h-[75vh] overflow-auto">
+                      <iframe src={modalUrl} className="w-full h-[60vh] rounded-lg border border-gray-200" title="Vista previa PDF" />
+                    </div>
+                  </div>
+                );
+              }
 
-                  if (isPdf) {
-                    return <iframe src={modalUrl} className="w-full h-[60vh] rounded-lg border border-gray-200" title="Vista previa PDF" />;
-                  }
-
-                  return (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={modalUrl}
-                      alt="Vista completa"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                          target.src = '/property.jpg';
-                        }
-                      }}
-                      className="max-h-[60vh] max-w-full object-contain rounded-lg shadow-sm"
-                    />
-                  );
-                })()
-              )}
-            </div>
-          </div>
+              return (
+                <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setOpenModal(false)}
+                    className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={modalUrl}
+                    alt="Vista completa"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/img/fallback-image.png';
+                    }}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              );
+            })()
+          )}
         </div>
       )}
 

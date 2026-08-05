@@ -4,6 +4,8 @@ import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { ProfileImageUpload } from '@/components/ui/ProfileImageUpload';
 import { useClient } from '../clientContext';
 
+import { fileToBase64 } from '@/lib/utils';
+
 export const AddDataClient = () => {
     const { state, updateField, taxpayerTypes, segmentTypes, statusTypes, agents, errors } = useClient();
 
@@ -75,9 +77,14 @@ export const AddDataClient = () => {
         error: errors[input.id]
     }));
 
-    const handleImageChange = (file: File) => {
-        const objectUrl = URL.createObjectURL(file);
-        updateField('profile_photo', objectUrl);
+    const handleImageChange = async (file: File) => {
+        try {
+            const base64 = await fileToBase64(file);
+            updateField('profile_photo', base64);
+        } catch {
+            const objectUrl = URL.createObjectURL(file);
+            updateField('profile_photo', objectUrl);
+        }
     };
 
     return (

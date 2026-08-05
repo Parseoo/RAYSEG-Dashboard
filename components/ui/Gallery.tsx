@@ -1,65 +1,94 @@
 "use client"
 
-import React, { useCallback, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useCallback, useEffect, useState } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '@/lib/utils';
 
 export const Gallery = ({ isOpen, onClose, images }: any) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const handleKeyDown = useCallback(
-    (e: any) => {
-      if (e.code === 'Escape') {
-        onClose();
-      }
+    (e: KeyboardEvent) => {
+      if (e.code === 'Escape') onClose();
+      if (e.code === 'ArrowRight') setCurrentIndex((prev) => (prev + 1) % images.length);
+      if (e.code === 'ArrowLeft') setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     },
-    [onClose]
+    [onClose, images.length]
   );
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setCurrentIndex(0);
+      return;
+    }
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
-  const onOverlayClose = (e: any) => {
-    if (e.currentTarget === e.target) {
-      onClose();
-    }
+  if (!isOpen || !images || images.length === 0) return null;
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
-  if (!isOpen) return null;
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   return (
-    <div className='fixed cursor-default inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4' onClick={e => onOverlayClose(e)}>
-      <div className='bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto'>
-        <div className='flex justify-between items-center p-3 sm:p-4 border-b sticky top-0 bg-white z-10'>
-          <h2 className='text-lg sm:text-xl font-bold'>Galería de Imágenes</h2>
-          <button
-            onClick={onClose}
-            className='text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded transition-colors'
-            aria-label='Cerrar galería'
-          >
-            <svg className='w-5 h-5 sm:w-6 sm:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12'></path>
-            </svg>
-          </button>
-        </div>
-        <div className='p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4'>
-          {images.map((image: any, index: any) => (
-            <Image
-              key={index}
-              src={image}
-              alt={`Image ${index + 1}`}
-              width={200}
-              height={200}
-              className='w-full h-32 sm:h-48 object-cover rounded-lg'
-            />
-          ))}
-        </div>
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+          title="Cerrar"
+        >
+          <X size={24} />
+        </button>
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-3 shadow z-10 transition-colors"
+              title="Anterior"
+            >
+              <ChevronLeft size={30} />
+            </button>
+            <button
+              onClick={nextImage}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-3 shadow z-10 transition-colors"
+              title="Siguiente"
+            >
+              <ChevronRight size={30} />
+            </button>
+            
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1 rounded-full text-sm">
+              {currentIndex + 1} / {images.length}
+            </div>
+          </>
+        )}
+
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={getImageUrl(images[currentIndex])}
+          alt={`Imagen ${currentIndex + 1}`}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (!target.src.endsWith('/img/fallback-image.png')) {
+              target.src = '/img/fallback-image.png';
+            }
+          }}
+          className="max-w-full max-h-full object-contain"
+        />
       </div>
     </div>
   );
 };
 
-
-export default Gallery
+export default Gallery;

@@ -30,7 +30,7 @@ const EditUserPage = () => {
                     paternal_last_name: apiData.paternal_last_name,
                     maternal_last_name: apiData.maternal_last_name || "",
                     password: "",
-                    password_confirm: "",
+                    old_password: "",
                     // role: si es objeto {id, name} usar el id, si es string usar directo
                     role: typeof apiData.role === 'object' && apiData.role !== null
                         ? String((apiData.role as any).id)
@@ -89,7 +89,6 @@ const EditUserPage = () => {
 
             if (formData.password) {
                 apiData.password = formData.password;
-                apiData.password_confirm = formData.password_confirm;
             }
 
             const response = await EditUser(Number(userId), apiData);

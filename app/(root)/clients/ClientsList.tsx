@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User, MoreVertical } from 'lucide-react';
 import { responsibleOptions } from '../../../components/selectClients.data';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import Search from '../../../components/ui/Search';
@@ -43,6 +43,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
+  const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationType>({
@@ -246,9 +247,9 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
           <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
-            {row.profile_picture ? (
+            {(row.profile_photo || row.profile_picture) ? (
               <Image
-                src={getUserImageUrl(row.profile_picture)}
+                src={getUserImageUrl(row.profile_photo || row.profile_picture)}
                 alt={row.name || 'Cliente'}
                 fill
                 sizes="48px"
@@ -319,6 +320,109 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </div>
       </td>
     </tr>
+  );
+
+  const toggleActionMenu = (id: string | number) => {
+    setOpenActionMenu(prev => prev === id ? null : id);
+  };
+
+  const renderMobileCard = (row: any, index: number) => (
+    <div key={row.id || index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+      {/* Header: Image, Info and Actions */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
+            {(row.profile_photo || row.profile_picture) ? (
+              <Image
+                src={getUserImageUrl(row.profile_photo || row.profile_picture)}
+                alt={row.name || 'Cliente'}
+                fill
+                sizes="48px"
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target && !target.src.endsWith('/user.svg')) {
+                    target.src = '/user.svg';
+                  }
+                }}
+                className='object-cover'
+              />
+            ) : (
+              <User className="w-6 h-6 text-slate-500" />
+            )}
+          </div>
+          <div>
+            <p className='font-bold text-base text-gray-800'>{row.name || '-'}</p>
+            <p className='text-xs text-gray-500'>CLI-{row.id}</p>
+          </div>
+        </div>
+        
+        {/* Actions Dropdown */}
+        <div className="relative">
+          <button 
+            onClick={() => toggleActionMenu(row.id)}
+            className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
+          >
+            <MoreVertical size={20} />
+          </button>
+          
+          {openActionMenu === row.id && (
+            <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+              <Link href={`/clients/${row.id}`}>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                  <Eye size={16} /> Ver
+                </button>
+              </Link>
+              <Link href={`/clients/edit-client/${row.id}`}>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                  <Pencil size={16} /> Editar
+                </button>
+              </Link>
+              <button 
+                onClick={() => {
+                  setOpenActionMenu(null);
+                  handleDeleteClick(row);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+              >
+                <Trash2 size={16} /> Eliminar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Details Grid */}
+      <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Contacto</p>
+          <p className="truncate" title={row.contact?.email}>{row.contact?.email || '-'}</p>
+          <p className="text-xs text-gray-600">{row.contact?.phone || '-'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Estado</p>
+          <Tag status={row.client_status} variant={row.client_status === 'activo' ? 'emerald' : 'red'}>
+            {row.client_status || 'Unknown'}
+          </Tag>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Tipo</p>
+          <p>{row.client_type || '-'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Interés principal</p>
+          <p className="font-medium">{formatInterestLabel(row.main_interest)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Origen</p>
+          <p>{row.origin || '-'}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-0.5">Agente</p>
+          <p className="truncate" title={row.agent?.name || row.agent_id}>{row.agent?.name || row.agent_id || '-'}</p>
+        </div>
+      </div>
+    </div>
   );
 
   const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
@@ -466,7 +570,25 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
             </div>
           </div>
 
-          <Table data={filteredClients} headers={headers} renderRow={renderRow} isLoading={initialLoading || isPageLoading} />
+          <div className="hidden md:block">
+            <Table data={filteredClients} headers={headers} renderRow={renderRow} isLoading={initialLoading || isPageLoading} />
+          </div>
+
+          <div className="md:hidden mt-4">
+            {initialLoading || isPageLoading ? (
+              <div className="flex justify-center items-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+              </div>
+            ) : filteredClients.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {filteredClients.map((row, idx) => renderMobileCard(row, idx))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                No hay registros disponibles
+              </div>
+            )}
+          </div>
 
           {pagination.total_paginas > 1 && (
             <Pagination

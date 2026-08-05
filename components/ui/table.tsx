@@ -65,7 +65,7 @@ const getValueByHeader = (item: any, header: string): any => {
     if (h === 'contacto') {
         return item.email || item.contacto || '';
     }
-    if (h === 'alta' || h === 'fecha' || h === 'inicio' || h === 'fin' || h === 'ultimo acceso') {
+    if (h === 'alta' || h === 'inicio' || h === 'fin' || h === 'ultimo acceso') {
         return item.high || item.created_at || item.updated_at || item.inicio || item.fin || '';
     }
     if (h === 'calle y numero') {
@@ -88,8 +88,8 @@ const getValueByHeader = (item: any, header: string): any => {
         }
         return item.responsable || '';
     }
-    if (h === 'creado en' || h === 'creado' || h === 'fecha') {
-        return item.created_at || item.createdAt || item.fecha || '';
+    if (h === 'creado en' || h === 'creado' || h === 'fecha' || h === 'fecha de creacion' || h === 'fecha creacion') {
+        return item.created_at || item.createdAt || item.fecha || item.date || '';
     }
     if (h === 'publicacion web' || h === 'publicacion' || h === 'web') {
         return item.is_active || item.is_published || item.status || '';
@@ -145,18 +145,25 @@ export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination 
                 return sortDirection === 'asc' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
             }
 
-            // Ordenación de fechas
-            const isDateA = !isNaN(Date.parse(valA)) && isNaN(Number(valA));
-            const isDateB = !isNaN(Date.parse(valB)) && isNaN(Number(valB));
-            if (isDateA && isDateB) {
-                const dateA = new Date(valA).getTime();
-                const dateB = new Date(valB).getTime();
-                return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+            // Ordenación de fechas - mejorada para detectar mejor formatos de fecha
+            const strValA = String(valA);
+            const strValB = String(valB);
+            
+            // Verificar si ambos valores son fechas válidas
+            const dateA = new Date(strValA);
+            const dateB = new Date(strValB);
+            const isValidDateA = dateA instanceof Date && !isNaN(dateA.getTime()) && (strValA.includes('-') || strValA.includes('/') || strValA.includes('T'));
+            const isValidDateB = dateB instanceof Date && !isNaN(dateB.getTime()) && (strValB.includes('-') || strValB.includes('/') || strValB.includes('T'));
+            
+            if (isValidDateA && isValidDateB) {
+                const timeA = dateA.getTime();
+                const timeB = dateB.getTime();
+                return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
             }
 
             // Ordenación de cadenas
-            const strA = String(valA).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            const strB = String(valB).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const strA = strValA.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const strB = strValB.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
             if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
             if (strA > strB) return sortDirection === 'asc' ? 1 : -1;

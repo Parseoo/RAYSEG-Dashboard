@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react';
-import { CirclePlus, Plus, Loader2, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { CirclePlus, Plus, Loader2, Pencil, Trash2, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { ItemResponse } from '@/lib/@type';
@@ -34,6 +34,8 @@ const AmenitiesManager = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { fetchCatalogs } = useProperty();
     const [localAddedAmenities, setLocalAddedAmenities] = useState<Record<string, { title: string; description: string; icon: string }>>({});
+    const [sortField, setSortField] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     // Cerrar dropdown al hacer click fuera
     useEffect(() => {
@@ -157,6 +159,44 @@ const AmenitiesManager = ({
         setDeleteModal({ isOpen: false, item: null });
     };
 
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            if (sortDirection === 'asc') {
+                setSortDirection('desc');
+            } else {
+                setSortField(null);
+                setSortDirection('asc');
+            }
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const sortedServiceItems = useMemo(() => {
+        if (!sortField || serviceItems.length === 0) return serviceItems;
+
+        return [...serviceItems].sort((a, b) => {
+            let valA: string = '';
+            let valB: string = '';
+
+            if (sortField === 'Nombre') {
+                valA = a.title || '';
+                valB = b.title || '';
+            } else if (sortField === 'Descripción') {
+                valA = a.description || '';
+                valB = b.description || '';
+            }
+
+            const strA = valA.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const strB = valB.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
+            if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [serviceItems, sortField, sortDirection]);
+
     return (
         <div className="bg-white w-full rounded-lg p-4 sm:p-5 border border-gray-200">
             <h1 className="font-[500] text-lg mb-1">
@@ -270,13 +310,37 @@ const AmenitiesManager = ({
                             <thead>
                                 <tr className="bg-slate-50 border-b border-gray-200">
                                     <th className="py-2.5 px-3 font-semibold text-xs text-gray-600 w-16 text-center">Icono</th>
-                                    <th className="py-2.5 px-3 font-semibold text-xs text-gray-600">Nombre</th>
-                                    <th className="py-2.5 px-3 font-semibold text-xs text-gray-600">Descripción</th>
+                                    <th 
+                                        onClick={() => handleSort('Nombre')}
+                                        className="py-2.5 px-3 font-semibold text-xs text-gray-600 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Nombre</span>
+                                            <span className="text-gray-400">
+                                                {sortField === 'Nombre' && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                {sortField === 'Nombre' && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                {sortField !== 'Nombre' && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th 
+                                        onClick={() => handleSort('Descripción')}
+                                        className="py-2.5 px-3 font-semibold text-xs text-gray-600 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Descripción</span>
+                                            <span className="text-gray-400">
+                                                {sortField === 'Descripción' && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                {sortField === 'Descripción' && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                {sortField !== 'Descripción' && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                            </span>
+                                        </div>
+                                    </th>
                                     <th className="py-2.5 px-3 font-semibold text-xs text-gray-600 text-right w-24">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {serviceItems.map((item) => {
+                                {sortedServiceItems.map((item) => {
                                     const Icon = item.icon as any;
                                     return (
                                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">

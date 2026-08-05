@@ -138,8 +138,8 @@ export interface UserForm {
   name: string;
   paternal_last_name: string;
   maternal_last_name: string | null;
-  password: string;
-  password_confirm: string;
+  password?: string;
+  old_password?: string;
   role: string;
   role_id?: number | null;
   phone?: string;

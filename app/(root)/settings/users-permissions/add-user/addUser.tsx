@@ -48,7 +48,7 @@ const initialUser: UserForm = {
     paternal_last_name: "",
     maternal_last_name: "",
     password: "",
-    password_confirm: "",
+    old_password: "",
     role: "",
     is_active: "true",
 };
@@ -116,20 +116,13 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             } else if (user.password.length < 8) {
                 tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
             }
-            if (!user.password_confirm) {
-                tempErrors.password_confirm = "El campo es requerido";
-            } else if (user.password !== user.password_confirm) {
-                tempErrors.password_confirm = "Las contraseñas no coinciden";
-            }
         } else {
-            // Si está en modo edición y el usuario ingresó contraseña, validarla
-            if (user.password || user.password_confirm) {
-                if (user.password && user.password.length < 8) {
-                    tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
-                }
-                if (user.password !== user.password_confirm) {
-                    tempErrors.password_confirm = "Las contraseñas no coinciden";
-                }
+            // En modo edición: si ingresó nueva contraseña, la actual es obligatoria
+            if (user.password && !user.old_password) {
+                tempErrors.old_password = "Ingresa tu contraseña actual para poder cambiarla";
+            }
+            if (user.password && user.password.length < 8) {
+                tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
             }
         }
 
@@ -223,8 +216,8 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             address: address,
             profile_picture: profilePictureBase64,
             internal_notes: user.notas_internas || user.internal_notes || "",
-            password: user.password,
-            password_confirm: user.password_confirm,
+            password: user.password || undefined,
+            old_password: isEdit ? (user.old_password || undefined) : undefined,
             role: user.role,
             role_id: user.role ? Number(user.role) : 0,
             is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo',
@@ -365,7 +358,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                         </div>
 
                         <AddInformationPersonal user={user} setUser={setUser} errors={errors} onImageChange={setProfileImage} rolesData={roles} />
-                        <AddPassword user={user} setUser={setUser} errors={errors} />
+                        <AddPassword user={user} setUser={setUser} errors={errors} isEdit={isEdit} />
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-end mt-5">
                             <button type="button" onClick={() => router.push("/settings/users-permissions")}

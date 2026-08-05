@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 
 import { DynamicInputs } from "@/components/ui/Input"
 import { inputsLocation } from "../inputConfig"
-import { Info, Loader2, MapPinned, Pencil, Trash2 } from "lucide-react"
+import { Info, Loader2, MapPinned, Pencil, Trash2, MoreVertical } from "lucide-react"
 import { Table } from "@/components/ui/table"
 import { GetPropertiesLocations, GetAllProperties, DeleteLocation, AddLocation, GetPropertyById, GetPropertyLocationById } from "@/lib/api/property/property-api"
 import { GetCatalogPropertyTypes } from "@/lib/api/catalog-api"
@@ -92,6 +92,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         addressId: null,
     })
     const [saving, setSaving] = useState(false)
+    const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null)
 
     useEffect(() => {
         if (onClearRef) {
@@ -384,6 +385,102 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         </tr>
     )
 
+    const toggleActionMenu = (id: string | number) => {
+        setOpenActionMenu(prev => prev === id ? null : id);
+    };
+
+    const renderMobileCard = (row: any, index: number) => (
+        <div key={`${row.id}-${index}`} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+            {/* Header: Title and Actions */}
+            <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                    <h3 className='font-bold text-base text-gray-800 mb-1'>{row.title}</h3>
+                    <p className="text-xs text-gray-500">ID: {row.property_id}</p>
+                </div>
+                
+                {/* Actions Dropdown */}
+                <div className="relative">
+                    <button 
+                        onClick={() => toggleActionMenu(`${row.id}-${index}`)}
+                        className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
+                    >
+                        <MoreVertical size={20} />
+                    </button>
+                    
+                    {openActionMenu === `${row.id}-${index}` && (
+                        <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+                            <button 
+                                onClick={() => {
+                                    setOpenActionMenu(null);
+                                    handleEditLocation(row);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2"
+                            >
+                                <Pencil size={16} /> Editar
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setOpenActionMenu(null);
+                                    row.address_id && setDeleteModal({ isOpen: true, propertyId: row.property_id, addressId: row.address_id });
+                                }}
+                                disabled={!row.address_id}
+                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                                    row.address_id 
+                                        ? 'text-red-600 hover:bg-red-50' 
+                                        : 'text-gray-300 cursor-not-allowed'
+                                }`}
+                            >
+                                <Trash2 size={16} /> Eliminar
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Address Details */}
+            <div className="space-y-2.5 text-sm mb-3">
+                <div className="flex items-start gap-2">
+                    <MapPinned size={16} className="text-primary_color mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                            {row.street || "-"} {row.street_number || ""}
+                        </p>
+                        <p className="text-gray-600 text-xs">
+                            {row.neighborhood || "-"}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Location Grid */}
+            <div className="grid grid-cols-2 gap-y-2 gap-x-2 text-sm pt-3 border-t border-slate-100">
+                <div>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Ciudad</p>
+                    <p className="text-gray-800">{row.city || '-'}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Estado</p>
+                    <p className="text-gray-800">{row.state || '-'}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500 font-semibold mb-0.5">CP</p>
+                    <p className="text-gray-800">{row.postal_code || '-'}</p>
+                </div>
+                <div className="col-span-2 border-t border-slate-100 pt-2 mt-1">
+                    <p className="text-xs text-gray-500 font-semibold mb-1">Coordenadas</p>
+                    <div className="flex items-center gap-3 text-xs font-mono">
+                        <span className="text-gray-700">
+                            <span className="text-gray-500">Lat:</span> {Number.isFinite(row.latitude) ? (row.latitude as number).toFixed(6) : '-'}
+                        </span>
+                        <span className="text-gray-700">
+                            <span className="text-gray-500">Lng:</span> {Number.isFinite(row.longitude) ? (row.longitude as number).toFixed(6) : '-'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     // Buscar dirección manualmente y centrar el mapa (con marcador)
     const fijarEnMapa = async () => {
         if (!address.trim()) {
@@ -433,83 +530,97 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         })
 
     return (
-        <div className="w-full rounded-lg p-5 border">
-            <h1 className="font-[500] text-lg">Vista previa del mapa</h1>
-            <p className="text-md text-gray-500">
-                Visualización de las propiedades según su ubicación registrada.
-            </p>
+        <div className="w-full rounded-lg p-4 sm:p-5 border">
+            <div className="mb-4">
+                <h1 className="font-[500] text-lg sm:text-xl">Vista previa del mapa</h1>
+                <p className="text-sm sm:text-md text-gray-500 mt-1">
+                    Visualización de las propiedades según su ubicación registrada.
+                </p>
+            </div>
 
             {/* Inputs de filtro */}
-            <div className="mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                    {/* Select de Propiedad */}
-                    <div className="sm:col-span-6 flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700">
-                            Propiedad
-                        </label>
-                        <select
-                            value={selectedPropertyId}
-                            onChange={(e) => {
-                                setSelectedPropertyId(e.target.value)
-                                console.log('ID de propiedad seleccionada:', e.target.value)
-                                const selectedProp = properties.find(p => String(p.property_id || p.id) === String(e.target.value))
-                                console.log('Propiedad completa seleccionada:', selectedProp)
-                            }}
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500 h-[42px]"
-                        >
-                            <option value="">Seleccionar propiedad</option>
-                            {properties && properties.length > 0 && properties.map((prop) => {
-                                const propIdStr = String(prop.property_id || prop.id || '');
-                                const propTitleStr = prop.title || prop.name || `Propiedad ${propIdStr}`;
-                                return (
-                                    <option key={propIdStr} value={propIdStr}>
-                                        {propTitleStr}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </div>
+            <div className="mt-4 space-y-4">
+                {/* Select de Propiedad */}
+                <div className="w-full">
+                    <label className="text-sm font-medium text-gray-700 block mb-2">
+                        Selecciona una propiedad
+                    </label>
+                    <select
+                        value={selectedPropertyId}
+                        onChange={(e) => {
+                            setSelectedPropertyId(e.target.value)
+                            console.log('ID de propiedad seleccionada:', e.target.value)
+                            const selectedProp = properties.find(p => String(p.property_id || p.id) === String(e.target.value))
+                            console.log('Propiedad completa seleccionada:', selectedProp)
+                        }}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500 h-[42px]"
+                    >
+                        <option value="">Seleccionar propiedad</option>
+                        {properties && properties.length > 0 && properties.map((prop) => {
+                            const propIdStr = String(prop.property_id || prop.id || '');
+                            const propTitleStr = prop.title || prop.name || `Propiedad ${propIdStr}`;
+                            return (
+                                <option key={propIdStr} value={propIdStr}>
+                                    {propTitleStr}
+                                </option>
+                            );
+                        })}
+                    </select>
                 </div>
 
                 {/* Input de dirección */}
-                <div className="flex flex-col gap-2 mt-4">
-                    <label htmlFor="direccion" className="text-sm font-medium text-gray-700">
+                <div className="w-full">
+                    <label htmlFor="direccion" className="text-sm font-medium text-gray-700 block mb-2">
                         Dirección a fijar en el mapa
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             id="direccion"
                             type="text"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                             placeholder="Ej: Calle 123, Colonia, Ciudad, Estado"
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm h-[42px]"
                             onKeyDown={(e) => e.key === "Enter" && fijarEnMapa()}
                         />
                         <button
                             type="button"
                             onClick={fijarEnMapa}
                             disabled={loading}
-                            className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 font-medium disabled:opacity-60 shadow-md"
+                            className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[180px] h-[42px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 font-medium disabled:opacity-60 shadow-md text-sm whitespace-nowrap px-4"
                         >
-                            {loading ? <Loader2 size={18} className="animate-spin" /> : <MapPinned size={20} />}
-                            Fijar en el mapa
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    <span>Buscando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <MapPinned size={18} />
+                                    <span>Fijar en el mapa</span>
+                                </>
+                            )}
                         </button>
                     </div>
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                 </div>
             </div>
 
-            <p className="text-gray-500 text-sm mt-4 mb-2">
-                Usa la dirección completa para una mejor precisión del pin en el mapa.
-            </p>
+            <div className="flex items-start gap-2 text-xs sm:text-sm text-gray-500 mt-4 mb-2 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <Info size={16} className="mt-0.5 shrink-0 text-blue-600" />
+                <p>
+                    Usa la dirección completa para una mejor precisión del pin en el mapa.
+                </p>
+            </div>
 
             {/* Indicador de marcadores activos */}
             {!isLoading && (
                 <div className="flex items-center gap-2 mb-4">
-                    <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-sm font-medium px-3 py-1.5 rounded-full border border-green-200">
-                        <MapPinned size={14} />
-                        {mapMarkers.length} propiedad{mapMarkers.length !== 1 ? 'es' : ''} con ubicación en el mapa
+                    <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs sm:text-sm font-medium px-2.5 sm:px-3 py-1.5 rounded-full border border-green-200">
+                        <MapPinned size={14} className="flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                            {mapMarkers.length} propiedad{mapMarkers.length !== 1 ? 'es' : ''}
+                        </span>
                     </span>
                 </div>
             )}
@@ -528,18 +639,27 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                         type="button"
                         onClick={handleSaveLocation}
                         disabled={saving}
-                        className="bg-[#16a34a] text-white px-6 py-2.5 rounded-lg font-medium shadow-md hover:bg-[#15803d] disabled:opacity-60 flex items-center gap-2 text-sm transition-all"
+                        className="bg-[#16a34a] text-white w-full sm:w-auto px-6 py-2.5 rounded-lg font-medium shadow-md hover:bg-[#15803d] disabled:opacity-60 flex items-center justify-center gap-2 text-sm transition-all"
                     >
-                        {saving ? <Loader2 size={18} className="animate-spin" /> : <MapPinned size={18} />}
-                        Guardar ubicación
+                        {saving ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                <span>Guardando...</span>
+                            </>
+                        ) : (
+                            <>
+                                <MapPinned size={18} />
+                                <span>Guardar ubicación</span>
+                            </>
+                        )}
                     </button>
                 </div>
             )}
 
             {/* Info */}
-            <div className="flex items-start gap-2 text-sm text-gray-500 mt-5">
-                <Info size={16} className="mt-0.5 shrink-0" />
-                <div className="space-y-1">
+            <div className="flex items-start gap-2 text-xs sm:text-sm text-gray-500 mt-5 bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
+                <Info size={16} className="mt-0.5 shrink-0 text-slate-600" />
+                <div className="space-y-1.5">
                     <p>
                         El mapa muestra automáticamente las propiedades con estatus
                         <strong> &quot;Disponible&quot;</strong> que tienen una dirección válida registrada.
@@ -550,19 +670,46 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             </div>
 
             {/* Tabla */}
-            <div className="mt-6 bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                    <h2 className="text-md font-medium">Propiedades con ubicación registrada</h2>
+            <div className="mt-6 bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+                <div className="flex flex-col gap-3 sm:gap-4 mb-4">
+                    <h2 className="text-base sm:text-md font-semibold text-gray-800">
+                        Propiedades con ubicación registrada
+                    </h2>
                     <Search
                         title="Buscar propiedad o ubicación..."
                         value={tableSearchTerm}
                         onChange={(e) => setTableSearchTerm(e.target.value)}
-                        className="max-w-[350px] w-full"
+                        className="w-full sm:max-w-[350px]"
                     />
                 </div>
-                <Table data={filteredTableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
+                
+                <div className="hidden md:block">
+                    <Table data={filteredTableData} headers={headers} renderRow={renderRow} isLoading={isLoading} />
+                </div>
+
+                <div className="md:hidden mt-4">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center py-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+                        </div>
+                    ) : filteredTableData.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            {filteredTableData.map((row, idx) => renderMobileCard(row, idx))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                            No hay localizaciones registradas
+                        </div>
+                    )}
+                </div>
             </div>
-            <p className="text-sm text-gray-500 mt-5">Esta lista solo afecta cómo se muestran los marcadores en el mapa público. No modifica la dirección oficial de la propiedad en tu inventario.</p>
+            
+            <div className="mt-5 bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4">
+                <p className="text-xs sm:text-sm text-amber-800 flex items-start gap-2">
+                    <Info size={16} className="flex-shrink-0 mt-0.5" />
+                    <span>Esta lista solo afecta cómo se muestran los marcadores en el mapa público. No modifica la dirección oficial de la propiedad en tu inventario.</span>
+                </p>
+            </div>
 
             {/* Modal de confirmación para eliminar */}
             <DeleteModal

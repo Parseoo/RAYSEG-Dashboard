@@ -18,7 +18,10 @@ import {
     FolderTree,
     MessageSquare,
     Image as ImageIcon,
-    Lock
+    Lock,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
 
 export interface PermissionActionItem {
@@ -56,12 +59,58 @@ export function ViewPermissions({ userPermissions = {}, isReadOnly = true, roleN
         'seguridad': false,
         'sistema': false,
     });
+    const [sortField, setSortField] = useState<Record<string, string | null>>({});
+    const [sortDirection, setSortDirection] = useState<Record<string, 'asc' | 'desc'>>({});
 
     const toggleGroup = (groupId: string) => {
         setExpandedGroups(prev => ({
             ...prev,
             [groupId]: !prev[groupId]
         }));
+    };
+
+    const handleSort = (groupId: string, field: string) => {
+        const currentField = sortField[groupId];
+        const currentDirection = sortDirection[groupId] || 'asc';
+
+        if (currentField === field) {
+            if (currentDirection === 'asc') {
+                setSortDirection(prev => ({ ...prev, [groupId]: 'desc' }));
+            } else {
+                setSortField(prev => ({ ...prev, [groupId]: null }));
+                setSortDirection(prev => ({ ...prev, [groupId]: 'asc' }));
+            }
+        } else {
+            setSortField(prev => ({ ...prev, [groupId]: field }));
+            setSortDirection(prev => ({ ...prev, [groupId]: 'asc' }));
+        }
+    };
+
+    const getSortedModules = (modules: PermissionModuleItem[], groupId: string) => {
+        const field = sortField[groupId];
+        const direction = sortDirection[groupId] || 'asc';
+
+        if (!field) return modules;
+
+        return [...modules].sort((a, b) => {
+            let valA: string = '';
+            let valB: string = '';
+
+            if (field === 'Módulo') {
+                valA = a.title || '';
+                valB = b.title || '';
+            } else if (field === 'Estado') {
+                valA = a.status || '';
+                valB = b.status || '';
+            }
+
+            const strA = valA.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const strB = valB.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if (strA < strB) return direction === 'asc' ? -1 : 1;
+            if (strA > strB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
     };
 
     // Construcción de los grupos y módulos según la referencia
@@ -324,14 +373,38 @@ export function ViewPermissions({ userPermissions = {}, isReadOnly = true, roleN
                                     <table className="w-full text-left text-xs sm:text-sm min-w-[620px]">
                                         <thead className="bg-slate-50/80 text-gray-500 text-[11px] uppercase tracking-wider font-semibold border-b border-slate-100">
                                             <tr>
-                                                <th className="py-3 px-5 font-semibold">Módulo</th>
-                                                <th className="py-3 px-5 font-semibold text-center w-36">Estado</th>
+                                                <th 
+                                                    onClick={() => handleSort(group.id, 'Módulo')}
+                                                    className="py-3 px-5 font-semibold cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                                                >
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>Módulo</span>
+                                                        <span className="text-gray-400">
+                                                            {sortField[group.id] === 'Módulo' && sortDirection[group.id] === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                            {sortField[group.id] === 'Módulo' && sortDirection[group.id] === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                            {sortField[group.id] !== 'Módulo' && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                                        </span>
+                                                    </div>
+                                                </th>
+                                                <th 
+                                                    onClick={() => handleSort(group.id, 'Estado')}
+                                                    className="py-3 px-5 font-semibold text-center w-36 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                                                >
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <span>Estado</span>
+                                                        <span className="text-gray-400">
+                                                            {sortField[group.id] === 'Estado' && sortDirection[group.id] === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
+                                                            {sortField[group.id] === 'Estado' && sortDirection[group.id] === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
+                                                            {sortField[group.id] !== 'Estado' && <ArrowUpDown size={14} className="opacity-40 hover:opacity-100 transition-opacity" />}
+                                                        </span>
+                                                    </div>
+                                                </th>
                                                 <th className="py-3 px-5 font-semibold">Permisos</th>
                                                 <th className="py-3 px-4 w-10"></th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {group.modules.map(module => {
+                                            {getSortedModules(group.modules, group.id).map(module => {
                                                 const ModIcon = module.icon;
                                                 return (
                                                     <tr key={module.id} className="hover:bg-slate-50/50 transition-colors">

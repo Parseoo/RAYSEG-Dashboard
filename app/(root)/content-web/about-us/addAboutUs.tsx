@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { GetAboutUs, UpdateAboutUs, DeleteCorporateImage, UploadCorporateImage } from '@/lib/api/web-content-api';
 import { showToast } from 'nextjs-toast-notify';
 import { CorporateImage } from '@/lib/@type-web';
-import { getImageUrl } from '@/lib/utils';
+import { getImageUrl, fileToBase64 } from '@/lib/utils';
 import DeleteModal from '@/components/ui/DeleteModal';
 
 interface AddAboutUsProps {
@@ -42,50 +42,47 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
         }
     }, [onClearRef]);
 
+    // Load existing about us data
     useEffect(() => {
-        const fetchAboutUs = async () => {
-            setIsLoading(true);
+        const fetchAboutData = async () => {
             try {
+                setIsLoading(true);
                 const res = await GetAboutUs();
-                const data = res.data;
-                // Solo populate si hay datos guardados
-                if (data && (data.title || data.short_description || data.history || data.mission || data.vision)) {
+                if (res?.data) {
                     setAboutData({
-                        titleAboutUs: data.title || '',
-                        aboutUsDescription: data.short_description || '',
-                        history: data.history || '',
-                        mission: data.mission || '',
-                        vision: data.vision || ''
+                        titleAboutUs: res.data.title || "",
+                        aboutUsDescription: res.data.short_description || "",
+                        history: res.data.history || "",
+                        mission: res.data.mission || "",
+                        vision: res.data.vision || ""
                     });
-                }
-                // Cargar imágenes corporativas
-                if (data && data.corporate_images) {
-                    setCorporateImages(data.corporate_images);
+                    if (res.data.corporate_images) {
+                        setCorporateImages(res.data.corporate_images);
+                    }
                 }
             } catch (error) {
-                // Si hay error, simplemente no cargamos datos (form queda vacío)
-                console.error('Error fetching AboutUs:', error);
+                console.error("Error loading about us data:", error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchAboutUs();
+
+        fetchAboutData();
     }, []);
 
     const handleSave = async () => {
-        setIsSaving(true);
         try {
-            const payload = {
-                title: aboutData.titleAboutUs || '',
-                short_description: aboutData.aboutUsDescription || '',
-                history: aboutData.history || '',
-                mission: aboutData.mission || '',
-                vision: aboutData.vision || ''
-            };
-            await UpdateAboutUs(payload);
-            showToast.success('Información guardada correctamente');
+            setIsSaving(true);
+            await UpdateAboutUs({
+                title: aboutData.titleAboutUs || "",
+                short_description: aboutData.aboutUsDescription || "",
+                history: aboutData.history || "",
+                mission: aboutData.mission || "",
+                vision: aboutData.vision || ""
+            });
+            showToast.success('Información general guardada correctamente');
         } catch (error) {
-            console.error('Error saving AboutUs:', error);
+            console.error('Error saving about us data:', error);
             showToast.error('Error al guardar la información');
         } finally {
             setIsSaving(false);
@@ -105,11 +102,8 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
         setIsUploading(true);
         try {
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const formData = new FormData();
-                formData.append('file', file);
-
-                await UploadCorporateImage(formData);
+                const base64 = await fileToBase64(files[i]);
+                await UploadCorporateImage({ file: base64 });
             }
             // Recargar las imágenes
             const res = await GetAboutUs();
@@ -117,9 +111,9 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                 setCorporateImages(res.data.corporate_images);
             }
             showToast.success('Imagen subida correctamente');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading image:', error);
-            showToast.error('Error al subir la imagen');
+            showToast.error(error?.response?.data?.detail || error?.response?.data?.message || 'Error al subir la imagen');
         } finally {
             setIsUploading(false);
             // Limpiar el input de archivo
@@ -265,26 +259,24 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                     <p className="text-sm text-gray-500 mt-5">Estas imágenes se mostrarán en la sección de &quot;Sobre Nosotros&quot; con el diseño de la página web pública.</p>
                     {openModal && selectedImage && (
                         <div
-                            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+                            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                             onClick={() => setOpenModal(false)}
                         >
-                            <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+                            <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                                 {/* Botón cerrar */}
                                 <button 
                                     onClick={() => setOpenModal(false)} 
-                                    className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 shadow z-10 transition-colors"
+                                    className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
                                 >
-                                    <X size={20} />
+                                    <X size={24} />
                                 </button>
 
-                                <div className="flex items-center justify-center p-2 bg-gray-900/5 min-h-[300px]">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img 
-                                        src={getImageUrl(selectedImage.image_url)} 
-                                        alt="Vista completa" 
-                                        className="max-h-[80vh] w-auto max-w-full object-contain rounded" 
-                                    />
-                                </div>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img 
+                                    src={getImageUrl(selectedImage.image_url)} 
+                                    alt="Vista completa" 
+                                    className="max-w-full max-h-full object-contain" 
+                                />
                             </div>
                         </div>
                     )}

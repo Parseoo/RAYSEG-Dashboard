@@ -23,7 +23,7 @@ const PermissionsPage = () => {
         paternal_last_name: "",
         maternal_last_name: "",
         password: "",
-        password_confirm: "",
+        old_password: "",
         role: "",
         is_active: true,
         permissions: {}
