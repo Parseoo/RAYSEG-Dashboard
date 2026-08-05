@@ -70,13 +70,6 @@ export const inputsSecurity: InputFieldConfig[] = [
         placeholder: '********',
         group: 1
     },
-    {
-        type: 'password',
-        id: 'confirmNewPassword',
-        label: 'Confirmar nueva contraseña',
-        placeholder: '********',
-        group: 1
-    },
 ];
 
 // Inputs para user permissions
@@ -145,14 +138,6 @@ export const inputsPassword: InputFieldConfig[] = [
         type: 'password',
         id: 'password',
         label: 'Contraseña',
-        placeholder: '********',
-        group: 1,
-        required: true
-    },
-    {
-        type: 'password',
-        id: 'password_confirm',
-        label: 'Confirmar contraseña',
         placeholder: '********',
         group: 1,
         required: true

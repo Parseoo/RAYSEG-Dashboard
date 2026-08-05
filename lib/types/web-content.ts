@@ -22,8 +22,7 @@ export interface AboutUsRequest {
 }
 
 export interface UploadCorporateImageRequest {
-    id: number;
-    image_url: string;
+    file: string;
 }
 
 // Footer
@@ -77,6 +76,7 @@ export interface LegalPagesResponse {
     privacy_content: string;
     terms_title: string;
     terms_content: string;
+    updated_at?: string;
 }
 
 // Home
@@ -93,4 +93,8 @@ export interface HomeRequest {
   main_subtitle: string;
   introductory_title: string;
   introductory_subtitle: string;
+}
+
+export interface UploadMainImageRequest {
+  file: string;
 }

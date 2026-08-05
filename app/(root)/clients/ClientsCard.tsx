@@ -122,7 +122,7 @@ export const ClientsCard = () => {
             </button>
           </div>
 
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4'>
+          <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4'>
             {cardsData.map((card, index) => (
               <div key={index} className='bg-slate-100 rounded-lg p-4 flex flex-col justify-between'>
                 <h2 className='text-gray-600 text-sm font-semibold'>{card.title}</h2>

@@ -32,8 +32,8 @@ export async function RegisterApi(data: RegisterForm) {
 }
 
 // Resetear contraseña
-export async function ResetPasswordApi(data: ResetPasswordForm) {
-  return httpClient.patch('/api/auth/reset-password', data);
+export async function ChangePassword(data: ResetPasswordForm) {
+  return httpClient.patch('/api/users/change-password', data);
 }
 
 // Obtener perfil

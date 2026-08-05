@@ -4,6 +4,7 @@ import { DynamicInputs } from "@/components/ui/Input"
 import { inputsPrivacyNotice } from "../inputConfig"
 import { Info } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/RichTextEditor"
+import { formatDate } from "@/lib/utils"
 
 import React from "react"
 
@@ -11,11 +12,13 @@ interface AddPrivacyNoticeProps {
     data: {
         privacy_title: string;
         privacy_content: string;
+        updated_at?: string;
     };
+    updatedAt?: string;
     onChange: (id: string, value: string) => void;
 }
 
-export const AddPrivacyNotice = ({ data, onChange }: AddPrivacyNoticeProps) => {
+export const AddPrivacyNotice = ({ data, updatedAt, onChange }: AddPrivacyNoticeProps) => {
     const titleInput = inputsPrivacyNotice[0]
     const mappedTitleInput = {
         ...titleInput,
@@ -41,7 +44,7 @@ export const AddPrivacyNotice = ({ data, onChange }: AddPrivacyNoticeProps) => {
                     <h1 className='font-[500] text-lg'>Datos del Aviso de Privacidad</h1>
                     <div className="flex items-center gap-2">
                         <Info className="flex-shrink-0 text-gray-500 w-4 h-4" />
-                        <p className="text-gray-500 text-sm">Última actualización: 05 Ene 2025</p>
+                        <p className="text-gray-500 text-sm">Última actualización: {formatDate(updatedAt || data.updated_at)}</p>
                     </div>
                 </div>
 

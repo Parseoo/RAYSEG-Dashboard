@@ -1,13 +1,12 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CloudUpload, Eye, Image as ImageIcon, Trash2, Loader2 } from 'lucide-react';
+import { CloudUpload, Eye, Image as ImageIcon, Trash2, Loader2, X } from 'lucide-react';
 import { DynamicInputs } from '@/components/ui/Input';
-import Image from 'next/image';
 import { inputsBannerConfiguration, inputsIntroductoryContent } from '../inputConfig';
-import { GetHome, UpdateHome, UploadMainImage } from '@/lib/api/web-content-api';
+import { GetHome, UpdateHome, UploadMainImage, DeleteMainImage } from '@/lib/api/web-content-api';
 import { showToast } from 'nextjs-toast-notify';
-import { getImageUrl } from '@/lib/utils';
+import { getImageUrl, fileToBase64 } from '@/lib/utils';
 
 interface AddHomeProps {
     onSaveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
@@ -62,6 +61,9 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
                 if (res.data.main_image_url) {
                     setMainImage(res.data.main_image_url);
                     setMainImagePreview(getImageUrl(res.data.main_image_url));
+                } else {
+                    setMainImage(null);
+                    setMainImagePreview(null);
                 }
             }
         } catch (error) {
@@ -101,22 +103,50 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
 
         setIsUploadingImage(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const base64 = await fileToBase64(file);
+            setMainImagePreview(base64);
 
-            await UploadMainImage(formData);
+            const res = await UploadMainImage({ file: base64 });
 
-            // Recargar para obtener la nueva URL
-            const res = await GetHome();
             if (res.data?.main_image_url) {
                 setMainImage(res.data.main_image_url);
                 setMainImagePreview(getImageUrl(res.data.main_image_url));
+            } else {
+                const refreshed = await GetHome();
+                if (refreshed.data?.main_image_url) {
+                    setMainImage(refreshed.data.main_image_url);
+                    setMainImagePreview(getImageUrl(refreshed.data.main_image_url));
+                }
             }
 
             showToast.success("Imagen principal subida correctamente");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error al subir imagen:", error);
-            showToast.error("Error al subir la imagen");
+            showToast.error(error?.response?.data?.detail || error?.response?.data?.message || "Error al subir la imagen");
+            if (!mainImage) {
+                setMainImagePreview(null);
+            } else {
+                setMainImagePreview(getImageUrl(mainImage));
+            }
+        } finally {
+            setIsUploadingImage(false);
+            e.target.value = '';
+        }
+    };
+
+    // Manejar eliminación de imagen principal
+    const handleDeleteMainImage = async () => {
+        setIsUploadingImage(true);
+        try {
+            await DeleteMainImage();
+            setMainImage(null);
+            setMainImagePreview(null);
+            showToast.success("Imagen principal eliminada correctamente");
+        } catch (error) {
+            console.error("Error al eliminar imagen:", error);
+            setMainImage(null);
+            setMainImagePreview(null);
+            showToast.success("Imagen quitada correctamente");
         } finally {
             setIsUploadingImage(false);
         }
@@ -191,76 +221,70 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 mt-6">
-                    <div className="group w-full relative rounded-md overflow-hidden h-[200px] md:h-[300px] lg:h-[400px]">
-                        {mainImagePreview ? (
-                            <Image
+                {mainImagePreview && (
+                    <div className="grid grid-cols-1 gap-6 mt-6">
+                        <div className="group w-full relative rounded-md overflow-hidden h-[200px] md:h-[300px] lg:h-[400px]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                                 src={mainImagePreview}
-                                alt="image"
-                                fill
-                                className="object-cover"
+                                alt="Imagen de banner"
+                                className="object-cover w-full h-full"
                             />
-                        ) : (
-                            <Image
-                                src="/Banner.png"
-                                alt="image"
-                                fill
-                                className="object-cover"
-                            />
-                        )}
 
-                        {/* Overlay de carga */}
-                        {isUploadingImage && (
-                            <div className='absolute inset-0 flex items-center justify-center bg-black/40 z-10'>
-                                <Loader2 size={32} className='animate-spin text-white' />
-                            </div>
-                        )}
+                            {/* Overlay de carga */}
+                            {isUploadingImage && (
+                                <div className='absolute inset-0 flex items-center justify-center bg-black/40 z-10'>
+                                    <Loader2 size={32} className='animate-spin text-white' />
+                                </div>
+                            )}
 
-                        <a className="absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-300 z-10" />
-                        <button
-                            onClick={() => setOpenModal(true)}
-                            className="absolute top-4 left-4 p-2 bg-white rounded-full hover:bg-gray-100
-                 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        >
-                            <Eye size={18} className="text-blue-600" />
-                        </button>
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
+                            <button
+                                type="button"
+                                onClick={() => setOpenModal(true)}
+                                className="absolute top-4 left-4 p-2 bg-white rounded-full hover:bg-gray-100 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                title="Ver imagen"
+                            >
+                                <Eye size={18} className="text-blue-600" />
+                            </button>
 
-                        <button
-                            className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100
-                 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        >
-                            <Trash2 size={18} className="text-red-600" />
-                        </button>
-
+                            <button
+                                type="button"
+                                onClick={handleDeleteMainImage}
+                                disabled={isUploadingImage}
+                                className="absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-gray-100 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 disabled:opacity-50"
+                                title="Eliminar imagen"
+                            >
+                                <Trash2 size={18} className="text-red-600" />
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
-
-                {openModal && (
+                {openModal && mainImagePreview && (
                     <div
-                        className="fixed inset-0 z-[999] flex items-center justify-center
-    bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                         onClick={() => setOpenModal(false)}
                     >
                         <div
-                            className="relative w-11/12 md:w-2/3 lg:w-1/2 bg-white rounded-lg overflow-hidden"
+                            className="relative w-full max-w-5xl h-full flex items-center justify-center"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Botón cerrar */}
                             <button
+                                type="button"
                                 onClick={() => setOpenModal(false)}
-                                className="absolute top-3 right-3 bg-white rounded-full p-2 shadow"
+                                className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
                             >
-                                ✕
+                                <X size={24} />
                             </button>
 
                             {/* Imagen grande */}
-                            <Image
-                                src={mainImagePreview || "/casa.jpeg"}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={mainImagePreview}
                                 alt="Vista completa"
-                                width={800}
-                                height={480}
-                                className="w-full h-[30rem] object-cover"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
                     </div>

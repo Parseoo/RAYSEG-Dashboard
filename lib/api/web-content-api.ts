@@ -1,5 +1,5 @@
 import { MessageResponse } from "../@type-permission";
-import { AboutUsRequest, AboutUsResponse, FooterResponse, HomeRequest, HomeResponse, LegalPagesResponse, ServiceItem, ServicesRequest, ServicesResponse, UploadCorporateImageRequest, UploadHeaderImagesRequest } from "../@type-web";
+import { AboutUsRequest, AboutUsResponse, FooterResponse, HomeRequest, HomeResponse, LegalPagesResponse, ServiceItem, ServicesRequest, ServicesResponse, UploadCorporateImageRequest, UploadHeaderImagesRequest, UploadMainImageRequest } from "../@type-web";
 import { httpClient } from "./fetch-client";
 
 // Web contents - About Us
@@ -19,9 +19,10 @@ export async function UpdateAboutUs(data: AboutUsRequest) {
     return httpClient.put(URL_ABOUT_US, data);
 }
 
-// Subir imagen corporativa
-export async function UploadCorporateImage(file: FormData | UploadCorporateImageRequest)  {
-    return httpClient.post<MessageResponse>(`${URL_ABOUT_US}/images`, file);
+// Subir imagen corporativa (Base64)
+export async function UploadCorporateImage(data: UploadCorporateImageRequest | { file: string } | string)  {
+    const payload = typeof data === 'string' ? { file: data } : data;
+    return httpClient.post<{ id: number; image_url: string }>(`${URL_ABOUT_US}/images`, payload);
 }
 
 // Eliminar imagen corporativa
@@ -103,7 +104,13 @@ export async function UpdateHome(data: HomeRequest) {
     return httpClient.put(`${URL_HOME}`, data);
 }
 
-// Subir imagenes 
-export async function UploadMainImage(file: any) {
-    return httpClient.post<MessageResponse>(`${URL_HOME}/main-image`, file);
+// Subir imagen principal (Base64)
+export async function UploadMainImage(data: UploadMainImageRequest | { file: string } | string) {
+    const payload = typeof data === 'string' ? { file: data } : data;
+    return httpClient.post<HomeResponse>(`${URL_HOME}/main-image`, payload);
+}
+
+// Eliminar imagen principal
+export async function DeleteMainImage() {
+    return httpClient.delete<MessageResponse>(`${URL_HOME}/main-image`);
 }

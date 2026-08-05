@@ -44,24 +44,21 @@ const ContentWebServiciosPage = () => {
                         <AddServices onSaveHeaderRef={saveHeaderRef} onClearRef={onClearRef} />
                     </div>
 
-                    <div className="flex items-center mt-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end mt-6 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => onClearRef.current?.()}
+                            className="bg-slate-100 w-full sm:w-[180px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 hover:bg-slate-200 transition-all font-medium shadow-md whitespace-nowrap text-sm">
+                            <X size={18} /> Limpiar campos
+                        </button>
 
-                        <div className="flex flex-col sm:flex-row items-center gap-4 justify-end w-full">
-                            <button
-                                type="button"
-                                onClick={() => onClearRef.current?.()}
-                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium">
-                                <X size={20} /> Limpiar campos
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handlePublish}
-                                disabled={isPublishing}
-                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium shadow-md disabled:opacity-60">
-                                {isPublishing ? <Save size={20} className="animate-spin" /> : <ArrowUpToLine size={20} />} Publicar
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={handlePublish}
+                            disabled={isPublishing}
+                            className="bg-primary_color text-white w-full sm:w-[180px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 hover:opacity-90 transition-all font-medium shadow-md disabled:opacity-60 whitespace-nowrap text-sm">
+                            {isPublishing ? <Save size={18} className="animate-spin" /> : <ArrowUpToLine size={18} />} Publicar
+                        </button>
                     </div>
 
                 </div>

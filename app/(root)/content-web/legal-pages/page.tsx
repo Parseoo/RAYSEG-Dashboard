@@ -17,7 +17,8 @@ const ContentWebPrivacyNoticePage = () => {
         privacy_title: '',
         privacy_content: '',
         terms_title: '',
-        terms_content: ''
+        terms_content: '',
+        updated_at: ''
     });
 
     useEffect(() => {
@@ -54,6 +55,10 @@ const ContentWebPrivacyNoticePage = () => {
         setIsSaving(true);
         try {
             await UpdateLegalPages(legalData);
+            const res = await GetLegalPages();
+            if (res.data) {
+                setLegalData(res.data);
+            }
             showToast.success("Páginas legales actualizadas correctamente");
         } catch (error) {
             console.error("Error saving legal pages:", error);
@@ -117,13 +122,15 @@ const ContentWebPrivacyNoticePage = () => {
                     <div className="mt-6">
                         {activeTab === 'privacy' && (
                             <AddPrivacyNotice
-                                data={{ privacy_title: legalData.privacy_title, privacy_content: legalData.privacy_content }}
+                                data={{ privacy_title: legalData.privacy_title, privacy_content: legalData.privacy_content, updated_at: legalData.updated_at }}
+                                updatedAt={legalData.updated_at}
                                 onChange={handlePrivacyChange}
                             />
                         )}
                         {activeTab === 'terms' && (
                             <AddTermsConditions
-                                data={{ terms_title: legalData.terms_title, terms_content: legalData.terms_content }}
+                                data={{ terms_title: legalData.terms_title, terms_content: legalData.terms_content, updated_at: legalData.updated_at }}
+                                updatedAt={legalData.updated_at}
                                 onChange={handleTermsChange}
                             />
                         )}

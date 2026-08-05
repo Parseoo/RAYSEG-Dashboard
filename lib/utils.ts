@@ -70,7 +70,7 @@ export function getUserImageUrl(path: any): string {
     if (Array.isArray(raw)) {
       raw = raw.length > 0 ? raw[0] : '';
     } else {
-      raw = raw.profile_picture || raw.image || raw.avatar || raw.url || raw.file || raw.src || '';
+      raw = raw.profile_photo || raw.profile_picture || raw.photo || raw.image || raw.avatar || raw.url || raw.file || raw.src || '';
     }
   }
 
@@ -106,3 +106,27 @@ export function getUserImageUrl(path: any): string {
   const normalizedPath = clean.startsWith('/') ? clean : `/${clean}`;
   return `${cleanBase}${normalizedPath}`;
 }
+
+export function formatDate(dateString?: string): string {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const formatted = date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).replace(".", "");
+    return formatted.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+  } catch {
+    return dateString;
+  }
+}
+
+export const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });

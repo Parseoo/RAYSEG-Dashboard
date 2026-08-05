@@ -32,29 +32,29 @@ const ContentWebHomePage = () => {
             <AddHome onSaveRef={onSaveRef} onClearRef={onClearRef} />
           </div>
 
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-6 gap-4">
             {/* IZQUIERDA */}
-            <div className="flex items-center gap-2 text-sm">
-              <Info size={16} />
+            <div className="flex items-center gap-2 text-sm shrink-0">
+              <Info size={16} className="shrink-0" />
               <p className="text-gray-500">
-                Los cambios  se aplicarán directamente al sitio público.
+                Los cambios se aplicarán directamente al sitio público.
               </p>
             </div>
 
             {/* DERECHA */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => onClearRef.current?.()}
-                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md">
-                <X size={20} /> Limpiar campos
+                className="bg-slate-100 flex-1 sm:flex-none sm:w-[180px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 hover:bg-slate-200 transition-all font-medium shadow-md whitespace-nowrap text-sm">
+                <X size={18} /> Limpiar campos
               </button>
 
               <button
                 type="button"
                 onClick={() => onSaveRef.current?.()}
-                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium shadow-md">
-                <ArrowUpToLine size={20} /> Publicar
+                className="bg-primary_color text-white flex-1 sm:flex-none sm:w-[180px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 hover:opacity-90 transition-all font-medium shadow-md whitespace-nowrap text-sm">
+                <ArrowUpToLine size={18} /> Publicar
               </button>
             </div>
           </div>

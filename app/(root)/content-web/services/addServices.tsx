@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { CirclePlus, ChevronLeft, ChevronRight, CloudUpload, Eye, Image as ImageIcon, Loader2, Plus, Trash2, X } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import { DynamicInputs, InputFieldConfig } from "@/components/ui/Input";
 import { inputsServicesSection } from "../inputConfig";
@@ -13,6 +13,9 @@ import { CreateServiceItem, GetServices, DeleteServiceItem, UpdateServiceItem, U
 import { ServiceItem, ServicesRequest, HeaderImage } from "@/lib/@type-web";
 import { showToast } from "nextjs-toast-notify";
 import { getImageUrl } from "@/lib/utils";
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -388,10 +391,10 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
     return (
         <>
             <div className='w-full max-h-max rounded-lg p-5 border'>
-                <div className='flex justify-between items-center mb-1'>
-                    <h1 className='font-[500] text-lg'>Encabezado de la sección de servicios</h1>
+                <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1 gap-1'>
+                    <h1 className='font-[500] text-base sm:text-lg'>Encabezado de la sección de servicios</h1>
                     {headerImages.length > 0 && (
-                        <span className='text-sm text-gray-500 font-medium'>
+                        <span className='text-xs sm:text-sm text-gray-500 font-medium'>
                             {headerImages.length} {headerImages.length === 1 ? 'imagen cargada' : 'imágenes cargadas'}
                         </span>
                     )}
@@ -435,94 +438,103 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                     />
                 </div>
 
-                {headerImages.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
-                        {headerImages.map((image) => (
-                            <div key={image.id} className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={getImageUrl(image.image_url)}
-                                    alt="Imagen de encabezado"
-                                    className="object-cover w-full h-full"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleViewHeaderImage(image);
-                                    }}
-                                    className="absolute top-2 left-2 p-1.5 bg-white/90 hover:bg-white text-blue-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
-                                    title="Ver imagen"
-                                >
-                                    <Eye size={16} />
+                {(headerImages.length > 0 || headerImage) && (
+                    <div className="mt-6 relative">
+                        <Slider
+                            dots={true}
+                            infinite={false}
+                            speed={300}
+                            slidesToShow={4}
+                            slidesToScroll={1}
+                            arrows={true}
+                            prevArrow={
+                                <button type="button" className="slick-prev" aria-label="Anterior">
+                                    <ChevronLeft size={20} />
                                 </button>
-
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteHeaderImage(image);
-                                    }}
-                                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
-                                    title="Eliminar imagen"
-                                >
-                                    <Trash2 size={16} />
+                            }
+                            nextArrow={
+                                <button type="button" className="slick-next" aria-label="Siguiente">
+                                    <ChevronRight size={20} />
                                 </button>
-                            </div>
-                        ))}
-                    </div>
-                ) : headerImage ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
-                        <div className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={getImageUrl(headerImage)}
-                                alt="Imagen de encabezado"
-                                className="object-cover w-full h-full"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
-                            <button
-                                type="button"
-                                onClick={() => handleViewHeaderImage({ image_url: headerImage })}
-                                className="absolute top-2 left-2 p-1.5 bg-white/90 hover:bg-white text-blue-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
-                                title="Ver imagen"
-                            >
-                                <Eye size={16} />
-                            </button>
+                            }
+                            responsive={[
+                                { breakpoint: 1280, settings: { slidesToShow: 4, slidesToScroll: 1 } },
+                                { breakpoint: 1024, settings: { slidesToShow: 3, slidesToScroll: 1 } },
+                                { breakpoint: 768, settings: { slidesToShow: 2, slidesToScroll: 1 } },
+                                { breakpoint: 480, settings: { slidesToShow: 1, slidesToScroll: 1 } },
+                            ]}
+                        >
+                            {(headerImages.length > 0 ? headerImages : [{ id: 0, image_url: headerImage! }]).map((image) => (
+                                <div key={image.id} className="px-2">
+                                    <div className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={getImageUrl(image.image_url)}
+                                            alt="Imagen de encabezado"
+                                            className="object-cover w-full h-full"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewHeaderImage(image);
+                                            }}
+                                            className="absolute top-2 left-2 p-1.5 bg-white/90 hover:bg-white text-blue-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
+                                            title="Ver imagen"
+                                        >
+                                            <Eye size={16} />
+                                        </button>
 
-                            <button
-                                type="button"
-                                onClick={() => setHeaderImage(null)}
-                                className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
-                                title="Quitar imagen"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
+                                        {headerImages.length > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteHeaderImage(image);
+                                                }}
+                                                className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
+                                                title="Eliminar imagen"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => setHeaderImage(null)}
+                                                className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
+                                                title="Quitar imagen"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </Slider>
                     </div>
-                ) : null}
+                )}
 
                 {/* Modal para visualizar imagen en tamaño completo */}
                 {openImageModal && selectedHeaderImage && (
                     <div
-                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                         onClick={() => setOpenImageModal(false)}>
                         <div
-                            className="relative w-11/12 md:w-2/3 lg:w-1/2 bg-white rounded-lg overflow-hidden"
+                            className="relative w-full max-w-5xl h-full flex items-center justify-center"
                             onClick={(e) => e.stopPropagation()}>
                             <button
                                 type="button"
                                 onClick={() => setOpenImageModal(false)}
-                                className="absolute top-3 right-3 bg-white rounded-full p-2 shadow z-10 hover:bg-gray-100">
-                                <X size={20} />
+                                className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors">
+                                <X size={24} />
                             </button>
 
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={getImageUrl(selectedHeaderImage.image_url)}
                                 alt="Vista completa"
-                                className="w-full h-[30rem] object-contain bg-slate-900"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
                     </div>
@@ -539,51 +551,51 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 />
             </div>
 
-            <div className="bg-slate-100 w-full min-w-full rounded-lg p-5">
-                <h1 className="font-[500] text-lg mb-4">
+            <div className="bg-slate-100 w-full rounded-lg p-3 sm:p-5">
+                <h1 className="font-[500] text-base sm:text-lg mb-4">
                     Lista de servicios
                 </h1>
 
-                <div className="flex w-full items-start gap-x-4 py-3 px-4">
-
-
-                    <div className="flex-1 -mt-7">
+                <div className="flex flex-col md:flex-row w-full items-stretch md:items-start gap-3 py-3 px-4">
+                    <div className="flex-1">
                         <DynamicInputs inputs={inputsServiceItemControlled} withBgWhite={true} />
                     </div>
 
-                    <button
-                        type="button"
-                        disabled={isSaving}
-                        onClick={handleAddService}
-                        className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md shrink-0 disabled:opacity-60"
-                    >
-                        {isSaving ? (
-                            <>
-                                <Loader2 size={20} className="animate-spin" />
-                                Guardando...
-                            </>
-                        ) : editingService ? (
-                            <>
-                                <Plus size={20} />
-                                Actualizar Servicio
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={20} />
-                                Agregar Servicio
-                            </>
-                        )}
-                    </button>
-
-                    {editingService && (
+                    <div className="flex flex-col sm:flex-row gap-2 md:mt-0 shrink-0">
                         <button
                             type="button"
-                            onClick={handleCancelEdit}
-                            className="bg-slate-200 text-gray-700 w-full sm:w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-300 transition-opacity font-medium shrink-0"
+                            disabled={isSaving}
+                            onClick={handleAddService}
+                            className="bg-primary_color text-white w-full sm:w-auto h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-60 whitespace-nowrap text-sm"
                         >
-                            Cancelar
+                            {isSaving ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : editingService ? (
+                                <>
+                                    <Plus size={18} />
+                                    Actualizar Servicio
+                                </>
+                            ) : (
+                                <>
+                                    <Plus size={18} />
+                                    Agregar Servicio
+                                </>
+                            )}
                         </button>
-                    )}
+
+                        {editingService && (
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="bg-slate-200 text-gray-700 w-full sm:w-auto h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-300 transition-opacity font-medium whitespace-nowrap text-sm"
+                            >
+                                Cancelar
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="mt-4 w-full">

@@ -101,6 +101,8 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
         other_source: state.other_source || null,
         agent_id: state.agent_id && state.agent_id > 0 ? Number(state.agent_id) : null,
         internal_notes: state.internal_notes || null,
+        profile_photo: state.profile_photo || null,
+        profile_picture: state.profile_photo || null,
       };
 
       if (state.property && state.property > 0) {
