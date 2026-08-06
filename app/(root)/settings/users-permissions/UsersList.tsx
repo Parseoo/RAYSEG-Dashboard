@@ -20,7 +20,7 @@ import { showToast } from 'nextjs-toast-notify';
 import { statusOptions } from './selectUsers';
 import { getUserImageUrl } from '@/lib/utils';
 
-const headers = ['Imagen', 'Usuario', 'Contacto', 'Rol', 'Estatus', 'Creado en', 'Acciones'];
+const headers = ['Imagen', 'Usuario', 'Contacto', 'Rol', 'Estatus', 'Creado en', 'Modificado en', 'Acciones'];
 
 function UsersList() {
     const router = useRouter();
@@ -47,6 +47,17 @@ function UsersList() {
         if (selectedStatus !== 'all') count++;
         return count;
     }, [selectedRole, selectedStatus]);
+
+    const handleClearFilters = () => {
+        setSelectedRole('all');
+        setSelectedStatus('all');
+        setSearchTerm('');
+        setIsFilterOpen(false);
+    };
+
+    const handleApplyFilters = () => {
+        setIsFilterOpen(false);
+    };
 
     const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
         <div className="flex items-center gap-3 flex-shrink-0 max-w-full">
@@ -229,10 +240,9 @@ function UsersList() {
                 </td>
                 <td className='py-4 px-4'>
                     <p className='font-medium text-sm'>{fullName}</p>
-                    <p className='text-xs text-gray-500'>{user.email}</p>
                 </td>
                 <td className='py-4 px-4'>
-                    <p className='font-medium text-sm'>{user.phone}</p>
+                    <p className='font-medium text-sm'>{user.phone || '-'}</p>
                     <p className='text-xs text-gray-500'>{user.email}</p>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>{role}</td>
@@ -243,6 +253,9 @@ function UsersList() {
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
                     {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
+                </td>
+                <td className='py-4 px-4 text-sm text-gray-700'>
+                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
                 </td>
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
@@ -312,7 +325,6 @@ function UsersList() {
                         </div>
                         <div>
                             <p className='font-bold text-base text-gray-800'>{fullName}</p>
-                            <p className='text-xs text-gray-500'>{user.email}</p>
                         </div>
                     </div>
                     
@@ -355,7 +367,7 @@ function UsersList() {
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
                     <div>
                         <p className="text-xs text-gray-500 font-semibold mb-0.5">Contacto</p>
-                        <p className="truncate" title={user.email}>{user.email || '-'}</p>
+                        <p className="truncate text-sm" title={user.email}>{user.email || '-'}</p>
                         <p className="text-xs text-gray-600">{user.phone || '-'}</p>
                     </div>
                     <div>
@@ -371,6 +383,10 @@ function UsersList() {
                     <div>
                         <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado en</p>
                         <p>{user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Modificado en</p>
+                        <p>{user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
                     </div>
                 </div>
             </div>
@@ -493,7 +509,13 @@ function UsersList() {
                 )}
             </div>
 
-            <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtros">
+            <FilterSidebar
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                onClear={handleClearFilters}
+                onApply={handleApplyFilters}
+                title="Filtros"
+            >
                 <div className="space-y-6 pt-2">
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold text-gray-700">Rol</label>
@@ -523,15 +545,6 @@ function UsersList() {
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-100 flex justify-end">
-                        <button
-                            onClick={() => { setSelectedRole('all'); setSelectedStatus('all'); }}
-                            className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
-                        >
-                            Limpiar filtros
-                        </button>
                     </div>
                 </div>
             </FilterSidebar>

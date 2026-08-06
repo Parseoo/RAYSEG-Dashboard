@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { ProfileHeader } from '@/app/(root)/settings/my-profile/viewProfile';
 import { PersonalInformation } from '@/app/(root)/settings/my-profile/components/PersonalInformation';
-import { AddressInformation } from '@/app/(root)/settings/my-profile/components/AddressInformation';
 import { ProfessionalProfile } from '@/app/(root)/settings/my-profile/components/ProfessionalProfile';
 import SecuritySettings from '@/app/(root)/settings/my-profile/security';
 import { GetProfileApi } from '@/lib/api/auth/auth-api';
@@ -50,17 +49,14 @@ const MyProfile = () => {
             <div className="flex flex-col gap-6">
                 <ProfileHeader user={user} />
 
-                {/* Información Personal y Ubicación lado a lado */}
+                {/* Grid con Información Personal a la izquierda y Perfil Profesional y Notas a la derecha */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                     <PersonalInformation user={user} />
-                    <AddressInformation user={user} />
+                    <ProfessionalProfile user={user} />
                 </div>
 
-                {/* Perfil Profesional y Notas a todo el ancho */}
-                <ProfessionalProfile user={user} />
-
                 {/* Seguridad y Acceso a todo el ancho */}
-                <SecuritySettings />
+                <SecuritySettings user={user} />
             </div>
         </div>
     );

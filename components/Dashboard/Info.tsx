@@ -47,7 +47,7 @@ function Info() {
 
   if (loading) {
     return (
-      <section className='w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+      <section className='w-full grid grid-cols-2 lg:grid-cols-4 gap-4'>
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className='h-32 bg-gray-100 animate-pulse rounded-lg' />
         ))}
@@ -56,7 +56,7 @@ function Info() {
   }
 
   return (
-    <section className='w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+    <section className='w-full grid grid-cols-2 lg:grid-cols-4 gap-4'>
       <InfoCard data={active} />
       <InfoCard data={sold} />
       <InfoCard data={rented} />

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CatalogResponse, ItemResponse } from '@/lib/types/catalogs';
 import { DeleteCatalogItem } from '@/lib/api/catalog-api';
-import { Loader2, ArrowUpDown, ArrowUp, ArrowDown, Eye, Pencil, Trash2, Lock } from 'lucide-react';
+import { Loader2, ArrowUpDown, ArrowUp, ArrowDown, Eye, Pencil, Trash2, Lock, MoreVertical } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 import Link from 'next/link';
@@ -66,6 +66,7 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
   // Modal de eliminación
   const [itemToDelete, setItemToDelete] = useState<ItemResponse | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
 
   const itemsPerPage = 10;
 
@@ -166,7 +167,9 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                 <p className="text-gray-500 font-medium">No hay ítems en este catálogo</p>
             </div>
         ) : (
-            <div className="w-full border border-gray-200 rounded-lg shadow-sm mt-4 overflow-hidden bg-white">
+            <>
+            {/* Desktop: Table */}
+            <div className="hidden md:block w-full border border-gray-200 rounded-lg shadow-sm mt-4 overflow-hidden bg-white">
                 <div className="w-full overflow-x-auto">
                     <table className="w-full border-collapse text-left table-fixed">
                         <thead>
@@ -305,6 +308,88 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                     />
                 </div>
             </div>
+
+            {/* Mobile: Cards */}
+            <div className="md:hidden mt-4 flex flex-col gap-4">
+                {paginatedItems.map((item, index) => {
+                    const IconComponent = getLucideIcon(item.icon, item.name, item.key);
+                    const formattedDate = item.created_at
+                        ? new Date(item.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '-';
+
+                    return (
+                        <div key={item.catalogItemID || index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className='font-bold text-base text-gray-800'>{item.name}</p>
+                                    <p className='text-xs text-gray-500 line-clamp-2'>{item.description || 'Sin descripción'}</p>
+                                </div>
+
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setOpenActionMenu(prev => prev === item.catalogItemID ? null : item.catalogItemID)}
+                                        className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
+                                    >
+                                        <MoreVertical size={20} />
+                                    </button>
+
+                                    {openActionMenu === item.catalogItemID && (
+                                        <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+                                            <Link href={`/catalogs/item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                                                    <Eye size={16} /> Ver
+                                                </button>
+                                            </Link>
+                                            <Link href={`/catalogs/edit-item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                                                    <Pencil size={16} /> Editar
+                                                </button>
+                                            </Link>
+                                            {item.is_system ? (
+                                                <button disabled className="w-full text-left px-4 py-2 text-sm text-gray-300 cursor-not-allowed flex items-center gap-2">
+                                                    <Lock size={16} /> Protegido
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => {
+                                                        setOpenActionMenu(null);
+                                                        setItemToDelete(item);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                >
+                                                    <Trash2 size={16} /> Eliminar
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                                {isAmenities && (
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Icono</p>
+                                        <IconComponent size={18} className="text-slate-700" />
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado en</p>
+                                    <p>{formattedDate}</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                <div className="py-3">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                </div>
+            </div>
+            </>
         )}
       </div>
 

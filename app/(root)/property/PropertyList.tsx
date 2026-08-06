@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
-import { Plus, SlidersHorizontal, Eye, Pencil, Trash2, Star, FileDown, X, Loader2 } from 'lucide-react'
+import { Plus, SlidersHorizontal, Eye, Pencil, Trash2, Star, FileDown, X, Loader2, MoreVertical } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag } from '@/components/ui/badges';
 import Link from 'next/link';
@@ -57,6 +57,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     date_from: '',
     date_to: ''
   });
+  const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
 
   useEffect(() => {
     const fetchCatalogs = async () => {
@@ -401,6 +402,136 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     );
   };
 
+  const toggleActionMenu = (id: string | number) => {
+    setOpenActionMenu(prev => prev === id ? null : id);
+  };
+
+  const renderMobileCard = (property: PropertyListItemResponse) => {
+    const images = (property as any).images;
+    let imageUrl = '/property.jpg';
+
+    if (images && Array.isArray(images) && images.length > 0) {
+      const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
+      const imgPath = mainImage?.image || mainImage?.file || mainImage?.image_url || mainImage?.url || mainImage?.src || (typeof mainImage === 'string' ? mainImage : null);
+      if (imgPath) imageUrl = getImageUrl(imgPath);
+    } else if ((property as any).main_image || (property as any).main_image_url || (property as any).mainImage) {
+      const mainImg = (property as any).main_image || (property as any).main_image_url || (property as any).mainImage;
+      const imgPath = typeof mainImg === 'string' ? mainImg : (mainImg?.image || mainImg?.file || mainImg?.url || mainImg?.image_url);
+      if (imgPath) imageUrl = getImageUrl(imgPath);
+    }
+
+    return (
+      <div key={property.property_id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        {/* Image */}
+        <div className="relative w-full h-48 bg-slate-100">
+          <Image
+            src={imageUrl}
+            alt={property.title || 'Property'}
+            fill
+            sizes="(max-width: 768px) 100vw, 400px"
+            unoptimized={true}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
+                target.src = '/property.jpg';
+              }
+            }}
+            className='object-cover'
+          />
+          {/* Actions Button */}
+          <div className="absolute top-2 right-2">
+            <button 
+              onClick={() => toggleActionMenu(property.property_id)}
+              className="p-2 bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white rounded-full shadow-md transition-colors"
+            >
+              <MoreVertical size={18} />
+            </button>
+            
+            {openActionMenu === property.property_id && (
+              <div className="absolute right-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+                <Link href={`/property/${property.property_id}`}>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                    <Eye size={16} /> Ver detalle
+                  </button>
+                </Link>
+                <Link href={`/property/edit-property/${property.property_id}`}>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                    <Pencil size={16} /> Editar
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => {
+                    setOpenActionMenu(null);
+                    handleDeleteClick(property);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 size={16} /> Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          {/* Title and MLS */}
+          <div className="mb-3">
+            <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-1">
+              {property.title || '-'}
+            </h3>
+            <p className="text-xs text-gray-500">MLS: {property.number_mls || '-'}</p>
+          </div>
+
+          {/* Price */}
+          <div className="mb-3">
+            <p className="text-2xl font-bold text-primary_color">
+              {formatPrice(property.price)}
+            </p>
+          </div>
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-3 text-sm mb-3 pb-3 border-b border-slate-100">
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-0.5">Tipo</p>
+              <p className="text-gray-800">{property.property_type?.name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-0.5">Operación</p>
+              <p className="text-gray-800">{formatOperationType(property.operation_type)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-0.5">Estatus</p>
+              <Tag status={property.property_status} statusType='property'>
+                {property.property_status || '-'}
+              </Tag>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-0.5">Publicación</p>
+              <Tag status={property.property_post_status?.name} statusType='publication'>
+                {property.property_post_status?.name || '-'}
+              </Tag>
+            </div>
+          </div>
+
+          {/* Footer with Featured Star and Date */}
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+              Creado: {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {property.is_featured ? (
+                <Star size={20} fill="#eab308" stroke="#eab308" />
+              ) : (
+                <Star size={20} fill="none" stroke="#eab308" />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Propiedades', href: '/property', active: true }]} />
@@ -518,7 +649,25 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </div>
           </div>
 
-          <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} hidePagination={true} />
+          <div className="hidden md:block">
+            <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} hidePagination={true} />
+          </div>
+
+          <div className="md:hidden">
+            {isLoading || isPageLoading ? (
+              <div className="flex justify-center items-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+              </div>
+            ) : filteredProperties.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {filteredProperties.map((property) => renderMobileCard(property))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                No hay propiedades disponibles
+              </div>
+            )}
+          </div>
 
           {pagination.total_paginas > 1 && (
             <Pagination

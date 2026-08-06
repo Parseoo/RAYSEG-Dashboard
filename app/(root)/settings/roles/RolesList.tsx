@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Plus, Loader2, MoreVertical } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Table } from '@/components/ui/table';
 import DeleteModal from '@/components/ui/DeleteModal';
@@ -22,6 +22,7 @@ function RolesList() {
     const [isCreating, setIsCreating] = useState(false);
     const [newRole, setNewRole] = useState({ name: '', description: '' });
     const [editingRole, setEditingRole] = useState<any | null>(null);
+    const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
 
     useEffect(() => {
         fetchRoles();
@@ -92,6 +93,10 @@ function RolesList() {
         }
     };
 
+    const toggleActionMenu = (id: string | number) => {
+        setOpenActionMenu(prev => prev === id ? null : id);
+    };
+
     const renderRow = (role: any) => {
         return (
             <tr key={role.id} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
@@ -147,6 +152,78 @@ function RolesList() {
         );
     };
 
+    const renderMobileCard = (role: any) => {
+        return (
+            <div key={role.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+                {/* Header: Nombre y Acciones */}
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <p className='font-bold text-base text-gray-800'>{role.name}</p>
+                        <p className='text-xs text-gray-500 line-clamp-1'>{role.description || 'Sin descripción'}</p>
+                    </div>
+
+                    {/* Actions Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => toggleActionMenu(role.id)}
+                            className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                            <MoreVertical size={20} />
+                        </button>
+
+                        {openActionMenu === role.id && (
+                            <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
+                                <button
+                                    onClick={() => {
+                                        setOpenActionMenu(null);
+                                        setEditingRole(role);
+                                        setNewRole({ name: role.name, description: role.description || '' });
+                                        setIsCreateModalOpen(true);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2"
+                                >
+                                    <Pencil size={16} /> Editar
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setOpenActionMenu(null);
+                                        handleDeleteClick(role);
+                                    }}
+                                    disabled={role.is_system_role}
+                                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${role.is_system_role ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'}`}
+                                >
+                                    <Trash2 size={16} /> Eliminar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">ID</p>
+                        <p className="font-mono text-slate-600">{role.id}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Sistema</p>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${role.is_system_role ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                            {role.is_system_role ? 'Sí' : 'No'}
+                        </span>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado El</p>
+                        <p>{role.created_at ? new Date(role.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Actualizado El</p>
+                        <p>{role.updated_at ? new Date(role.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <>
             <Breadcrumb items={[
@@ -175,9 +252,31 @@ function RolesList() {
                             </button>
                         </div>
                     </div>
-                    <Table data={roles} headers={headers} renderRow={renderRow} isLoading={loading} />
+
+                    {/* Desktop: Table */}
+                    <div className="hidden md:block">
+                        <Table data={roles} headers={headers} renderRow={renderRow} isLoading={loading} />
+                    </div>
+
+                    {/* Mobile: Cards */}
+                    <div className="md:hidden mt-4">
+                        {loading ? (
+                            <div className="flex justify-center items-center py-10">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+                            </div>
+                        ) : roles.length > 0 ? (
+                            <div className="flex flex-col gap-4">
+                                {roles.map((role) => renderMobileCard(role))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                                No se encontraron roles configurados.
+                            </div>
+                        )}
+                    </div>
+
                     {!loading && roles.length === 0 && (
-                        <div className='py-20 flex flex-col items-center justify-center text-center'>
+                        <div className='hidden md:flex py-20 flex-col items-center justify-center text-center'>
                             <p className='text-slate-500 font-medium'>No se encontraron roles configurados.</p>
                         </div>
                     )}

@@ -174,26 +174,6 @@ export default function AddCatalogItemPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Catálogo Destino */}
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Catálogo de destino <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedCatalogId}
-                onChange={(e) => handleCatalogChange(e.target.value)}
-                className="w-full h-[40px] px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary_color text-sm bg-white"
-                required
-              >
-                <option value="" disabled>Selecciona un catálogo</option>
-                {catalogs.map(cat => (
-                  <option key={cat.catalogoID} value={cat.catalogoID}>
-                    {cat.name} ({cat.key})
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Nombre del Ítem */}
             <div className="flex flex-col gap-2">
@@ -211,11 +191,12 @@ export default function AddCatalogItemPage() {
               />
             </div>
 
-            {/* Icono (visible especialmente para amenidades u opcional) */}
+            {/* Icono (solo visible para Amenidades) */}
+            {isAmenities && (
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700 flex items-center justify-between">
                 <span>Icono (Opcional)</span>
-                {isAmenities && <span className="text-xs text-primary_color font-normal">Recomendado para amenidades</span>}
+                <span className="text-xs text-primary_color font-normal">Recomendado para amenidades</span>
               </label>
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -224,7 +205,7 @@ export default function AddCatalogItemPage() {
                     onClick={() => setShowIconSelector(!showIconSelector)}
                     className="h-[40px] px-3 bg-slate-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-slate-100 transition-colors text-sm"
                   >
-                    {SelectedIconComponent ? (
+                    {selectedIcon !== "CirclePlus" ? (
                       <SelectedIconComponent size={18} className="text-slate-700" />
                     ) : (
                       <CirclePlus size={18} className="text-slate-700" />
@@ -248,6 +229,7 @@ export default function AddCatalogItemPage() {
                 </span>
               </div>
             </div>
+            )}
 
             {/* Descripción */}
             <div className="flex flex-col gap-2 md:col-span-2">
@@ -269,7 +251,7 @@ export default function AddCatalogItemPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 <Sparkles size={14} className="text-amber-500" />
-                <span>Previsualización generada por el backend</span>
+                <span>Previsualización</span>
               </div>
               {isPreviewLoading && (
                 <div className="flex items-center gap-1 text-xs text-gray-400">

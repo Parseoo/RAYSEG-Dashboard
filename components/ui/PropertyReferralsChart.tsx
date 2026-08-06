@@ -24,12 +24,12 @@ const PropertyReferralsChart = () => {
       <h2 className='text-xl font-semibold mb-4'>Referencias inmobiliarias</h2>
       <div className='space-y-4 h-full'>
         {data.map((item) => (
-          <div key={item.name} className='block h-16'>
-            <div className='flex'>
-            <div className='w-32 text-gray-600 font-[600] text-lg mb-3'>{item.name}</div>
-            <div className='w-12 text-right text-lg font-[600] ml-auto'>
-              {animate ? `${item.value}%` : '0%'}
-            </div>
+          <div key={item.name} className='block h-auto sm:h-16'>
+            <div className='flex items-center mb-2'>
+              <div className='flex-1 min-w-0 text-gray-600 font-[600] text-sm sm:text-base truncate pr-2'>{item.name}</div>
+              <div className='text-sm sm:text-lg font-[600] shrink-0'>
+                {animate ? `${item.value}%` : '0%'}
+              </div>
             </div>
 
             <div className='flex-grow bg-gray-200 rounded-full overflow-hidden h-2'>
