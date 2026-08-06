@@ -84,42 +84,42 @@ const ContentWebPrivacyNoticePage = () => {
                 { label: 'Páginas Legales', href: '/content-web/legal-pages', active: true }
             ]} />
 
-            <div className='bg-white w-full max-h-max rounded-lg p-5 mb-9 shadow-md'>
+            <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
                 <div className='w-full h-full'>
-                    <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
+                    <div className='flex flex-col gap-3 mb-4'>
                         <div>
-                            <h1 className='font-[700] text-2xl'>Paginas legales</h1>
-                            <p className='text-md text-gray-500'>Este aviso describe la forma en que se recaban, utilizan y protegen los datos personales de los usuarios.</p>
+                            <h1 className='font-[700] text-xl sm:text-2xl'>Páginas legales</h1>
+                            <p className='text-sm sm:text-md text-gray-500 mt-1'>Este aviso describe la forma en que se recaban, utilizan y protegen los datos personales de los usuarios.</p>
                         </div>
                     </div>
                     <div className="border-b border-default">
-                        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-body">
-                            <li className="me-2">
+                        <ul className="flex flex-col sm:flex-row -mb-px text-sm font-medium text-center text-body">
+                            <li className="w-full sm:w-auto sm:me-2">
                                 <button
                                     onClick={() => setActiveTab('privacy')}
-                                    className={`inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group transition-colors duration-200 ${activeTab === 'privacy'
+                                    className={`w-full sm:inline-flex items-center justify-center p-3 sm:p-4 border-b-2 sm:rounded-t-lg group transition-colors duration-200 ${activeTab === 'privacy'
                                         ? 'text-primary_color border-primary_color bg-blue-50/50'
                                         : 'border-transparent hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                                         }`}>
-                                    <FileKey className={`mr-2 w-5 h-5 ${activeTab === 'privacy' ? 'text-primary_color' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                                    <FileKey className={`mr-2 w-4 h-4 sm:w-5 sm:h-5 ${activeTab === 'privacy' ? 'text-primary_color' : 'text-gray-400 group-hover:text-gray-500'}`} />
                                     Aviso de Privacidad
                                 </button>
                             </li>
-                            <li className="me-2">
+                            <li className="w-full sm:w-auto sm:me-2">
                                 <button
                                     onClick={() => setActiveTab('terms')}
-                                    className={`inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group transition-colors duration-200 ${activeTab === 'terms'
+                                    className={`w-full sm:inline-flex items-center justify-center p-3 sm:p-4 border-b-2 sm:rounded-t-lg group transition-colors duration-200 ${activeTab === 'terms'
                                         ? 'text-primary_color border-primary_color bg-blue-50/50'
                                         : 'border-transparent hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                                         }`}>
-                                    <ScrollText className={`mr-2 w-5 h-5 ${activeTab === 'terms' ? 'text-primary_color' : 'text-gray-400 group-hover:text-gray-500'}`} />
-                                    Terminos y Condiciones
+                                    <ScrollText className={`mr-2 w-4 h-4 sm:w-5 sm:h-5 ${activeTab === 'terms' ? 'text-primary_color' : 'text-gray-400 group-hover:text-gray-500'}`} />
+                                    Términos y Condiciones
                                 </button>
                             </li>
                         </ul>
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-4 sm:mt-6">
                         {activeTab === 'privacy' && (
                             <AddPrivacyNotice
                                 data={{ privacy_title: legalData.privacy_title, privacy_content: legalData.privacy_content, updated_at: legalData.updated_at }}
@@ -136,20 +136,20 @@ const ContentWebPrivacyNoticePage = () => {
                         )}
                     </div>
 
-                    <div className="flex items-center mt-6">
-                        <div className="flex flex-col sm:flex-row items-center gap-4 justify-end w-full">
+                    <div className="flex items-center mt-4 sm:mt-6">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:justify-end">
                             <button
                                 type="button"
                                 onClick={() => setLegalData({ privacy_title: '', privacy_content: '', terms_title: '', terms_content: '' })}
-                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md">
-                                <X size={20} /> Limpiar campos
+                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md text-sm">
+                                <X size={18} /> Limpiar campos
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50">
-                                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />} Guardar
+                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50 text-sm">
+                                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Guardar
                             </button>
                         </div>
                     </div>

@@ -92,12 +92,12 @@ export default function CatalogsPage() {
       ]} />
       
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mt-4">
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
-            <div>
-                <h1 className='text-xl font-bold'>Catálogos disponibles</h1>
-                <p className='text-gray-500 text-sm'>Administra listas de opciones y elementos configurables del sistema.</p>
-            </div>
-            <div className='flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full sm:w-auto justify-end'>
+        <div className='flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6'>
+            <div className='flex flex-col gap-2'>
+                <div>
+                    <h1 className='text-xl font-bold'>Catálogos disponibles</h1>
+                    <p className='text-gray-500 text-sm'>Administra listas de opciones y elementos configurables del sistema.</p>
+                </div>
                 <div className="flex flex-col gap-1 w-full sm:w-[280px]">
                     <label className="text-xs font-semibold text-gray-700">Seleccionar catálogo</label>
                     <CatalogSearchSelect 
@@ -106,23 +106,21 @@ export default function CatalogsPage() {
                         onSelectCatalog={handleSelectCatalog}
                     />
                 </div>
-
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => {
-                            if (selectedCatalog) {
-                                router.push(`/catalogs/add-item?catalog=${encodeURIComponent(selectedCatalog.name)}&catalogId=${selectedCatalog.catalogoID}`);
-                            } else {
-                                showToast.warning("Selecciona un catálogo primero");
-                            }
-                        }}
-                        className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm shrink-0'
-                    >
-                        <Plus size={18} />
-                        <span>Agregar Ítem</span>
-                    </button>
-                </div>
             </div>
+
+            <button 
+                onClick={() => {
+                    if (selectedCatalog) {
+                        router.push(`/catalogs/add-item?catalog=${encodeURIComponent(selectedCatalog.name)}&catalogId=${selectedCatalog.catalogoID}`);
+                    } else {
+                        showToast.warning("Selecciona un catálogo primero");
+                    }
+                }}
+                className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm shrink-0'
+            >
+                <Plus size={18} />
+                <span>Agregar Ítem</span>
+            </button>
         </div>
 
         <div className="w-full">

@@ -16,15 +16,20 @@ import {
     User,
     MapPin,
     Loader2,
-    Edit3
+    Edit3,
+    Lock,
+    Save,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { getUserImageUrl } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { ViewPermissions } from '../add-user/viewPermissions';
-import { GetUsersById } from '@/lib/api/user-api';
+import { GetUsersById, EditUser } from '@/lib/api/user-api';
 import { GetListRoles } from '@/lib/api/permission-api';
 import { UserResponse } from '@/lib/@type';
 import { Tag } from '@/components/ui/badges';
+import { showToast } from 'nextjs-toast-notify';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
     <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
@@ -34,6 +39,95 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
         <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
     </div>
 );
+
+const PasswordField = ({ label, id, value, onChange }: { label: string; id: string; value: string; onChange: (v: string) => void }) => {
+    const [show, setShow] = useState(false)
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}</label>
+            <div className="relative">
+                <input
+                    id={id}
+                    type={show ? 'text' : 'password'}
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full h-[40px] border border-gray-200 rounded-lg px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary_color/30 focus:border-primary_color transition-all"
+                />
+                <button
+                    type="button"
+                    onClick={() => setShow(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+            </div>
+        </div>
+    )
+}
+
+const SecurityCard = ({ userId }: { userId: number }) => {
+    const [form, setForm] = useState({ old_password: '', new_password: '' })
+    const [isSaving, setIsSaving] = useState(false)
+
+    const handleChange = (field: string) => (value: string) => setForm(f => ({ ...f, [field]: value }))
+
+    const handleSubmit = async () => {
+        if (!form.old_password || !form.new_password) {
+            showToast.warning("Por favor completa todos los campos")
+            return
+        }
+        if (form.new_password.length < 8) {
+            showToast.warning("La nueva contraseña debe tener al menos 8 caracteres")
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            await EditUser(userId, {
+                password: form.new_password,
+            } as any)
+            showToast.success("Contraseña actualizada correctamente")
+            setForm({ old_password: '', new_password: '' })
+        } catch (error: any) {
+            const msg = error?.response?.data?.detail || error?.response?.data?.old_password?.[0] || "Error al actualizar la contraseña"
+            showToast.error(msg)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    return (
+        <div className='bg-white rounded-lg p-6 border shadow-sm'>
+            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <Lock size={20} />
+                </div>
+                <div>
+                    <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
+                    <p className='text-xs text-gray-500'>Actualiza la contraseña de inicio de sesión</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <PasswordField label="Contraseña actual" id="user_old_password" value={form.old_password} onChange={handleChange('old_password')} />
+                <PasswordField label="Nueva contraseña" id="user_new_password" value={form.new_password} onChange={handleChange('new_password')} />
+            </div>
+
+            <div className="flex justify-end mt-5">
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSaving}
+                    className="bg-primary_color text-white h-[40px] px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium shadow-md text-sm disabled:opacity-60"
+                >
+                    <Save size={16} />
+                    {isSaving ? 'Guardando...' : 'Cambiar contraseña'}
+                </button>
+            </div>
+        </div>
+    )
+}
 
 const InfoBlock = ({ label, value }: { label: string, value: any }) => {
     let displayValue = '-';
@@ -324,7 +418,12 @@ export default function UserDetailPage() {
                 </div>
             </div>
 
-            {/* SECCIÓN 3: Permisos por pantalla (Comentado temporalmente) */}
+            {/* SECCIÓN 3: Seguridad y Acceso */}
+            <div className="mb-5">
+                <SecurityCard userId={Number(userId)} />
+            </div>
+
+            {/* SECCIÓN 4: Permisos por pantalla (Comentado temporalmente) */}
             {/* <ViewPermissions
                 userPermissions={(userData as any).permissions || {}}
                 isReadOnly={true}

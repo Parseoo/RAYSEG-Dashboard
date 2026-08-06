@@ -173,7 +173,7 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
               disabled={isSaving}
               className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-all font-medium shadow-md disabled:opacity-60'
             >
-              <Save size={20} /> {isSaving ? 'Guardando...' : isEdit ? 'Actualizar Cliente' : 'Guardar Cliente'}
+              <Save size={20} /> {isSaving ? 'Guardando...' : 'Guardar Cliente'}
             </button>
           </div>
         </div>

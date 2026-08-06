@@ -136,12 +136,11 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
       safeCatalog('preferred-contact-method'),
       safeCatalog('operation-type') || safeCatalog('primary_interest'),
       safeCatalog('property-types'),
-      safeCatalog('payment-method'),
       safeCatalog('client-origin'),
       GetAllUsers({ perPage: 100 })
     ]);
 
-    const [taxpayerRes, statusRes, segmentRes, contactRes, interestRes, propertyRes, paymentRes, originRes, usersRes] = results;
+    const [taxpayerRes, statusRes, segmentRes, contactRes, interestRes, propertyRes, originRes, usersRes] = results;
 
     const extractItems = (res: any) => {
       if (!res) return [];
@@ -181,10 +180,6 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
 
     if (propertyRes.status === 'fulfilled') {
       setTargetPropertyTypes(extractItems(propertyRes.value));
-    }
-
-    if (paymentRes.status === 'fulfilled') {
-      setPaymentMethodTypes(extractItems(paymentRes.value));
     }
 
     if (originRes.status === 'fulfilled') {

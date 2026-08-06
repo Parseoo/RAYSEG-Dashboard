@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { Eye, EyeOff, Save } from 'lucide-react'
+import { Eye, EyeOff, Lock, Save } from 'lucide-react'
 import { UserForm } from '@/lib/@type'
 import { ChangePassword } from '@/lib/api/auth/auth-api'
 import { showToast } from 'nextjs-toast-notify'
@@ -87,27 +87,32 @@ export const AddPassword = ({ user, setUser, errors, isEdit = false }: AddPasswo
     }
 
     return (
-        <div className='w-full max-h-max rounded-xl p-4 sm:p-6 border border-slate-200 bg-white shadow-sm mt-4'>
-            <h2 className='font-semibold text-lg text-gray-900'>Seguridad de la cuenta</h2>
-            <p className='text-sm text-gray-500 mt-0.5'>
-                {isEdit
-                    ? 'Para cambiar la contraseña, ingresa la actual y la nueva. Déjalos vacíos si no deseas modificarla.'
-                    : 'Establece la contraseña de acceso para este usuario.'}
-            </p>
+        <div className='bg-white rounded-lg p-6 border shadow-sm mt-4'>
+            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <Lock size={20} />
+                </div>
+                <div>
+                    <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
+                    <p className='text-xs text-gray-500'>
+                        {isEdit
+                            ? 'Actualiza la contraseña de inicio de sesión'
+                            : 'Establece la contraseña de acceso para este usuario'}
+                    </p>
+                </div>
+            </div>
 
-            <div className={`mt-5 grid gap-4 ${isEdit ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-1 max-w-xs'}`}>
-                {isEdit && (
-                    <PasswordField
-                        id="old_password"
-                        label="Contraseña actual"
-                        value={(user as any).old_password || ''}
-                        onChange={set('old_password' as keyof UserForm)}
-                        error={(errors as any).old_password}
-                    />
-                )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <PasswordField
+                    id="old_password"
+                    label="Contraseña actual"
+                    value={(user as any).old_password || ''}
+                    onChange={set('old_password' as keyof UserForm)}
+                    error={(errors as any).old_password}
+                />
                 <PasswordField
                     id="password"
-                    label={isEdit ? 'Nueva contraseña' : 'Contraseña'}
+                    label="Nueva contraseña"
                     value={user.password || ''}
                     onChange={set('password')}
                     error={errors.password as string}

@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, Save } from 'lucide-react'
+import { Eye, EyeOff, Lock, Save, Clock, KeyRound } from 'lucide-react'
 import { ChangePassword } from '@/lib/api/auth/auth-api'
 import { showToast } from 'nextjs-toast-notify'
+import { User } from '@/lib/@type'
 
 const PasswordField = ({ label, id, value, onChange }: { label: string; id: string; value: string; onChange: (v: string) => void }) => {
     const [show, setShow] = useState(false)
@@ -31,7 +32,7 @@ const PasswordField = ({ label, id, value, onChange }: { label: string; id: stri
     )
 }
 
-export const SecuritySettings = () => {
+export const SecuritySettings = ({ user }: { user?: User | null }) => {
     const [form, setForm] = useState({ old_password: '', new_password: '' })
     const [isSaving, setIsSaving] = useState(false)
 
@@ -72,6 +73,37 @@ export const SecuritySettings = () => {
                 <div>
                     <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
                     <p className='text-xs text-gray-500'>Actualiza tu contraseña de inicio de sesión</p>
+                </div>
+            </div>
+
+            {/* Último acceso y último cambio de contraseña */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-100">
+                <div className="flex items-center gap-3 bg-slate-50 rounded-lg px-4 py-3">
+                    <div className="p-2 bg-white rounded-lg border border-slate-200 shrink-0">
+                        <Clock size={16} className="text-slate-500" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[11px] text-gray-400 font-medium">Último acceso</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                            {user?.last_access_date
+                                ? new Date(user.last_access_date).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                : '-'}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-slate-50 rounded-lg px-4 py-3">
+                    <div className="p-2 bg-white rounded-lg border border-slate-200 shrink-0">
+                        <KeyRound size={16} className="text-slate-500" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[11px] text-gray-400 font-medium">Último cambio de contraseña</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                            {user?.last_password_change
+                                ? new Date(user.last_password_change).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                : 'Sin cambios registrados'}
+                        </p>
+                    </div>
                 </div>
             </div>
 

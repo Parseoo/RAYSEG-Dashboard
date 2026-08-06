@@ -2,7 +2,7 @@
 
 import React from "react";
 import { User as UserType } from "@/lib/@type";
-import { User, Mail, Phone, Hash, Shield, CheckCircle2, XCircle } from "lucide-react";
+import { User, Mail, Phone, Hash, Shield, CheckCircle2, XCircle, MapPin, Navigation } from "lucide-react";
 
 interface PersonalInformationProps {
     user?: UserType | null;
@@ -18,6 +18,13 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
         user?.paternal_last_name,
         user?.maternal_last_name
     ].filter(Boolean).join(" ").trim() || "-";
+
+    let addressObj: Record<string, any> = {};
+    if (typeof user?.address === 'object' && user?.address !== null) {
+        addressObj = user.address;
+    }
+    const city = addressObj?.city ?? (addressObj as any)?.ciudad ?? user?.city ?? (user as any)?.ciudad ?? null;
+    const state = addressObj?.state ?? (addressObj as any)?.estado ?? user?.state ?? (user as any)?.estado ?? null;
 
     return (
         <div className="bg-white rounded-lg p-6 border shadow-sm">
@@ -59,6 +66,24 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
                     <span className="text-gray-900 font-semibold text-sm sm:text-right">{user?.phone || "-"}</span>
                 </div>
 
+                {/* Ciudad */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-gray-100 gap-1">
+                    <span className="text-gray-500 font-medium text-sm flex items-center gap-2">
+                        <Navigation size={15} className="text-gray-400" />
+                        Ciudad
+                    </span>
+                    <span className="text-gray-900 font-semibold text-sm sm:text-right">{city || "-"}</span>
+                </div>
+
+                {/* Estado */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-gray-100 gap-1">
+                    <span className="text-gray-500 font-medium text-sm flex items-center gap-2">
+                        <MapPin size={15} className="text-gray-400" />
+                        Estado
+                    </span>
+                    <span className="text-gray-900 font-semibold text-sm sm:text-right">{state || "-"}</span>
+                </div>
+
                 {/* ID de usuario */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-gray-100 gap-1">
                     <span className="text-gray-500 font-medium text-sm flex items-center gap-2">
@@ -79,9 +104,9 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
                     <span className="text-gray-900 font-semibold text-sm sm:text-right">{roleName}</span>
                 </div>
 
-                {/* Estado */}
+                {/* Estado de cuenta */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1">
-                    <span className="text-gray-500 font-medium text-sm">Estado</span>
+                    <span className="text-gray-500 font-medium text-sm">Estado de cuenta</span>
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                         user?.is_active
                             ? "bg-emerald-100 text-emerald-800"
