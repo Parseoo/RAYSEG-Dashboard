@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, Save } from 'lucide-react'
+import { Eye, EyeOff, Lock, RefreshCw, Copy } from 'lucide-react'
 import { UserForm } from '@/lib/@type'
-import { ChangePassword } from '@/lib/api/auth/auth-api'
 import { showToast } from 'nextjs-toast-notify'
+import { ResetPasswordUserByAdmin } from '@/lib/api/user-api'
 
 interface AddPasswordProps {
     user: UserForm;
     setUser: React.Dispatch<React.SetStateAction<UserForm>>;
     errors: Partial<UserForm>;
     isEdit?: boolean;
+    userId?: number;
 }
 
 const PasswordField = ({
@@ -56,34 +57,84 @@ const PasswordField = ({
     )
 }
 
-export const AddPassword = ({ user, setUser, errors, isEdit = false }: AddPasswordProps) => {
+export const AddPassword = ({ user, setUser, errors, isEdit = false, userId }: AddPasswordProps) => {
     const set = (field: keyof UserForm) => (val: string) => setUser(prev => ({ ...prev, [field]: val }))
-    const [isChanging, setIsChanging] = useState(false)
+    const [tempPassword, setTempPassword] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
 
-    const handleChangePassword = async () => {
-        if (!user.password || (isEdit && !user.old_password)) {
-            showToast.warning("Por favor completa los campos de contraseña")
-            return
-        }
-        if (user.password.length < 8) {
-            showToast.warning("La contraseña debe tener al menos 8 caracteres")
-            return
-        }
-
-        setIsChanging(true)
+    const handleGenerate = async () => {
+        if (!userId) return;
+        setIsGenerating(true);
         try {
-            await ChangePassword({
-                old_password: user.old_password || "",
-                new_password: user.password,
-            } as any)
-            showToast.success("Contraseña actualizada correctamente")
-            setUser(prev => ({ ...prev, old_password: "", password: "" }))
-        } catch (error: any) {
-            const msg = error?.response?.data?.detail || error?.response?.data?.old_password?.[0] || "Error al actualizar la contraseña"
-            showToast.error(msg)
+            const response = await ResetPasswordUserByAdmin(userId, {} as any);
+            const data = response.data as any;
+            if (data.success) {
+                setTempPassword(data.temporary_password);
+                showToast.success(data.message || "Contraseña temporal generada");
+            } else {
+                showToast.error(data.message || "Error al generar la contraseña temporal");
+            }
+        } catch (error) {
+            showToast.error("Error al generar la contraseña temporal");
         } finally {
-            setIsChanging(false)
+            setIsGenerating(false);
         }
+    }
+
+    if (isEdit) {
+        return (
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 mt-4 shadow-sm">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <Lock size={20} />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-semibold text-gray-900">Seguridad y acceso</h2>
+                        <p className="text-sm text-gray-500 mt-0.5">Solo un administrador puede restablecer la contraseña de este usuario</p>
+                    </div>
+                </div>
+
+                {!tempPassword ? (
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                        <p className="text-sm text-gray-600 text-center mb-4">
+                            Se generará una contraseña temporal que el usuario deberá cambiar en su próximo inicio de sesión.
+                        </p>
+                        <button 
+                            type="button" 
+                            onClick={handleGenerate}
+                            disabled={isGenerating}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-gray-700 disabled:opacity-50 shadow-sm"
+                        >
+                            <RefreshCw size={16} className={isGenerating ? "animate-spin" : ""} />
+                            {isGenerating ? "Generando..." : "Generar contraseña temporal"}
+                        </button>
+                    </div>
+                ) : (
+                    <div className="bg-green-50/50 rounded-lg p-4 border border-green-200">
+                        <p className="text-sm text-green-700 font-medium mb-3">Contraseña temporal generada</p>
+                        
+                        <div className="flex flex-row items-center gap-2 mb-3">
+                            <div className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-gray-800 font-mono text-sm tracking-wider shadow-inner overflow-hidden text-ellipsis">
+                                {tempPassword}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(tempPassword);
+                                    showToast.success("Copiado al portapapeles", { position: "top-right" });
+                                }}
+                                className="p-2 bg-white border border-slate-200 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-slate-50 transition-colors flex-shrink-0 shadow-sm"
+                                title="Copiar al portapapeles"
+                            >
+                                <Copy size={18} />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-gray-500">El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+                    </div>
+                )}
+            </div>
+        )
     }
 
     return (
@@ -95,41 +146,28 @@ export const AddPassword = ({ user, setUser, errors, isEdit = false }: AddPasswo
                 <div>
                     <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
                     <p className='text-xs text-gray-500'>
-                        {isEdit
-                            ? 'Actualiza la contraseña de inicio de sesión'
-                            : 'Establece la contraseña de acceso para este usuario'}
+                        Establece la contraseña de acceso para este usuario
                     </p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <PasswordField
-                    id="old_password"
-                    label="Contraseña actual"
-                    value={(user as any).old_password || ''}
-                    onChange={set('old_password' as keyof UserForm)}
-                    error={(errors as any).old_password}
-                />
-                <PasswordField
                     id="password"
-                    label="Nueva contraseña"
+                    label="Contraseña"
                     value={user.password || ''}
                     onChange={set('password')}
                     error={errors.password as string}
-                    required={!isEdit}
+                    required={true}
                 />
-            </div>
-
-            <div className="flex justify-end mt-5">
-                <button
-                    type="button"
-                    onClick={handleChangePassword}
-                    disabled={isChanging}
-                    className="bg-primary_color text-white h-[40px] px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium shadow-md text-sm disabled:opacity-60"
-                >
-                    <Save size={16} />
-                    {isChanging ? 'Cambiando...' : 'Cambiar contraseña'}
-                </button>
+                <PasswordField
+                    id="password_confirm"
+                    label="Confirmar contraseña"
+                    value={user.password_confirm || ''}
+                    onChange={set('password_confirm')}
+                    error={errors.password_confirm as string}
+                    required={true}
+                />
             </div>
         </div>
     )

@@ -20,10 +20,14 @@ export interface UserResponse {
   role: Role;
   created_at: string;
   updated_at: string;
+  last_access_date?: string;
+  last_password_change?: string;
 }
 
 export interface Address {
   street?: string | null;
+  ext_number?: string | null;
+  int_number?: string | null;
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
@@ -76,16 +80,7 @@ export interface LoginForm {
   password: string;
 }
 
-export interface RegisterForm {
-  email: string;
-  name: string;
-  paternal_last_name?: string;
-  maternal_last_name?: string;
-  password: string;
-  password_confirm?: string;
-  role?: string;
-  username?: string;
-}
+
 
 export interface ResetPasswordForm {
   old_password: string;
@@ -139,6 +134,7 @@ export interface UserForm {
   paternal_last_name: string;
   maternal_last_name: string | null;
   password?: string;
+  password_confirm?: string;
   old_password?: string;
   role: string;
   role_id?: number | null;
@@ -148,16 +144,47 @@ export interface UserForm {
   address?: any;
   is_active: boolean | string;
   is_staff?: boolean;
-  is_superuser?: boolean;
+  is_superuser?: boolean | string;
   permissions?: { [key: string]: boolean | string[] };
   profile_picture?: string;
+  street?: string;
+  ext_number?: string;
+  int_number?: string;
+  calle?: string;
+  numero_exterior?: string;
+  numero_interior?: string;
   estado?: string;
   ciudad?: string;
   colonia?: string;
   codigo_postal?: string;
+  last_access_date?: string;
+  last_password_change?: string;
 }
 
-
+export interface CreateUserRequest {
+  email: string;
+  name: string;
+  paternal_last_name: string;
+  maternal_last_name: string;
+  phone: string;
+  address: {
+    street: string;
+    ext_number: string;
+    int_number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    postal_code: string;
+  };
+  profile_picture: string;
+  internal_notes: string;
+  password?: string;
+  password_confirm?: string;
+  role_id: number;
+  is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
+}
 
 export interface Role {
   id: number;

@@ -153,17 +153,38 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
         },
         {
             type: 'text',
-            id: 'colonia',
-            label: 'Colonia',
-            placeholder: 'Colonia',
+            id: 'street',
+            label: 'Calle',
+            placeholder: 'Calle / Calle principal',
             group: 6
         },
         {
             type: 'text',
+            id: 'ext_number',
+            label: 'Número exterior',
+            placeholder: 'No. Ext',
+            group: 6
+        },
+        {
+            type: 'text',
+            id: 'int_number',
+            label: 'Número interior',
+            placeholder: 'No. Int',
+            group: 6
+        },
+        {
+            type: 'text',
+            id: 'colonia',
+            label: 'Colonia',
+            placeholder: 'Colonia',
+            group: 7
+        },
+        {
+            type: 'number',
             id: 'codigo_postal',
             label: 'Código postal',
             placeholder: 'Código postal',
-            group: 6
+            group: 7
         },
         {
             type: 'select',
@@ -178,6 +199,12 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             type: 'switch',
             id: 'is_active',
             label: 'Estatus del usuario',
+            group: 3
+        },
+        {
+            type: 'switch',
+            id: 'is_superuser',
+            label: 'Acceso de Superadministrador',
             group: 3
         },
         {

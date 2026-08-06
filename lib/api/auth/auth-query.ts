@@ -1,8 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { GetProfileApi, LogoutApi, LoginApi, RegisterApi, setAuthHeader, clearAuthHeader } from "./auth-api";
+import { GetProfileApi, LogoutApi, LoginApi, setAuthHeader, clearAuthHeader } from "./auth-api";
 import { useUserStore } from "@/lib/store/userStore";
 import { useRouter } from "next/navigation";
-import { LoginForm, RegisterForm } from "@/lib/@type";
+import { LoginForm } from "@/lib/@type";
 
 export const useGetProfile = () => useQuery({
   queryKey: ['profile'],
@@ -52,29 +52,7 @@ export const useLogin = () => {
   })
 }
 
-export const useRegister = () => {
-  const { setToken, login } = useUserStore();
-  const router = useRouter();
 
-  return useMutation({
-    mutationKey: ['register'],
-    mutationFn: (data: RegisterForm) => RegisterApi(data),
-    onSuccess: (response) => {
-      console.log('Registration successful');
-      // Assuming register automatically logs in or returns similar structure
-      if (response.data && (response.data.tokens?.access)) {
-        const user = response.data.user;
-        const accessToken = response.data.tokens?.access;
-        setAuthHeader(accessToken);
-        login(user, accessToken);
-        router.push('/');
-      }
-    },
-    onError: (error) => {
-      console.error('Registration failed:', error);
-    },
-  })
-}
 
 export const useLogout = () => {
   const { logout } = useUserStore();
