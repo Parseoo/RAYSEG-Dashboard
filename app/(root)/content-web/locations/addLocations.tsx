@@ -408,9 +408,8 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         <div key={`${row.id}-${index}`} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
             {/* Header: Title and Actions */}
             <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
+                <div className="flex-1"> 
                     <h3 className='font-bold text-base text-gray-800 mb-1'>{row.title}</h3>
-                    <p className="text-xs text-gray-500">ID: {row.property_id}</p>
                 </div>
                 
                 {/* Actions Dropdown */}
@@ -458,7 +457,16 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                     <MapPinned size={16} className="text-primary_color mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                         <p className="font-medium text-gray-900">
-                            {row.street || "-"} (Ext: {row.exterior_number || "-"}, Int: {row.interior_number || "-"})
+                            {row.street || "-"}
+                            {((row.exterior_number && row.exterior_number !== '-') || (row.interior_number && row.interior_number !== '-')) && (
+                                <>
+                                    {" "}
+                                    ({[
+                                        row.exterior_number && row.exterior_number !== '-' ? `Ext: ${row.exterior_number}` : '',
+                                        row.interior_number && row.interior_number !== '-' ? `Int: ${row.interior_number}` : ''
+                                    ].filter(Boolean).join(', ')})
+                                </>
+                            )}
                         </p>
                         <p className="text-gray-600 text-xs">
                             {row.neighborhood || "-"}

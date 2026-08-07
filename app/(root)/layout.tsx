@@ -24,11 +24,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     if (token && isTokenExpired(token)) {
       console.log('Token expirado, cerrando sesión...');
       logout();
-      setSessionExpired(true);
+      // Ya no mostramos el mensaje de expirado al abrir la app después de mucho tiempo
       localStorage.removeItem('jwtToken');
       localStorage.removeItem('refresh_token');
     }
-  }, [_hasHydrated, token, logout, setSessionExpired]);
+  }, [_hasHydrated, token, logout]);
 
   // Redirigir a /sign-in si no está logueado (solo después de que Zustand esté listo)
   useEffect(() => {

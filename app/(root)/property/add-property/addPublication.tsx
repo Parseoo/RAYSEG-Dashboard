@@ -8,10 +8,14 @@ import { inputsPublicationProperty } from '../inputConfig';
 import { useProperty } from '../propertyContext';
 import { statusProperty } from '../../../../components/SelectProperties.data';
 
-export const AddPublicationProperty = () => {
+export const AddPublicationProperty = ({ isEdit = false }: { isEdit?: boolean }) => {
     const { state, updateField, publicationStatusCatalog } = useProperty();
 
-    const statusPubliProperty = inputsPublicationProperty.map(input => {
+    const filteredInputs = isEdit 
+        ? inputsPublicationProperty 
+        : inputsPublicationProperty.filter(input => input.id !== 'status_publication');
+
+    const statusPubliProperty = filteredInputs.map(input => {
         const dynamicStatusCatalog = publicationStatusCatalog || [];
         if (input.id === 'status_publication' && dynamicStatusCatalog.length > 0) {
             return {

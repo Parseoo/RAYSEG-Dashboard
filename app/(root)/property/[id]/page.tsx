@@ -44,9 +44,10 @@ export default function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const propertyId = params?.id as string;
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [activeMedia, setActiveMedia] = useState<any>(null);
   const [property, setProperty] = useState<PropertyDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   useEffect(() => {
     if (!propertyId) return;
@@ -64,6 +65,45 @@ export default function PropertyDetailPage() {
     };
     fetchProperty();
   }, [propertyId]);
+
+  // Usar imágenes del API si existen, de lo contrario usar mocks como placeholder
+  const rawImagesList: any[] = property && Array.isArray(property.images) && property.images.length > 0
+    ? property.images
+    : (property ? ((property as any).property_images || (property as any).photos || ((property as any).main_image ? [{ image: (property as any).main_image, is_main: true }] : [])) : []);
+
+  const propertyMedia = (Array.isArray(rawImagesList) && rawImagesList.length > 0)
+    ? [...rawImagesList]
+      .sort((a: any, b: any) => (b?.is_main ? 1 : 0) - (a?.is_main ? 1 : 0))
+      .map((img: any) => {
+        const path = typeof img === 'string' ? img : (img?.image || img?.file || img?.url || img?.image_url || img?.src || '');
+        return {
+          url: getImageUrl(path),
+          isMain: Boolean(img?.is_main || img?.isMain || false)
+        };
+      })
+      .filter((img) => Boolean(img.url))
+    : [];
+
+  const plansMedia = property && (property as any).plans && Array.isArray((property as any).plans)
+    ? (property as any).plans.map((p: any) => ({
+        url: getImageUrl(p.plan || p.file || p.url || p),
+        isMain: false,
+        isPlan: true
+      }))
+    : [];
+  const allMedia = [...propertyMedia, ...plansMedia];
+
+  const Calendar = (LucideIcons as any).Calendar || (LucideIcons as any).CalendarDays;
+  const MapIcon = (LucideIcons as any).Map || (LucideIcons as any).MapPin;
+  const Trees = (LucideIcons as any).Trees || (LucideIcons as any).Flower;
+  const Award = (LucideIcons as any).Award || (LucideIcons as any).Trophy;
+  const Home = (LucideIcons as any).Home;
+
+  useEffect(() => {
+    if (allMedia.length > 0) {
+      setActiveMedia(allMedia[0]);
+    }
+  }, [property]);
 
   if (loading) {
     return (
@@ -85,53 +125,13 @@ export default function PropertyDetailPage() {
     ? (mlsClean.toUpperCase().startsWith('MLS') ? mlsClean : `MLS-${mlsClean}`)
     : null;
 
-  // Usar imágenes del API si existen, de lo contrario usar mocks como placeholder
-  const rawImagesList: any[] = Array.isArray(property.images) && property.images.length > 0
-    ? property.images
-    : ((property as any).property_images || (property as any).photos || ((property as any).main_image ? [{ image: (property as any).main_image, is_main: true }] : []));
+  const operationTypeDisplay = typeof property.operation_type === 'object' && property.operation_type !== null
+    ? (property.operation_type as any).name 
+    : property.operation_type;
 
-  const propertyImages = (Array.isArray(rawImagesList) && rawImagesList.length > 0)
-    ? [...rawImagesList]
-      .sort((a: any, b: any) => (b?.is_main ? 1 : 0) - (a?.is_main ? 1 : 0))
-      .map((img: any) => {
-        const path = typeof img === 'string' ? img : (img?.image || img?.file || img?.url || img?.image_url || img?.src || '');
-        return getImageUrl(path);
-      })
-      .filter((url: string) => Boolean(url))
-    : ['/property.jpg', '/casa.jpeg', '/property.jpg', '/casa.jpeg', '/property.jpg'];
-
-  const quickStats = [
-    {
-      icon: Ruler,
-      value: property.construction_size ? `${property.construction_size} m²` : '0 m²',
-      label: 'Construcción'
-    },
-    {
-      icon: Maximize2,
-      value: property.terrain_size ? `${property.terrain_size} m²` : '0 m²',
-      label: 'Terreno'
-    },
-    {
-      icon: Bed,
-      value: property.rooms !== null && property.rooms !== undefined ? String(property.rooms) : '0',
-      label: 'Recámaras'
-    },
-    {
-      icon: Bath,
-      value: property.bathrooms !== null && property.bathrooms !== undefined ? String(property.bathrooms) : '0',
-      label: 'Baños'
-    },
-    {
-      icon: Car,
-      value: property.parking_spaces !== null && property.parking_spaces !== undefined ? String(property.parking_spaces) : '0',
-      label: 'Cochera'
-    },
-    {
-      icon: Layers,
-      value: property.floors !== null && property.floors !== undefined ? String(property.floors) : '0',
-      label: 'Niveles'
-    }
-  ];
+  const propertyStatusDisplay = typeof property.property_status === 'object' && property.property_status !== null
+    ? (property.property_status as any).name
+    : property.property_status;
 
   return (
     <>
@@ -141,7 +141,6 @@ export default function PropertyDetailPage() {
         { label: property.title || 'Detalle de propiedad', href: `/property/${propertyId}`, active: true }
       ]} />
 
-      {/* Botón Volver fuera de la card */}
       <div className='mb-4'>
         <button
           onClick={() => router.back()}
@@ -152,12 +151,9 @@ export default function PropertyDetailPage() {
       </div>
 
       <div className='bg-white w-full rounded-lg shadow-md'>
-        {/* Cabecera Principal */}
         <div className='border-b border-gray-200 p-5 sm:p-6'>
-          {/* Fila superior: Título con MLS al lado y ubicación a la izquierda | Precio a la derecha */}
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4'>
             <div className='flex-1 min-w-0'>
-              {/* Título + MLS + ID */}
               <div className='flex flex-wrap items-center gap-3 mb-2'>
                 <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight break-words'>
                   {property.title}
@@ -167,26 +163,19 @@ export default function PropertyDetailPage() {
                     {mlsDisplay}
                   </span>
                 )}
-                {property.property_id && (
-                  <span className='inline-flex items-center px-2.5 py-1 bg-gray-100 text-gray-600 border border-gray-200 font-medium text-xs rounded-md shrink-0'>
-                    ID: {property.property_id}
-                  </span>
-                )}
               </div>
 
-              {/* Ubicación */}
               <div className='flex items-center gap-1.5 text-gray-600 text-sm mb-3'>
                 <MapPin size={16} className='shrink-0 text-gray-500' />
                 <p className='break-words'>{fullAddress || 'Ubicación no disponible'}</p>
               </div>
 
-              {/* Badges con descripción arriba (diseño estándar del dashboard) */}
               <div className='flex flex-wrap items-center gap-5 mt-3'>
                 <div className='flex flex-col gap-1.5'>
                   <span className='text-[11px] text-gray-500 font-medium uppercase tracking-wider'>Operación</span>
                   <div>
-                    <Tag status={property.operation_type === 'sale' ? 'Venta' : 'Renta'}>
-                      {property.operation_type === 'sale' ? 'Venta' : 'Renta'}
+                    <Tag status={operationTypeDisplay}>
+                      {operationTypeDisplay}
                     </Tag>
                   </div>
                 </div>
@@ -194,8 +183,8 @@ export default function PropertyDetailPage() {
                 <div className='flex flex-col gap-1.5'>
                   <span className='text-[11px] text-gray-500 font-medium uppercase tracking-wider'>Estado Propiedad</span>
                   <div>
-                    <Tag status={property.property_status || 'Disponible'} statusType="property">
-                      {property.property_status || 'Disponible'}
+                    <Tag status={propertyStatusDisplay} statusType="property">
+                      {propertyStatusDisplay}
                     </Tag>
                   </div>
                 </div>
@@ -221,210 +210,249 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
-            {/* Precio */}
             <div className='text-left lg:text-right pt-2 lg:pt-0 shrink-0'>
               <p className='text-xs font-medium text-gray-400 uppercase tracking-wider mb-0.5 hidden lg:block'>
-                Precio de {property.operation_type === 'sale' ? 'Venta' : 'Renta'}
+                Precio de {operationTypeDisplay}
               </p>
               <p className='text-2xl sm:text-3xl font-bold text-gray-800'>
                 ${Number(property.price || 0).toLocaleString('es-MX')}
                 <span className='text-sm sm:text-base font-normal text-gray-500 ml-1.5'>
-                  {property.operation_type === 'rent' ? '/ mes' : 'MXN'}
+                  {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? '/ mes' : 'MXN'}
                 </span>
               </p>
             </div>
           </div>
-
-          {/* Quick Specs Bar (Cuadros más compactos y limpios) */}
-          <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-5 mt-5 border-t border-gray-100'>
-            {quickStats.map((stat, idx) => {
-              const IconComp = stat.icon;
-              return (
-                <div
-                  key={idx}
-                  className='flex flex-col items-center justify-center p-2.5 rounded-lg border border-gray-200/80 bg-gray-50/60 text-center hover:bg-gray-50 transition-colors'
-                >
-                  <IconComp size={18} className='text-gray-600 mb-1' strokeWidth={1.75} />
-                  <span className='text-sm font-bold text-gray-900 leading-tight'>
-                    {stat.value}
-                  </span>
-                  <span className='text-[11px] font-medium text-gray-500 mt-0.5 leading-none'>
-                    {stat.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
         </div>
 
-        {/* Contenido Principal */}
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 p-5 sm:p-6'>
-          {/* Columna Izquierda: Información General, Descripción, Amenidades, Legal */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 p-5 sm:p-6 bg-slate-50/50'>
           <div className='lg:col-span-2 space-y-6'>
-            <div>
-              <h2 className='text-lg font-semibold text-gray-800 mb-3'>Información general</h2>
-              <p className='text-sm text-gray-500 mb-4'>Resumen de todos los datos que se muestran en la web pública y en el dashboard interno.</p>
-
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4'>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('property_type')}</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.property_type?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('operation_type')}</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.operation_type === 'sale' ? 'Venta' : 'Renta'}</p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('outdoor_spaces') || 'Espacios Exteriores'}</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.outdoor_spaces !== undefined && property.outdoor_spaces !== null ? property.outdoor_spaces : 'N/A'}</p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('construction_year')}</p>
-                  <p className='text-sm font-medium text-gray-800'>
-                    {property.construction_year
-                      ? `${property.construction_year} (${new Date().getFullYear() - property.construction_year} años)`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('conservation_status') || 'Estado de conservación'}</p>
-                  <p className='text-sm font-medium text-gray-800'>{(property as any).conservation_status || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>Tipo de terreno</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.terrain_type?.name || 'N/A'}</p>
-                </div>
-              </div>
-
-              <div className='mt-6'>
-                <p className='text-xs text-gray-500 mb-1'>Descripción para la web</p>
-                <p className='text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed'>
-                  {property.description || 'Sin descripción disponible.'}
-                </p>
-              </div>
-
-              <div className='mt-6'>
-                <p className='text-xs text-gray-500 mb-3'>Amenidades</p>
-                <div className='flex flex-wrap gap-2'>
-                  {property.amenities && property.amenities.length > 0 ? (
-                    property.amenities.map((item: any, idx: number) => (
-                      <span
-                        key={idx}
-                        className='flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200'
-                      >
-                        {item.icon && <DynamicIcon name={item.icon} size={14} />}
-                        {item.name || item}
-                      </span>
-                    ))
-                  ) : (
-                    <p className='text-xs text-gray-400 italic'>No hay amenidades registradas</p>
+            {allMedia.length > 0 && (
+              <div className='bg-white p-4 sm:p-5 rounded-lg border border-gray-200 shadow-xs space-y-4'>
+                <div className='relative w-full max-w-md mx-auto aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs'>
+                  <Image
+                    src={activeMedia?.url || allMedia[0]?.url}
+                    alt='Imagen de la propiedad'
+                    fill
+                    className='object-cover cursor-pointer'
+                    unoptimized={true}
+                    onClick={() => setIsGalleryOpen(true)}
+                  />
+                  {(activeMedia?.isMain || (!activeMedia && allMedia[0]?.isMain)) && (
+                    <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
+                      Principal
+                    </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            <div className='border-t border-gray-200 pt-6'>
-              <h2 className='text-lg font-semibold text-gray-800 mb-4'>Información legal y administrativa</h2>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4'>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>Espacios exteriores</p>
-                  <p className='text-sm font-medium text-gray-800'>{(property as any).outdoor_spaces || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>Clave catastral / MLS</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.number_mls || 'N/A'}</p>
-                </div>
-                <div className='sm:col-span-2'>
-                  <p className='text-xs text-gray-500 mb-1'>Nota interna</p>
-                  <p className='text-sm font-medium text-gray-800'>{(property as any).note || 'Sin notas'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Columna Derecha: Imágenes, Planos, Mapa, Info comercial */}
-          <div className='space-y-6'>
-            <div>
-              <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
-                <h3 className='text-base font-semibold text-gray-800'>Imágenes de la propiedad</h3>
-                <button
-                  onClick={() => setIsGalleryOpen(true)}
-                  className='text-xs text-blue-600 hover:text-blue-700 font-medium'
-                >
-                  Ver todas
-                </button>
-              </div>
-              <div className='space-y-2'>
-                <div className='relative group cursor-pointer' onClick={() => setIsGalleryOpen(true)}>
-                  <Image
-                    src={propertyImages[0]}
-                    alt='Principal'
-                    width={400}
-                    height={250}
-                    unoptimized={true}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                        target.src = '/property.jpg';
-                      }
-                    }}
-                    className='w-full h-48 object-cover rounded-lg'
-                  />
-                  <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
-                    Principal
-                  </div>
-                </div>
-                <div className='grid grid-cols-3 gap-2'>
-                  {propertyImages.slice(1, 4).map((img, idx) => (
-                    <div key={idx} className='relative cursor-pointer group' onClick={() => setIsGalleryOpen(true)}>
-                      <Image
-                        src={img}
-                        alt={`Imagen ${idx + 2}`}
-                        width={120}
-                        height={120}
-                        unoptimized={true}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                            target.src = '/property.jpg';
-                          }
-                        }}
-                        className='w-full h-24 object-cover rounded-lg'
-                      />
-                      {idx === 2 && propertyImages.length > 4 && (
-                        <div className='absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-lg'>
-                          <span className='text-white text-sm font-medium'>+{propertyImages.length - 4}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Planos */}
-            {(property as any).plans && (property as any).plans.length > 0 && (
-              <div className='border-t border-gray-200 pt-6'>
-                <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-4'>
-                  <h3 className='text-base font-semibold text-gray-800'>Planos de la propiedad</h3>
-                </div>
-                <div className='grid grid-cols-2 sm:grid-cols-3 gap-4'>
-                  {(property as any).plans.map((plan: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className='relative group cursor-pointer bg-gray-100 rounded-lg p-4 flex items-center justify-center h-32 hover:bg-gray-200/70 transition-colors'
-                      onClick={() => window.open(getImageUrl(plan.plan || plan.file || plan.url || plan), '_blank')}
-                    >
-                      <span className='text-gray-600 font-medium text-sm'>Plano {idx + 1}</span>
-                    </div>
-                  ))}
+                <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-thin'>
+                  {allMedia.map((media, idx) => {
+                    const isActive = activeMedia ? activeMedia.url === media.url : idx === 0;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveMedia(media)}
+                        className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
+                          isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <Image
+                          src={media.url}
+                          alt={`Miniatura ${idx + 1}`}
+                          fill
+                          className='object-cover'
+                          unoptimized={true}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            <div className='border-t border-gray-200 pt-6'>
+            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <h2 className='text-lg font-semibold text-gray-800 mb-4'>Información general</h2>
+              <div className='divide-y divide-gray-100'>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Descripción</span>
+                  <span className='col-span-2 text-gray-800 font-normal whitespace-pre-wrap'>{property.description || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Dirección completa</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{fullAddress || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Calle</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.street || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Número exterior</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.exterior_number || addressObj.street_number || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Número interior</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.interior_number || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Colonia / Fraccionamiento</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.neighborhood || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Ciudad</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.city || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Estado</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.state || '—'}</span>
+                </div>
+                <div className='grid grid-cols-3 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Código postal</span>
+                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.postal_code || addressObj.zip_code || '—'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <h2 className='text-lg font-semibold text-gray-800 mb-1'>Notas internas <span className='text-xs font-normal text-gray-400'>(solo administradores)</span></h2>
+              <p className='text-sm text-gray-700 mt-4 font-normal'>{(property as any).note || 'Sin notas internas'}</p>
+            </div>
+          </div>
+
+          <div className='space-y-6'>
+            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <h3 className='text-base font-semibold text-gray-800 mb-4'>Resumen de la propiedad</h3>
+              <div className='grid grid-cols-2 gap-y-4 gap-x-3 mt-4'>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    {Home && <Home size={16} />}
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Tipo de propiedad</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.property_type?.name || '—'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Maximize2 size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Terreno</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.terrain_size ? `${property.terrain_size} m²` : '—'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Ruler size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Construcción</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.construction_size ? `${property.construction_size} m²` : '—'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Bed size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Recámaras</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.rooms || '0'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Bath size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Baños</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.bathrooms || '0'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Car size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Cochera</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.parking_spaces || '0'}</p>
+                  </div>
+                </div>
+                <div className='flex items-start gap-2'>
+                  <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                    <Layers size={16} />
+                  </div>
+                  <div>
+                    <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Niveles</p>
+                    <p className='text-sm font-bold text-gray-800'>{property.floors || '0'}</p>
+                  </div>
+                </div>
+                {property.construction_year && Number(property.construction_year) > 0 && (
+                  <div className='flex items-start gap-2'>
+                    <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                      {Calendar && <Calendar size={16} />}
+                    </div>
+                    <div>
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Año de construcción</p>
+                      <p className='text-sm font-bold text-gray-800'>
+                        {property.construction_year} <span className='text-[10px] font-normal text-gray-500'>({new Date().getFullYear() - Number(property.construction_year)} años)</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {(property as any).conservation_status && (
+                  <div className='flex items-start gap-2'>
+                    <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                      <Star size={16} />
+                    </div>
+                    <div>
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Estado de conservación</p>
+                      <p className='text-sm font-bold text-gray-800'>{(property as any).conservation_status}</p>
+                    </div>
+                  </div>
+                )}
+                {property.terrain_type?.name && (
+                  <div className='flex items-start gap-2'>
+                    <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                      {MapIcon && <MapIcon size={16} />}
+                    </div>
+                    <div>
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Tipo de terreno</p>
+                      <p className='text-sm font-bold text-gray-800'>{property.terrain_type.name}</p>
+                    </div>
+                  </div>
+                )}
+                {property.outdoor_spaces !== undefined && property.outdoor_spaces !== null && String(property.outdoor_spaces).trim() !== '' && String(property.outdoor_spaces) !== '0' && (
+                  <div className='flex items-start gap-2'>
+                    <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                      {Trees && <Trees size={16} />}
+                    </div>
+                    <div>
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Espacios exteriores</p>
+                      <p className='text-sm font-bold text-gray-800'>{property.outdoor_spaces}</p>
+                    </div>
+                  </div>
+                )}
+                {property.amenities && property.amenities.length > 0 && (
+                  <div className='flex items-start gap-2 col-span-2 mt-2 pt-2 border-t border-gray-100'>
+                    <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
+                      {Award && <Award size={16} />}
+                    </div>
+                    <div>
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1'>Amenidades</p>
+                      <div className='flex flex-wrap gap-1'>
+                        {property.amenities.map((item: any, idx: number) => (
+                          <span key={idx} className='inline-flex items-center gap-1 bg-slate-100 text-gray-800 text-[10px] font-semibold px-2 py-0.5 rounded border border-gray-200'>
+                            {item.icon && <DynamicIcon name={item.icon} size={11} />}
+                            {item.name || item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
               <h3 className='text-base font-semibold text-gray-800 mb-3'>Ubicación en mapa</h3>
-              <div className='w-full h-[300px] overflow-hidden rounded-lg border border-gray-200'>
+              <div className='w-full h-[300px] overflow-hidden rounded-lg border border-gray-200 mt-3 shadow-2xs'>
                 <MapWithMarker
                   markerPosition={
                     locationObj.latitude && locationObj.longitude
@@ -436,20 +464,26 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
-            <div className='border-t border-gray-200 pt-6'>
-              <h3 className='text-base font-semibold text-gray-800 mb-4'>Información comercial</h3>
-              <div className='space-y-3'>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>Última actualización</p>
-                  <p className='text-sm font-medium text-gray-800'>
-                    {property.updated_at ? new Date(property.updated_at).toLocaleDateString('es-MX') : 'N/A'}
-                  </p>
+            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <h3 className='text-base font-semibold text-gray-800 mb-3'>Información comercial</h3>
+              <div className='divide-y divide-gray-100 mt-4'>
+                <div className='grid grid-cols-2 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Precio de referencia</span>
+                  <span className='text-gray-800 font-semibold text-right sm:text-left'>
+                    ${Number(property.price || 0).toLocaleString('es-MX')} {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? '/ mes' : 'MXN'}
+                  </span>
                 </div>
-                <div>
-                  <p className='text-xs text-gray-500 mb-1'>Fecha de alta</p>
-                  <p className='text-sm font-medium text-gray-800'>
-                    {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : 'N/A'}
-                  </p>
+                <div className='grid grid-cols-2 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Última actualización</span>
+                  <span className='text-gray-800 font-medium text-right sm:text-left'>
+                    {property.updated_at ? new Date(property.updated_at).toLocaleDateString('es-MX') : '—'}
+                  </span>
+                </div>
+                <div className='grid grid-cols-2 py-3 text-sm'>
+                  <span className='text-gray-500 font-medium'>Fecha de creación</span>
+                  <span className='text-gray-800 font-medium text-right sm:text-left'>
+                    {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '—'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -461,7 +495,7 @@ export default function PropertyDetailPage() {
         <Gallery
           isOpen={isGalleryOpen}
           onClose={() => setIsGalleryOpen(false)}
-          images={propertyImages}
+          images={allMedia.map(m => m.url)}
         />
       )}
     </>
