@@ -101,7 +101,7 @@ export interface PropertyListItemResponse {
   parking_spaces: number;
   floors: number;
   construction_year: number;
-  ambientes: number;
+  outdoor_spaces: number;
   conservation_status: string;
   address: LocationItemResponse[];
   amenities: CatalogItem[];
@@ -162,7 +162,7 @@ export interface PropertyDetailResponse {
   parking_spaces: number;
   floors: number;
   construction_year: number;
-  ambientes: number;
+  outdoor_spaces: number;
   conservation_status: string;
   address: unknown[];
   amenities: unknown[];

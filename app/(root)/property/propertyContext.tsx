@@ -22,7 +22,7 @@ export interface PropertyState {
   terrain_type: string;
   floors: number | null;
   construction_year: number | null;
-  ambientes: number | null;
+  outdoor_spaces: number | null;
   conservation_status: string;
   full_address: string;
   street: string;
@@ -57,7 +57,7 @@ const initialState: PropertyState = {
   terrain_type: '',
   floors: null,
   construction_year: null,
-  ambientes: null,
+  outdoor_spaces: null,
   conservation_status: '',
   full_address: '',
   street: '',

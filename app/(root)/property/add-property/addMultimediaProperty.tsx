@@ -152,11 +152,11 @@ export const AddMultimediaProperty = () => {
                     </div>
                   )}
 
-                  {/* Hover Action - Eye (Top Left) */}
+                  {/* Hover Action - Eye (Top Left, o debajo de la etiqueta Principal) */}
                   <button
                     type="button"
                     onClick={() => handleViewImage(image)}
-                    className={`absolute top-2 ${image.is_main ? 'left-20' : 'left-2'} p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100`}
+                    className={`absolute ${image.is_main ? 'top-[36px] left-2' : 'top-2 left-2'} p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100`}
                     title="Ver imagen"
                   >
                     <Eye size={15} className="text-blue-600" />

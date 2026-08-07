@@ -7,11 +7,11 @@ import { GetEstados, GetCiudades } from '@/lib/api/property/property-api';
 
 // Configuración base de los inputs (las opciones de `estado` se poblarán dinámicamente)
 const baseInputs: Omit<InputFieldConfig, 'options'>[] = [
-    { type: 'text', id: 'street', label: 'Calle', placeholder: 'Ej. Blvd. Campestre o Av. Principal', required: true },
+    { type: 'text', id: 'street', label: 'Calle', placeholder: 'Ej. Blvd. Campestre o Av. Principal', required: true, group: 0 },
+    { type: 'text', id: 'neighborhood', label: 'Colonia / Fraccionamiento', placeholder: 'Ej. Jardines del Moral, Residencial Campestre', group: 0 },
     { type: 'text', id: 'street_number', label: 'Núm. Exterior', placeholder: '245', group: 1 },
     { type: 'text', id: 'interior_number', label: 'Núm. Interior (opc.)', placeholder: 'Int. 4B', group: 1 },
     { type: 'number', id: 'postal_code', label: 'Código Postal', placeholder: '37160', group: 1, required: true },
-    { type: 'text', id: 'neighborhood', label: 'Colonia / Fraccionamiento', placeholder: 'Ej. Jardines del Moral, Residencial Campestre' },
     { type: 'select', id: 'estado', label: 'Estado', placeholder: 'Selecciona un estado', group: 2, required: true },
     { type: 'select', id: 'city', label: 'Ciudad', placeholder: 'Selecciona una ciudad', group: 2, required: true },
 ];

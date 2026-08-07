@@ -27,11 +27,31 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
     propertyStateCatalog,
     conservationStatusCatalog,
     terrainTypeCatalog,
-    publicationStatusCatalog
+    publicationStatusCatalog,
+    amenitiesCatalog
   } = useProperty();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const isEdit = !!propertyId;
+
+  const resolveId = (value: any, catalog: any[], fallback: number = 1): number => {
+    if (value === undefined || value === null || value === '') return fallback;
+    const apiVal = resolveCatalogApiValue(value, catalog);
+    const parsedApi = parseInt(apiVal);
+    if (!isNaN(parsedApi) && parsedApi > 0) return parsedApi;
+
+    const directNum = parseInt(String(value).trim());
+    if (!isNaN(directNum) && directNum > 0) return directNum;
+
+    const resolved = resolveCatalogItemId(value, catalog);
+    if (resolved !== null && !isNaN(resolved) && resolved > 0) return resolved;
+
+    if (catalog && catalog.length > 0) {
+      const firstVal = parseInt(String(catalog[0].value || catalog[0].catalogItemID || '1'));
+      if (!isNaN(firstVal) && firstVal > 0) return firstVal;
+    }
+    return fallback;
+  };
 
   useEffect(() => {
     if (propertyId) fetchProperty(propertyId);
@@ -65,6 +85,8 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
 
   const validatePropertyFields = () => {
     const tempErrors: Record<string, string> = {};
+
+    // Datos principales
     if (!state.title?.trim()) {
       tempErrors.title = "El campo es requerido";
     }
@@ -81,14 +103,61 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
     if (!state.description?.trim()) {
       tempErrors.description = "El campo es requerido";
     }
+
+    // Ubicación
     if (!state.street?.trim()) {
       tempErrors.street = "El campo es requerido";
+    }
+    if (!state.estado?.trim()) {
+      tempErrors.estado = "El campo es requerido";
     }
     if (!state.city?.trim()) {
       tempErrors.city = "El campo es requerido";
     }
     if (!state.postal_code?.trim()) {
       tempErrors.postal_code = "El campo es requerido";
+    }
+
+    // Detalles según visibilidad por tipo de propiedad
+    const type = state.property_type?.toLowerCase() || '';
+    const isTerrain = type === 'terreno';
+    const isHouse = type === 'casa';
+    const isApartment = type === 'departamento' || type === 'apartamento';
+
+    if ((isHouse || isTerrain || !type) && (state.terrain_size === null || state.terrain_size === undefined || String(state.terrain_size).trim() === '' || Number(state.terrain_size) < 0)) {
+      tempErrors.terrain_size = "El campo es requerido";
+    }
+
+    if (!isTerrain && (state.construction_size === null || state.construction_size === undefined || String(state.construction_size).trim() === '' || Number(state.construction_size) < 0)) {
+      tempErrors.construction_size = "El campo es requerido";
+    }
+
+    if ((isHouse || isApartment) && (state.rooms === null || state.rooms === undefined || String(state.rooms).trim() === '')) {
+      tempErrors.rooms = "El campo es requerido";
+    }
+
+    if (!isTerrain && (state.bathrooms === null || state.bathrooms === undefined || String(state.bathrooms).trim() === '')) {
+      tempErrors.bathrooms = "El campo es requerido";
+    }
+
+    if (!isTerrain && (state.parking_spaces === null || state.parking_spaces === undefined || String(state.parking_spaces).trim() === '')) {
+      tempErrors.parking_spaces = "El campo es requerido";
+    }
+
+    if (isHouse && (state.floors === null || state.floors === undefined || String(state.floors).trim() === '')) {
+      tempErrors.floors = "El campo es requerido";
+    }
+
+    if (!isTerrain && (!state.construction_year || Number(state.construction_year) <= 0)) {
+      tempErrors.construction_year = "El campo es requerido";
+    }
+
+    if ((isTerrain || isHouse) && !state.terrain_type) {
+      tempErrors.terrain_type = "El campo es requerido";
+    }
+
+    if (!isTerrain && !state.conservation_status) {
+      tempErrors.conservation_status = "El campo es requerido";
     }
 
     if (Object.keys(tempErrors).length > 0) {
@@ -113,44 +182,61 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         state.postal_code
       );
 
+      const amenityIds = (state.amenities || []).map(a => {
+        if (typeof a === 'number' && !isNaN(a)) return a;
+        const num = parseInt(String(a));
+        if (!isNaN(num) && num > 0) return num;
+        return resolveCatalogItemId(a, amenitiesCatalog);
+      }).filter((id): id is number => id !== null && !isNaN(id));
+
       // Mapear el estado del context al formato esperado por el API para creación
       const payload = {
-        number_mls: '',
+        number_mls: state.number_mls || '',
         title: state.title,
         description: state.description,
-        price: parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || null,
-        property_type: resolveCatalogApiValue(state.property_type, propertyTypes)?.toString() || null,
-        operation_type: resolveCatalogApiValue(state.operation_type, operationCatalog)?.toString() || null,
-        terrain_type: resolveCatalogApiValue(state.terrain_type, terrainTypeCatalog)?.toString() || null,
-        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : null,
-        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : null,
-        rooms: state.rooms ? parseInt(String(state.rooms)) : null,
-        bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : null,
-        parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : null,
-        floors: state.floors ? parseInt(String(state.floors)) : null,
-        construction_year: state.construction_year ? parseInt(String(state.construction_year)) : null,
-        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || null,
-        property_status: resolveCatalogApiValue(state.property_status, propertyStateCatalog)?.toString() || null,
-        property_post_status: resolveCatalogApiValue(state.status_publication, publicationStatusCatalog)?.toString() || null,
+        price: parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || 0,
+        property_type: resolveId(state.property_type, propertyTypes, 1),
+        operation_type: resolveId(state.operation_type, operationCatalog, 1),
+        terrain_type: resolveId(state.terrain_type, terrainTypeCatalog, 1),
+        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : "0",
+        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : "0",
+        rooms: state.rooms ? parseInt(String(state.rooms)) : 0,
+        bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : 0,
+        parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : 0,
+        floors: state.floors ? parseInt(String(state.floors)) : 1,
+        construction_year: state.construction_year ? parseInt(String(state.construction_year)) : new Date().getFullYear(),
+        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
+        property_status: resolveId(state.property_status, propertyStateCatalog, 1),
+        outdoor_spaces: state.outdoor_spaces ? parseInt(String(state.outdoor_spaces)) : 0,
         note: state.note || "",
-        is_featured: state.is_featured || false,
+        is_featured: Boolean(state.is_featured),
         address: {
           street: state.street || state.full_address?.split(',')[0]?.trim() || "Calle",
           interior_number: state.interior_number || "",
           exterior_number: state.street_number || state.full_address?.split(',')[1]?.trim() || "S/N",
           neighborhood: state.neighborhood || "",
-          city: state.city,
+          city: state.city || "",
           state: state.estado || "Guanajuato",
-          zip_code: state.postal_code
+          zip_code: state.postal_code || ""
         },
-        amenities: state.amenities.map(a => String(a)),
-        images: (state.images || []).map((img: any) => ({
-          fileID: img.fileID,
-          file: img.file,
-          is_main: Boolean(img.is_main)
-        })),
-        plans: (state.plans || []).filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:')),
-        ambientes: state.ambientes ? parseInt(String(state.ambientes)) : null
+        location: {
+          latitude: geo.latitude || 21.1222,
+          longitude: geo.longitude || -101.68
+        },
+        amenities: amenityIds,
+        images: (state.images || [])
+          .filter((img: any) => typeof img.file === 'string' && img.file.startsWith('data:'))
+          .map((img: any) => ({
+            fileID: img.fileID ? Number(img.fileID) : null,
+            file: img.file,
+            is_main: Boolean(img.is_main)
+          })),
+        plans: (state.plans || [])
+          .filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:'))
+          .map((plan: any) => ({
+            fileID: plan.fileID ? Number(plan.fileID) : null,
+            file: plan.file
+          }))
       };
 
       console.log("FINAL PAYLOAD:", payload);
@@ -164,7 +250,16 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
       console.error("Error al crear propiedad:", error?.data || error?.response?.data || error);
       const detail = error?.data?.detail || error?.response?.data?.detail;
       if (Array.isArray(detail)) {
-        detail.forEach((d: any) => console.error("Validation error:", JSON.stringify(d)));
+        const backendErrors: Record<string, string> = {};
+        detail.forEach((err: any) => {
+          if (err.loc && Array.isArray(err.loc) && err.loc.length > 0) {
+            const field = String(err.loc[err.loc.length - 1]);
+            backendErrors[field] = "El campo es requerido";
+          }
+        });
+        if (Object.keys(backendErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...backendErrors }));
+        }
       }
       const message = typeof detail === 'string' ? detail : (detail ? JSON.stringify(detail) : "Error al crear la propiedad");
       showToast.error(message);
@@ -185,45 +280,66 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         state.postal_code
       );
 
+      const amenityIds = (state.amenities || []).map(a => {
+        if (typeof a === 'number' && !isNaN(a)) return a;
+        const num = parseInt(String(a));
+        if (!isNaN(num) && num > 0) return num;
+        return resolveCatalogItemId(a, amenitiesCatalog);
+      }).filter((id): id is number => id !== null && !isNaN(id));
+
       // Mapear el estado del context al formato esperado por el API
       const payload = {
         id: propertyId,
-        number_mls: state.number_mls,
+        number_mls: state.number_mls || '',
         title: state.title,
         description: state.description,
-        price: parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || null,
-        property_type: resolveCatalogApiValue(state.property_type, propertyTypes)?.toString() || null,
-        operation_type: resolveCatalogApiValue(state.operation_type, operationCatalog)?.toString() || null,
-        property_status: resolveCatalogApiValue(state.property_status, propertyStateCatalog)?.toString() || null,
-        property_post_status: resolveCatalogApiValue(state.status_publication, publicationStatusCatalog)?.toString() || null,
-        terrain_type: resolveCatalogApiValue(state.terrain_type, terrainTypeCatalog)?.toString() || null,
-        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : null,
-        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : null,
-        rooms: state.rooms ? parseInt(String(state.rooms)) : null,
-        bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : null,
-        parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : null,
-        floors: state.floors ? parseInt(String(state.floors)) : null,
-        construction_year: state.construction_year ? parseInt(String(state.construction_year)) : null,
-        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || null,
+        price: parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || 0,
+        property_type: resolveId(state.property_type, propertyTypes, 1),
+        operation_type: resolveId(state.operation_type, operationCatalog, 1),
+        terrain_type: resolveId(state.terrain_type, terrainTypeCatalog, 1),
+        property_status: resolveId(state.property_status, propertyStateCatalog, 1),
+        property_post_status: resolveId(state.status_publication, publicationStatusCatalog, 1),
+        terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : "0",
+        construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : "0",
+        rooms: state.rooms ? parseInt(String(state.rooms)) : 0,
+        bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : 0,
+        parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : 0,
+        floors: state.floors ? parseInt(String(state.floors)) : 1,
+        construction_year: state.construction_year ? parseInt(String(state.construction_year)) : new Date().getFullYear(),
+        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
+        outdoor_spaces: state.outdoor_spaces ? parseInt(String(state.outdoor_spaces)) : 0,
         note: state.note || "",
-        is_featured: state.is_featured || false,
+        is_featured: Boolean(state.is_featured),
         address: {
           street: state.street || state.full_address?.split(',')[0]?.trim() || "Calle",
           interior_number: state.interior_number || "",
           exterior_number: state.street_number || state.full_address?.split(',')[1]?.trim() || "S/N",
           neighborhood: state.neighborhood || "",
-          city: state.city,
+          city: state.city || "",
           state: state.estado || "Guanajuato",
-          zip_code: state.postal_code
+          zip_code: state.postal_code || ""
         },
-        amenities: state.amenities.map(a => String(a)),
-        images: (state.images || []).map((img: any) => ({
-          fileID: img.fileID,
-          file: img.file,
-          is_main: Boolean(img.is_main)
-        })),
-        plans: (state.plans || []).filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:')),
-        ambientes: state.ambientes ? parseInt(String(state.ambientes)) : null
+        ...(state.addressId && !isNaN(Number(state.addressId)) ? {
+          location: {
+            property_address_id: Number(state.addressId),
+            latitude: geo.latitude || 21.1222,
+            longitude: geo.longitude || -101.68
+          }
+        } : {}),
+        amenities: amenityIds,
+        images: (state.images || [])
+          .filter((img: any) => typeof img.file === 'string' && img.file.startsWith('data:'))
+          .map((img: any) => ({
+            fileID: img.fileID ? Number(img.fileID) : null,
+            file: img.file,
+            is_main: Boolean(img.is_main)
+          })),
+        plans: (state.plans || [])
+          .filter((plan: any) => typeof plan.file === 'string' && plan.file.startsWith('data:'))
+          .map((plan: any) => ({
+            fileID: plan.fileID ? Number(plan.fileID) : null,
+            file: plan.file
+          }))
       };
 
       console.log("FINAL PAYLOAD (Edit):", payload);
@@ -234,7 +350,19 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
       router.push('/property');
     } catch (error: any) {
       console.error("Error al actualizar propiedad:", error.response?.data);
-      const detail = error?.response?.data?.detail;
+      const detail = error?.response?.data?.detail || error?.data?.detail;
+      if (Array.isArray(detail)) {
+        const backendErrors: Record<string, string> = {};
+        detail.forEach((err: any) => {
+          if (err.loc && Array.isArray(err.loc) && err.loc.length > 0) {
+            const field = String(err.loc[err.loc.length - 1]);
+            backendErrors[field] = "El campo es requerido";
+          }
+        });
+        if (Object.keys(backendErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...backendErrors }));
+        }
+      }
       const message = typeof detail === 'string' ? detail : (detail ? JSON.stringify(detail) : "Error al actualizar la propiedad");
       showToast.error(message);
     } finally {
