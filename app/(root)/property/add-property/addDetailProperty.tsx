@@ -397,7 +397,7 @@ const AmenitiesManager = ({
 };
 
 export const AddDetailProperty = () => {
-    const { state, updateField, amenitiesCatalog, conservationStatusCatalog, terrainTypeCatalog } = useProperty();
+    const { state, updateField, amenitiesCatalog, conservationStatusCatalog, terrainTypeCatalog, errors } = useProperty();
 
     // Definir qué campos se muestran según el tipo de propiedad
     const getVisibleFields = (propertyType: string) => {
@@ -409,7 +409,7 @@ export const AddDetailProperty = () => {
             bathrooms: type === 'casa' || type === 'departamento' || type === 'apartamento' || type === 'local' || type === 'oficina',
             parking_spaces: type === 'casa' || type === 'departamento' || type === 'apartamento' || type === 'local' || type === 'oficina',
             floors: type === 'casa',
-            ambientes: type === 'casa' || type === 'departamento' || type === 'apartamento',
+            outdoor_spaces: type === 'casa' || type === 'departamento' || type === 'apartamento',
             construction_year: type === 'casa' || type === 'departamento' || type === 'apartamento' || type === 'local' || type === 'oficina',
             terrain_type: type === 'terreno' || type === 'casa',
             conservation_status: type === 'casa' || type === 'departamento' || type === 'apartamento' || type === 'local' || type === 'oficina',
@@ -439,7 +439,8 @@ export const AddDetailProperty = () => {
                             ? (val === '' ? null : Number(val))
                             : val;
                         updateField(input.id as any, finalVal);
-                    }
+                    },
+                    error: errors[input.id]
                 };
             }
             if (input.id === 'terrain-type' || input.id === 'terrain_type') {
@@ -456,7 +457,8 @@ export const AddDetailProperty = () => {
                             ? (val === '' ? null : Number(val))
                             : val;
                         updateField(input.id as any, finalVal);
-                    }
+                    },
+                    error: errors[input.id]
                 };
             }
             return {
@@ -468,7 +470,8 @@ export const AddDetailProperty = () => {
                         ? (val === '' ? null : Number(val))
                         : val;
                     updateField(input.id as any, finalVal);
-                }
+                },
+                error: errors[input.id]
             };
         });
 

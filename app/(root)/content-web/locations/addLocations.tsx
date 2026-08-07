@@ -17,7 +17,8 @@ import Search from "@/components/ui/Search"
 // Headers de la tabla
 const headers = [
     "Propiedad",
-    "Calle y número",
+    "Calle",
+    "No. Ext. / Int.",
     "Colonia",
     "Ciudad",
     "Estado",
@@ -40,8 +41,8 @@ const mapLocationsToRows = (locations: any[], properties: any[] = []) => {
         const location = loc.location || {};
 
         const exterior = addr.exterior_number || addr.street_number || "";
-        const interior = addr.interior_number ? ` Int ${addr.interior_number}` : "";
-        const streetNumber = `${exterior}${interior}`.trim();
+        const interior = addr.interior_number || "";
+        const streetNumber = `${exterior}${interior ? ' Int ' + interior : ''}`.trim();
 
         // Buscar el título de la propiedad usando property_id o property_address_id
         const propId = loc.property_id || loc.property_address_id;
@@ -55,6 +56,8 @@ const mapLocationsToRows = (locations: any[], properties: any[] = []) => {
             title: propertyTitle,
             street: addr.street || "-",
             street_number: streetNumber || "",
+            exterior_number: exterior || "-",
+            interior_number: interior || "-",
             neighborhood: addr.neighborhood || "-",
             city: addr.city || "-",
             state: addr.state || "-",
@@ -289,6 +292,8 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                 title: prop?.title || prop?.name || `Propiedad ${selectedPropertyId}`,
                 street: addrData?.street || "Calle",
                 street_number: streetNumber || "S/N",
+                exterior_number: addrData?.exterior_number || addrData?.street_number || "-",
+                interior_number: addrData?.interior_number || "-",
                 neighborhood: addrData?.neighborhood || "Colonia",
                 city: addrData?.city || "Ciudad",
                 state: addrData?.state || "Guanajuato",
@@ -358,32 +363,42 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
     }
 
     // Render de filas
-    const renderRow = (row: any, index: number) => (
-        <tr key={`${row.id}-${index}`} className="border-b border-slate-100 hover:bg-gray-50 transition-colors">
-            <td className="py-4 px-4 text-sm font-medium text-gray-900">{row.title}</td>
-            <td className="py-4 px-4 text-sm text-gray-700">{row.street || "-"} {row.street_number || ""}</td>
-            <td className="py-4 px-4 text-sm text-gray-700">{row.neighborhood || "-"}</td>
-            <td className="py-4 px-4 text-sm text-gray-700">{row.city || "-"}</td>
-            <td className="py-4 px-4 text-sm text-gray-700">{row.state || "-"}</td>
-            <td className="py-4 px-4 text-sm text-gray-700">{row.postal_code || "-"}</td>
-            <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.latitude) ? (row.latitude as number).toFixed(6) : '-'}</td>
-            <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.longitude) ? (row.longitude as number).toFixed(6) : '-'}</td>
-            <td className="py-4 px-4">
-                <div className="flex items-center gap-2">
-                    <button onClick={() => handleEditLocation(row)} className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors">
-                        <Pencil size={16} className="text-gray-600" />
-                    </button>
-                    <button
-                        onClick={() => row.address_id && setDeleteModal({ isOpen: true, propertyId: row.property_id, addressId: row.address_id })}
-                        disabled={!row.address_id}
-                        className={`p-1.5 rounded-md ${row.address_id ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-300 cursor-not-allowed'}`}
-                    >
-                        <Trash2 size={16} className="text-white" />
-                    </button>
-                </div>
-            </td>
-        </tr>
-    )
+    const renderRow = (row: any, index: number) => {
+        const ext = row.exterior_number && row.exterior_number !== '-' ? `Ext. ${row.exterior_number}` : '';
+        const intStr = row.interior_number && row.interior_number !== '-' ? `Int. ${row.interior_number}` : '';
+        let numberDisplay = '-';
+        if (ext && intStr) numberDisplay = `${ext} · ${intStr}`;
+        else if (ext) numberDisplay = ext;
+        else if (intStr) numberDisplay = intStr;
+
+        return (
+            <tr key={`${row.id}-${index}`} className="border-b border-slate-100 hover:bg-gray-50 transition-colors">
+                <td className="py-4 px-4 text-sm font-medium text-gray-900">{row.title}</td>
+                <td className="py-4 px-4 text-sm text-gray-700">{row.street || "-"}</td>
+                <td className="py-4 px-4 text-sm text-gray-700 font-medium">{numberDisplay}</td>
+                <td className="py-4 px-4 text-sm text-gray-700">{row.neighborhood || "-"}</td>
+                <td className="py-4 px-4 text-sm text-gray-700">{row.city || "-"}</td>
+                <td className="py-4 px-4 text-sm text-gray-700">{row.state || "-"}</td>
+                <td className="py-4 px-4 text-sm text-gray-700">{row.postal_code || "-"}</td>
+                <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.latitude) ? (row.latitude as number).toFixed(6) : '-'}</td>
+                <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.longitude) ? (row.longitude as number).toFixed(6) : '-'}</td>
+                <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => handleEditLocation(row)} className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors">
+                            <Pencil size={16} className="text-gray-600" />
+                        </button>
+                        <button
+                            onClick={() => row.address_id && setDeleteModal({ isOpen: true, propertyId: row.property_id, addressId: row.address_id })}
+                            disabled={!row.address_id}
+                            className={`p-1.5 rounded-md ${row.address_id ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-300 cursor-not-allowed'}`}
+                        >
+                            <Trash2 size={16} className="text-white" />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        );
+    }
 
     const toggleActionMenu = (id: string | number) => {
         setOpenActionMenu(prev => prev === id ? null : id);
@@ -443,7 +458,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                     <MapPinned size={16} className="text-primary_color mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                         <p className="font-medium text-gray-900">
-                            {row.street || "-"} {row.street_number || ""}
+                            {row.street || "-"} (Ext: {row.exterior_number || "-"}, Int: {row.interior_number || "-"})
                         </p>
                         <p className="text-gray-600 text-xs">
                             {row.neighborhood || "-"}

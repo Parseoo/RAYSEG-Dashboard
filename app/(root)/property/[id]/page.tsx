@@ -275,8 +275,8 @@ export default function PropertyDetailPage() {
                   <p className='text-sm font-medium text-gray-800'>{property.operation_type === 'sale' ? 'Venta' : 'Renta'}</p>
                 </div>
                 <div>
-                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('ambientes') || 'Ambientes'}</p>
-                  <p className='text-sm font-medium text-gray-800'>{property.ambientes || 'N/A'}</p>
+                  <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('outdoor_spaces') || 'Espacios Exteriores'}</p>
+                  <p className='text-sm font-medium text-gray-800'>{property.outdoor_spaces !== undefined && property.outdoor_spaces !== null ? property.outdoor_spaces : 'N/A'}</p>
                 </div>
                 <div>
                   <p className='text-xs text-gray-500 mb-1'>{getFieldLabel('construction_year')}</p>

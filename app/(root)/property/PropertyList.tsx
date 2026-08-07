@@ -8,8 +8,8 @@ import { Tag } from '@/components/ui/badges';
 import Link from 'next/link';
 import Search from '@/components/ui/Search';
 import { Table } from '@/components/ui/table';
-import { operationProperty } from '@/components/SelectProperties.data';
-import { GetCatalogPropertyTypes, GetPropertyOperationTypes } from '@/lib/api/catalog-api';
+import { operationProperty, statusProperty } from '@/components/SelectProperties.data';
+import { GetCatalogPropertyTypes, GetPropertyOperationTypes, GetCatalogByName } from '@/lib/api/catalog-api';
 import { resolveCatalogDisplayValue } from '@/lib/utils/catalog';
 import { ItemResponse } from '@/lib/@type';
 import Breadcrumb from '@/components/ui/breadcrumb';
@@ -33,8 +33,10 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
-  const [selectedEstatus, setSelectedEstatus] = useState("all");
+  const [selectedOperation, setSelectedOperation] = useState("all");
+  const [selectedAvailability, setSelectedAvailability] = useState("all");
   const [selectedStatusProperty, setSelectedStatusProperty] = useState("all");
+  const [isFeaturedOnly, setIsFeaturedOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationType>({
     total: 0,
@@ -45,7 +47,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [propertyTypeOptions, setPropertyTypeOptions] = useState<{ label: string; value: string }[]>([]);
   const [operationCatalog, setOperationCatalog] = useState<ItemResponse[]>([]);
-  const [operationOptions, setOperationOptions] = useState<{ label: string; value: string }[]>([]);
+  const [propertyStateCatalog, setPropertyStateCatalog] = useState<ItemResponse[]>([]);
+  const [operationOptions, setOperationOptions] = useState<{ label: string; value: string }[]>(operationProperty);
+  const [availabilityOptions, setAvailabilityOptions] = useState<{ label: string; value: string }[]>(statusProperty);
   const [estados, setEstados] = useState<{ label: string; value: string }[]>([]);
   const [selectedEstado, setSelectedEstado] = useState("all");
   const [citiesOptions, setCitiesOptions] = useState<{ label: string; value: string }[]>([]);
@@ -61,28 +65,43 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
   useEffect(() => {
     const fetchCatalogs = async () => {
-      const [typesRes, operationRes, estadosRes] = await Promise.allSettled([
+      const [typesRes, operationRes, estadosRes, propertyStateRes] = await Promise.allSettled([
         GetCatalogPropertyTypes(),
         GetPropertyOperationTypes(),
         GetEstados(),
+        GetCatalogByName('property-type-status'),
       ]);
 
-      const extractItems = (res: { data?: { items?: ItemResponse[]; catalogItems?: ItemResponse[] } }) => {
-        if (!res?.data) return [];
-        if (res.data.items) return res.data.items;
-        if (res.data.catalogItems) return res.data.catalogItems;
+      const extractItems = (res: any) => {
+        if (!res) return [];
+        const target = res?.value?.data || res?.value || res?.data || res;
+        if (target?.items && Array.isArray(target.items)) return target.items;
+        if (target?.catalogItems && Array.isArray(target.catalogItems)) return target.catalogItems;
+        if (Array.isArray(target)) return target;
         return [];
       };
 
       if (typesRes.status === 'fulfilled') {
-        const items = extractItems(typesRes.value);
-        setPropertyTypeOptions(items.map((item) => ({ label: item.name, value: item.name })));
+        const items = extractItems(typesRes);
+        if (items.length > 0) {
+          setPropertyTypeOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+        }
       }
 
       if (operationRes.status === 'fulfilled') {
-        const items = extractItems(operationRes.value);
+        const items = extractItems(operationRes);
         setOperationCatalog(items);
-        setOperationOptions(items.map((item) => ({ label: item.name, value: item.name })));
+        if (items.length > 0) {
+          setOperationOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+        }
+      }
+
+      if (propertyStateRes.status === 'fulfilled') {
+        const items = extractItems(propertyStateRes);
+        setPropertyStateCatalog(items);
+        if (items.length > 0) {
+          setAvailabilityOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+        }
       }
 
       console.log('estadosRes status:', estadosRes.status);
@@ -146,17 +165,21 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     if (selectedEstado !== 'all') count++;
     if (selectedCity !== 'all') count++;
     if (selectedType !== 'all') count++;
-    if (selectedEstatus !== 'all') count++;
+    if (selectedOperation !== 'all') count++;
+    if (selectedAvailability !== 'all') count++;
     if (selectedStatusProperty !== 'all') count++;
+    if (isFeaturedOnly) count++;
     return count;
-  }, [selectedEstado, selectedCity, selectedType, selectedEstatus, selectedStatusProperty]);
+  }, [selectedEstado, selectedCity, selectedType, selectedOperation, selectedAvailability, selectedStatusProperty, isFeaturedOnly]);
 
   const handleClearFilters = () => {
     setSelectedEstado("all");
     setSelectedCity("all");
     setSelectedType("all");
-    setSelectedEstatus("all");
+    setSelectedOperation("all");
+    setSelectedAvailability("all");
     setSelectedStatusProperty("all");
+    setIsFeaturedOnly(false);
     setIsFilterOpen(false);
   };
 
@@ -260,10 +283,27 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     fetchProperties(currentPage);
   }, [currentPage]);
 
-  const formatAddress = (address: PropertyListItemResponse['address']) => {
-    if (!address || address.length === 0) return '-';
-    const addr = address[0];
-    return `${addr.street} ${addr.street_number}, ${addr.neighborhood}, ${addr.city}, ${addr.state}`;
+  const formatAddress = (address: any) => {
+    if (!address) return '-';
+    const addr = Array.isArray(address) ? address[0] : address;
+    if (!addr) return '-';
+    
+    let streetPart = addr.street || '';
+    if (addr.exterior_number && addr.exterior_number !== 'S/N') streetPart += ` ${addr.exterior_number}`;
+    if (addr.interior_number) streetPart += ` Int. ${addr.interior_number}`;
+    
+    const parts = [
+      streetPart.trim(), 
+      addr.neighborhood, 
+      addr.city, 
+      addr.state
+    ].filter(Boolean);
+    return parts.join(', ') || '-';
+  };
+
+  const getAddressString = (property: PropertyListItemResponse) => {
+    if ((property as any).full_address) return (property as any).full_address;
+    return formatAddress(property.address);
   };
 
   const formatPrice = (price: string) => {
@@ -294,11 +334,22 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
       const matchesCity = selectedCity === "all" || addr?.city === selectedCity;
       const matchesType = selectedType === "all" || p.property_type?.name === selectedType;
-      const matchesEstatus = selectedEstatus === "all" || p.operation_type === selectedEstatus || formatOperationType(p.operation_type) === selectedEstatus;
+
+      const matchesOperation = selectedOperation === "all" ||
+        p.operation_type === selectedOperation ||
+        formatOperationType(p.operation_type) === selectedOperation;
+
+      const matchesAvailability = selectedAvailability === "all" ||
+        p.property_status === selectedAvailability ||
+        resolveCatalogDisplayValue(p.property_status, propertyStateCatalog) === selectedAvailability;
+
       const matchesStatusProperty = selectedStatusProperty === "all" || p.property_post_status?.name === selectedStatusProperty;
-      return matchesSearch && matchesEstado && matchesCity && matchesType && matchesEstatus && matchesStatusProperty;
+
+      const matchesFeatured = !isFeaturedOnly || Boolean(p.is_featured);
+
+      return matchesSearch && matchesEstado && matchesCity && matchesType && matchesOperation && matchesAvailability && matchesStatusProperty && matchesFeatured;
     });
-  }, [properties, searchTerm, selectedEstado, selectedCity, selectedType, selectedEstatus, selectedStatusProperty, formatOperationType, estados]);
+  }, [properties, searchTerm, selectedEstado, selectedCity, selectedType, selectedOperation, selectedAvailability, selectedStatusProperty, isFeaturedOnly, formatOperationType, propertyStateCatalog, estados]);
 
   const handleDeleteClick = (item: PropertyListItemResponse) => setDeleteModal({ isOpen: true, item });
 
@@ -364,9 +415,10 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 className='object-cover'
               />
             </div>
-            <div className='min-w-0'>
-              <p className='font-medium text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
-              <p className='text-xs text-gray-500'>{property.number_mls || '-'}</p>
+            <div className='min-w-0 flex flex-col justify-center'>
+              <p className='text-xs text-gray-500 font-medium line-clamp-1'>MLS: {property.number_mls || '-'}</p>
+              <p className='font-semibold text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
+              <p className='text-xs text-gray-500 line-clamp-1'>{getAddressString(property)}</p>
             </div>
           </div>
         </td>
@@ -475,12 +527,13 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
         {/* Content */}
         <div className="p-4">
-          {/* Title and MLS */}
+          {/* Title, MLS and Address */}
           <div className="mb-3">
-            <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-1">
+            <p className="text-xs text-gray-500 font-medium mb-0.5">MLS: {property.number_mls || '-'}</p>
+            <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-0.5">
               {property.title || '-'}
             </h3>
-            <p className="text-xs text-gray-500">MLS: {property.number_mls || '-'}</p>
+            <p className="text-xs text-gray-500 line-clamp-1">{getAddressString(property)}</p>
           </div>
 
           {/* Price */}
@@ -572,7 +625,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           </div>
 
           <div className="mb-6 space-y-5">
-            {/* Buscador y Estado de Propiedad */}
+            {/* Buscador y Botón Destacadas */}
             <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
               <div className='flex-1 min-w-0'>
                 <Search
@@ -582,12 +635,37 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className='flex items-center justify-start lg:justify-end w-full lg:w-auto'>
+              <button
+                type="button"
+                onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
+                className={`h-[40px] px-3.5 rounded-lg flex items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer ${
+                  isFeaturedOnly
+                    ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm'
+                    : 'bg-slate-100 border-slate-200 text-gray-700 hover:bg-slate-200'
+                }`}
+                title="Filtrar sólo destacadas"
+              >
+                <Star size={18} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
+                <span>Destacadas</span>
+              </button>
+            </div>
+
+            {/* Píldoras de Filtro Operación y Disponibilidad */}
+            <div className='py-1 flex flex-col lg:flex-row gap-4 w-full'>
+              <div className='flex-grow min-w-0'>
                 <FilterPills
-                  label="Estado de propiedad"
-                  options={operationProperty}
-                  selectedValue={selectedEstatus}
-                  onChange={setSelectedEstatus}
+                  label="Operación"
+                  options={operationOptions}
+                  selectedValue={selectedOperation}
+                  onChange={setSelectedOperation}
+                />
+              </div>
+              <div className='flex-grow min-w-0'>
+                <FilterPills
+                  label="Disponibilidad"
+                  options={availabilityOptions}
+                  selectedValue={selectedAvailability}
+                  onChange={setSelectedAvailability}
                 />
               </div>
             </div>
@@ -741,16 +819,32 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   </Select>
                 </div>
               )}
-              {selectedEstatus !== 'all' && (
+              {selectedOperation !== 'all' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado de propiedad</label>
-                  <Select value={selectedEstatus} onValueChange={setSelectedEstatus}>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Operación</label>
+                  <Select value={selectedOperation} onValueChange={setSelectedOperation}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar estado de propiedad" />
+                      <SelectValue placeholder="Seleccionar operación" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      {operationProperty.map((opt) => (
+                      <SelectItem value="all">Todas las operaciones</SelectItem>
+                      {operationOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selectedAvailability !== 'all' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Disponibilidad</label>
+                  <Select value={selectedAvailability} onValueChange={setSelectedAvailability}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar disponibilidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las disponibilidades</SelectItem>
+                      {availabilityOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -774,6 +868,19 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+              {isFeaturedOnly && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Destacada</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
+                    className="px-3 py-1.5 text-xs rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-medium flex items-center gap-2 w-fit"
+                  >
+                    <Star size={16} fill="#eab308" stroke="#eab308" />
+                    <span>Solo destacadas</span>
+                  </button>
                 </div>
               )}
             </div>

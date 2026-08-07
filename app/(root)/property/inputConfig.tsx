@@ -29,35 +29,35 @@ export const inputsPublicationProperty: InputFieldConfig[] = [
 
 export const inputsDetailProperty: InputFieldConfig[] = [
     {
-        type: 'number', id: 'terrain_size', label: 'Superficie Terreno (m²)', placeholder: '120', group: 1
+        type: 'number', id: 'terrain_size', label: 'Superficie Terreno (m²)', placeholder: '120', group: 1, required: true
     },
     {
-        type: 'number', id: 'construction_size', label: 'Superficie Construcción (m²)', placeholder: '95', group: 1
+        type: 'number', id: 'construction_size', label: 'Superficie Construcción (m²)', placeholder: '95', group: 1, required: true
     },
     {
-        type: 'number', id: 'rooms', label: 'Recámaras', placeholder: '3', group: 2
+        type: 'number', id: 'rooms', label: 'Recámaras', placeholder: '3', group: 2, required: true
     },
     {
-        type: 'number', id: 'bathrooms', label: 'Baños', placeholder: '2.5', group: 2
+        type: 'number', id: 'bathrooms', label: 'Baños', placeholder: '2.5', group: 2, required: true
     },
     {
-        type: 'number', id: 'parking_spaces', label: 'Cocheras', placeholder: '2', group: 2
+        type: 'number', id: 'parking_spaces', label: 'Cocheras', placeholder: '2', group: 2, required: true
     },
     {
-        type: 'number', id: 'floors', label: 'Niveles', placeholder: '2', group: 3
+        type: 'number', id: 'floors', label: 'Niveles', placeholder: '2', group: 3, required: true
     },
     {
-        type: 'number', id: 'ambientes', label: 'Ambientes', placeholder: '6', group: 3
+        type: 'number', id: 'outdoor_spaces', label: 'Espacios Exteriores', placeholder: '0', group: 3
     },
     {
-        type: 'number', id: 'construction_year', label: 'Año de construcción', placeholder: '2021', group: 3
+        type: 'number', id: 'construction_year', label: 'Año de construcción', placeholder: '2021', group: 3, required: true
     },
     {
-        type: 'select', id: 'terrain_type', label: 'Tipo de terreno', placeholder: 'Selecciona un tipo de terreno', group: 4,
+        type: 'select', id: 'terrain_type', label: 'Tipo de terreno', placeholder: 'Selecciona un tipo de terreno', group: 4, required: true,
         options: []
     },
     {
-        type: 'select', id: 'conservation_status', label: 'Estado de conservación', placeholder: 'Selecciona un estado', group: 4,
+        type: 'select', id: 'conservation_status', label: 'Estado de conservación', placeholder: 'Selecciona un estado', group: 4, required: true,
         options: []
     },
 ];
