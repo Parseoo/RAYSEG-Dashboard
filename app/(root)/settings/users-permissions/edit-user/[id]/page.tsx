@@ -30,15 +30,20 @@ const EditUserPage = () => {
                     paternal_last_name: apiData.paternal_last_name,
                     maternal_last_name: apiData.maternal_last_name || "",
                     password: "",
+                    password_confirm: "",
                     old_password: "",
                     // role: si es objeto {id, name} usar el id, si es string usar directo
                     role: typeof apiData.role === 'object' && apiData.role !== null
                         ? String((apiData.role as any).id)
                         : (apiData.role || ""),
-                    // is_active como string para el formulario
-                    is_active: apiData.is_active ? "true" : "false",
+                    // is_active e is_superuser como string para el formulario
+                    is_active: apiData.is_active ? true : false,
+                    is_superuser: apiData.is_superuser ? true : false,
                     phone: apiData.phone || "",
                     // Mapear address del API a campos separados del formulario
+                    street: apiData.address?.street || "",
+                    ext_number: apiData.address?.ext_number || "",
+                    int_number: apiData.address?.int_number || "",
                     estado: apiData.address?.state || "",
                     ciudad: apiData.address?.city || "",
                     colonia: apiData.address?.neighborhood || "",
@@ -47,6 +52,8 @@ const EditUserPage = () => {
                     notas_internas: apiData.internal_notes || "",
                     internal_notes: apiData.internal_notes || "",
                     profile_picture: apiData.profile_picture || "",
+                    last_access_date: apiData.last_access_date || "",
+                    last_password_change: apiData.last_password_change || "",
                 };
                 setUserData(mappedData);
             } catch (error) {
@@ -69,7 +76,9 @@ const EditUserPage = () => {
                 state: formData.estado || "",
                 city: formData.ciudad || "",
                 neighborhood: formData.colonia || "",
-                street: "",
+                street: formData.street || formData.calle || "",
+                ext_number: formData.ext_number || formData.numero_exterior || "",
+                int_number: formData.int_number || formData.numero_interior || "",
                 postal_code: formData.codigo_postal || ""
             };
 
@@ -79,16 +88,20 @@ const EditUserPage = () => {
                 paternal_last_name: formData.paternal_last_name,
                 maternal_last_name: formData.maternal_last_name || null,
                 phone: formData.phone || undefined,
+                street: formData.street || formData.calle || "",
+                ext_number: formData.ext_number || formData.numero_exterior || "",
+                int_number: formData.int_number || formData.numero_interior || "",
                 role_id: formData.role ? Number(formData.role) : null,
                 is_active: formData.is_active === 'true' || formData.is_active === true || formData.is_active === 'activo',
                 is_staff: false,
-                is_superuser: false,
+                is_superuser: formData.is_superuser === 'true' || formData.is_superuser === true,
                 address: address,
                 internal_notes: formData.notas_internas || undefined,
             };
 
             if (formData.password) {
                 apiData.password = formData.password;
+                apiData.password_confirm = formData.password_confirm;
             }
 
             const response = await EditUser(Number(userId), apiData);

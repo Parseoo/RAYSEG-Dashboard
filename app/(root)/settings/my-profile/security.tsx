@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Eye, EyeOff, Lock, Save, Clock, KeyRound } from 'lucide-react'
-import { ChangePassword } from '@/lib/api/auth/auth-api'
+import { ChangePassword } from '@/lib/api/user-api'
 import { showToast } from 'nextjs-toast-notify'
 import { User } from '@/lib/@type'
 
@@ -51,7 +51,7 @@ export const SecuritySettings = ({ user }: { user?: User | null }) => {
         setIsSaving(true)
         try {
             await ChangePassword({
-                old_password: form.old_password,
+                current_password: form.old_password,
                 new_password: form.new_password,
             } as any)
             showToast.success("Contraseña actualizada correctamente")

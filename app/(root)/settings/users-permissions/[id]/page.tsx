@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
     ArrowLeft,
-    MoreVertical,
     Mail,
     Phone,
     Calendar,
@@ -17,19 +16,15 @@ import {
     MapPin,
     Loader2,
     Edit3,
-    Lock,
-    Save,
-    Eye,
-    EyeOff
+    FileText
 } from 'lucide-react';
 import { getUserImageUrl } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { ViewPermissions } from '../add-user/viewPermissions';
-import { GetUsersById, EditUser } from '@/lib/api/user-api';
+import { GetUsersById } from '@/lib/api/user-api';
 import { GetListRoles } from '@/lib/api/permission-api';
 import { UserResponse } from '@/lib/@type';
 import { Tag } from '@/components/ui/badges';
-import { showToast } from 'nextjs-toast-notify';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
     <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
@@ -39,95 +34,6 @@ const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
         <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
     </div>
 );
-
-const PasswordField = ({ label, id, value, onChange }: { label: string; id: string; value: string; onChange: (v: string) => void }) => {
-    const [show, setShow] = useState(false)
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}</label>
-            <div className="relative">
-                <input
-                    id={id}
-                    type={show ? 'text' : 'password'}
-                    value={value}
-                    onChange={e => onChange(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-[40px] border border-gray-200 rounded-lg px-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary_color/30 focus:border-primary_color transition-all"
-                />
-                <button
-                    type="button"
-                    onClick={() => setShow(s => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-            </div>
-        </div>
-    )
-}
-
-const SecurityCard = ({ userId }: { userId: number }) => {
-    const [form, setForm] = useState({ old_password: '', new_password: '' })
-    const [isSaving, setIsSaving] = useState(false)
-
-    const handleChange = (field: string) => (value: string) => setForm(f => ({ ...f, [field]: value }))
-
-    const handleSubmit = async () => {
-        if (!form.old_password || !form.new_password) {
-            showToast.warning("Por favor completa todos los campos")
-            return
-        }
-        if (form.new_password.length < 8) {
-            showToast.warning("La nueva contraseña debe tener al menos 8 caracteres")
-            return
-        }
-
-        setIsSaving(true)
-        try {
-            await EditUser(userId, {
-                password: form.new_password,
-            } as any)
-            showToast.success("Contraseña actualizada correctamente")
-            setForm({ old_password: '', new_password: '' })
-        } catch (error: any) {
-            const msg = error?.response?.data?.detail || error?.response?.data?.old_password?.[0] || "Error al actualizar la contraseña"
-            showToast.error(msg)
-        } finally {
-            setIsSaving(false)
-        }
-    }
-
-    return (
-        <div className='bg-white rounded-lg p-6 border shadow-sm'>
-            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
-                <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-                    <Lock size={20} />
-                </div>
-                <div>
-                    <h2 className='text-lg font-bold text-gray-900'>Seguridad y Acceso</h2>
-                    <p className='text-xs text-gray-500'>Actualiza la contraseña de inicio de sesión</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <PasswordField label="Contraseña actual" id="user_old_password" value={form.old_password} onChange={handleChange('old_password')} />
-                <PasswordField label="Nueva contraseña" id="user_new_password" value={form.new_password} onChange={handleChange('new_password')} />
-            </div>
-
-            <div className="flex justify-end mt-5">
-                <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSaving}
-                    className="bg-primary_color text-white h-[40px] px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all font-medium shadow-md text-sm disabled:opacity-60"
-                >
-                    <Save size={16} />
-                    {isSaving ? 'Guardando...' : 'Cambiar contraseña'}
-                </button>
-            </div>
-        </div>
-    )
-}
 
 const InfoBlock = ({ label, value }: { label: string, value: any }) => {
     let displayValue = '-';
@@ -199,7 +105,7 @@ export default function UserDetailPage() {
     };
 
     const formatDate = (dateString?: string) => {
-        if (!dateString) return '3 ago 2026';
+        if (!dateString) return '-';
         try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return dateString;
@@ -239,13 +145,16 @@ export default function UserDetailPage() {
     }
 
     const fullName = `${userData.name || ''} ${userData.paternal_last_name || ''} ${userData.maternal_last_name || ''}`.trim() || 'Usuario';
-    const userRoleLabel = userData.role ? getRoleName(userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Prueba Rol');
+    const userRoleLabel = userData.role ? getRoleName(userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Sin Rol');
     const isActive = userData.is_active === true || (userData.is_active as any) === 1 || String(userData.is_active).toLowerCase() === 'true' || String(userData.is_active).toLowerCase() === 'activo';
 
-    const estado = userData.address?.state || (userData as any).estado || 'Guanajuato';
-    const ciudad = userData.address?.city || (userData as any).ciudad || 'Doctor Mora';
-    const colonia = userData.address?.neighborhood || (userData as any).colonia || 'San Marcos';
-    const codigoPostal = userData.address?.postal_code || (userData as any).codigo_postal || '37410';
+    const estado = userData.address?.state || (userData as any).estado || '-';
+    const ciudad = userData.address?.city || (userData as any).ciudad || '-';
+    const colonia = userData.address?.neighborhood || (userData as any).colonia || '-';
+    const codigoPostal = userData.address?.postal_code || (userData as any).codigo_postal || '-';
+    const calle = userData.address?.street || '-';
+    const numExt = userData.address?.ext_number || '-';
+    const numInt = userData.address?.int_number || '-';
 
     return (
         <div className="w-full max-w-[1440px] mx-auto pb-10">
@@ -277,12 +186,6 @@ export default function UserDetailPage() {
                     >
                         <Edit3 size={16} /> Editar usuario
                     </Link>
-                    <button
-                        type="button"
-                        className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                        <MoreVertical size={20} />
-                    </button>
                 </div>
             </div>
 
@@ -330,7 +233,7 @@ export default function UserDetailPage() {
                 </div>
 
                 {/* Fila inferior con metadatos */}
-                <div className="pt-5 mt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="pt-5 mt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-5 gap-4">
                     {/* ID de usuario */}
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
@@ -342,10 +245,21 @@ export default function UserDetailPage() {
                         </div>
                     </div>
 
-                    {/* Última actualización */}
+                    {/* Fecha de creación */}
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
                             <Calendar size={16} />
+                        </div>
+                        <div>
+                            <span className="block text-[11px] text-gray-400">Fecha de Creación</span>
+                            <span className="text-xs sm:text-sm font-semibold text-gray-800">{formatDate(userData.created_at)}</span>
+                        </div>
+                    </div>
+
+                    {/* Última actualización */}
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0">
+                            <Clock size={16} />
                         </div>
                         <div>
                             <span className="block text-[11px] text-gray-400">Última actualización</span>
@@ -360,7 +274,9 @@ export default function UserDetailPage() {
                         </div>
                         <div>
                             <span className="block text-[11px] text-gray-400">Último acceso</span>
-                            <span className="text-xs sm:text-sm font-semibold text-gray-800">Hace 2 horas</span>
+                            <span className="text-xs sm:text-sm font-semibold text-gray-800">
+                                {formatDate(userData.last_access_date)}
+                            </span>
                         </div>
                     </div>
 
@@ -402,6 +318,10 @@ export default function UserDetailPage() {
                             <div className="p-2 bg-slate-100 rounded-lg text-slate-600 shrink-0"><CreditCard size={16} /></div>
                             <InfoBlock label="ID de Usuario" value={`#${userData.id}`} />
                         </div>
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 bg-purple-50 rounded-lg text-purple-600 shrink-0"><ShieldCheck size={16} /></div>
+                            <InfoBlock label="Es Superusuario" value={userData.is_superuser ? 'Sí' : 'No'} />
+                        </div>
                     </div>
                 </div>
 
@@ -414,14 +334,20 @@ export default function UserDetailPage() {
                         <InfoBlock label="Colonia" value={colonia} />
                         <InfoBlock label="Ciudad" value={ciudad} />
                         <InfoBlock label="Código Postal" value={codigoPostal} />
+                        <InfoBlock label="Calle" value={calle} />
+                        <InfoBlock label="Número Exterior" value={numExt} />
+                        <InfoBlock label="Número Interior" value={numInt} />
                     </div>
                 </div>
             </div>
 
-            {/* SECCIÓN 3: Seguridad y Acceso */}
-            <div className="mb-5">
-                <SecurityCard userId={Number(userId)} />
-            </div>
+            {/* SECCIÓN 3: Notas Internas */}
+            {userData.internal_notes && (
+                <div className="bg-white rounded-lg p-5 shadow-md border border-slate-200 mb-5">
+                    <SectionHeader title="Notas Internas" icon={FileText} />
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{userData.internal_notes}</p>
+                </div>
+            )}
 
             {/* SECCIÓN 4: Permisos por pantalla (Comentado temporalmente) */}
             {/* <ViewPermissions

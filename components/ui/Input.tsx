@@ -53,6 +53,53 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
     const isPasswordType = input.type === 'password';
     const isCurrency = input.type === 'currency';
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (input.type === 'number') {
+            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
+                return;
+            }
+            if (!/^[0-9]$/.test(e.key)) {
+                e.preventDefault();
+            }
+        } else if (input.type === 'currency') {
+            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
+                return;
+            }
+            if (e.key === '.' && String(input.value || '').includes('.')) {
+                e.preventDefault();
+                return;
+            }
+            if (!/^[0-9.]$/.test(e.key)) {
+                e.preventDefault();
+            }
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!input.onChange) return;
+
+        let val = e.target.value;
+
+        if (input.type === 'number') {
+            val = val.replace(/[^0-9]/g, '');
+            e.target.value = val;
+        } else if (input.type === 'currency') {
+            val = val.replace(/[^0-9.]/g, '');
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            e.target.value = val;
+        } else if (input.type === 'tel') {
+            val = val.replace(/[^0-9+\-\s()]/g, '');
+            e.target.value = val;
+        }
+
+        input.onChange(e as any);
+    };
+
     const renderInput = () => (
         <div className="relative">
             {input.type === 'select' ? (
@@ -98,11 +145,13 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                         <span className="absolute left-3 text-sm text-gray-600">{input.currency || 'MXN'}</span>
                     )}
                     <input
-                        type={isPasswordType ? (showPassword ? 'text' : 'password') : (isCurrency ? 'number' : input.type)}
+                        type={isPasswordType ? (showPassword ? 'text' : 'password') : (isCurrency ? 'text' : input.type === 'number' ? 'text' : input.type)}
+                        inputMode={input.type === 'number' || isCurrency ? 'numeric' : input.type === 'tel' ? 'tel' : undefined}
                         id={input.id}
                         placeholder={input.placeholder}
                         value={(input.value as string | number | readonly string[]) ?? ''}
-                        onChange={input.onChange as any}
+                        onKeyDown={handleKeyDown}
+                        onChange={handleChange}
                         className={`w-full ${isCurrency ? 'pl-16' : 'px-4'} py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''} ${isPasswordType ? 'pr-10' : ''}`}
                     />
                     {isPasswordType && (
@@ -201,6 +250,21 @@ export const DynamicInputs = React.memo(({ inputs, withBgWhite = false }: Dynami
 DynamicInputs.displayName = 'DynamicInputs';
 
 export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, value, onChange }) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (type === 'number') {
+            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+            if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+            if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (type === 'number') {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        }
+        onChange?.(e);
+    };
+
     return (
         <div className='w-full relative flex-grow block lg:block'>
             <input
@@ -209,7 +273,8 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
                 type={type || 'text'}
                 placeholder={title}
                 value={value ?? ''}
-                onChange={onChange}
+                onKeyDown={handleKeyDown}
+                onChange={handleChange}
                 className={cn(
                     width ? `pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none w-${width}`
                         : `w-full pl-5 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-blue-500 hover:outline-none`
@@ -217,4 +282,4 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
             />
         </div>
     );
-}
+};

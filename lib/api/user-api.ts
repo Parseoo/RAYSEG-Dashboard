@@ -1,5 +1,5 @@
 import { httpClient } from "@/lib/api/fetch-client";
-import type { UserForm, ResponseMessage, UserListResponse, UserResponse } from "@/lib/@type";
+import type { UserForm, CreateUserRequest, ResponseMessage, UserListResponse, UserResponse, ResetPasswordForm } from "@/lib/@type";
 
 export interface UserListQuery {
     search?: string;
@@ -23,11 +23,27 @@ export async function GetAllUsers(params?: UserListQuery) {
 }
 
 // Crear un usuario
-export async function CreateUser(data: UserForm) {
+export async function CreateUser(data: CreateUserRequest | UserForm | any) {
     return httpClient.post<ResponseMessage>('/api/users', data);
 }
 
-export async function EditUser(user_id: number, data: Partial<UserForm>) {
+// Cambiar contraseña personal
+export async function ChangePassword(data: ResetPasswordForm) {
+    return httpClient.put('/api/users/change-password', data);
+}
+
+// Subir foto de perfil para un usuario usando base64 (solo administradores)
+export async function UploadProfilePicture(
+    user_id: number | string,
+    data: UploadProfilePictureRequest | { image_data: string } | string
+) {
+    const payload = typeof data === 'string'
+        ? { image_data: data }
+        : data;
+    return httpClient.post<UserResponse>(`/api/users/${user_id}/profile-picture`, payload);
+}
+
+export async function EditUser(user_id: number, data: Partial<CreateUserRequest | UserForm | any>) {
     return httpClient.patch<ResponseMessage>(`/api/users/${user_id}`, data);
 }
 
@@ -41,17 +57,13 @@ export async function DeleteUser(user_id: number) {
     return httpClient.delete<ResponseMessage>(`/api/users/${user_id}`);
 }
 
+// Resetear contraseña de un usuario mediante rol adminitrador
+export async function ResetPasswordUserByAdmin(user_id: number, data: any = {}) {
+    return httpClient.post(`/api/users/${user_id}/reset-password`, data);
+}
+
 export interface UploadProfilePictureRequest {
     image_data: string;
 }
 
-// Subir foto de perfil para un usuario usando base64 (solo administradores)
-export async function UploadProfilePicture(
-    user_id: number | string,
-    data: UploadProfilePictureRequest | { image_data: string } | string
-) {
-    const payload = typeof data === 'string'
-        ? { image_data: data }
-        : data;
-    return httpClient.post<UserResponse>(`/api/users/${user_id}/profile-picture`, payload);
-}
+

@@ -7,7 +7,7 @@ import { Save, X, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AddInformationPersonal } from "./addInformationPersonal";
 import AddPassword from "./addPassword";
-import { UserForm } from "@/lib/@type";
+import { UserForm, CreateUserRequest } from "@/lib/@type";
 import { CreateUser, UploadProfilePicture } from "@/lib/api/user-api";
 import { GetListRoles, GetRolePermissions } from "@/lib/api/permission-api";
 
@@ -48,9 +48,14 @@ const initialUser: UserForm = {
     paternal_last_name: "",
     maternal_last_name: "",
     password: "",
+    password_confirm: "",
     old_password: "",
     role: "",
     is_active: "true",
+    is_superuser: false,
+    street: "",
+    ext_number: "",
+    int_number: "",
 };
 
 interface AddUserProps {
@@ -116,13 +121,23 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             } else if (user.password.length < 8) {
                 tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
             }
-        } else {
-            // En modo edición: si ingresó nueva contraseña, la actual es obligatoria
-            if (user.password && !user.old_password) {
-                tempErrors.old_password = "Ingresa tu contraseña actual para poder cambiarla";
+
+            if (!user.password_confirm) {
+                tempErrors.password_confirm = "El campo es requerido";
+            } else if (user.password && user.password_confirm && user.password !== user.password_confirm) {
+                tempErrors.password_confirm = "Las contraseñas no coinciden";
             }
-            if (user.password && user.password.length < 8) {
-                tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
+        } else {
+            // En modo edición: solo validamos nueva contraseña si fue ingresada
+            if (user.password) {
+                if (user.password.length < 8) {
+                    tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
+                }
+                if (!user.password_confirm) {
+                    tempErrors.password_confirm = "El campo es requerido";
+                } else if (user.password !== user.password_confirm) {
+                    tempErrors.password_confirm = "Las contraseñas no coinciden";
+                }
             }
         }
 
@@ -199,30 +214,31 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
 
         // Construir el address según lo esperado por el backend
         const address = {
-            state: user.estado || "",
-            city: user.ciudad || "",
+            street: user.street || user.calle || "",
+            ext_number: user.ext_number || user.numero_exterior || "",
+            int_number: user.int_number || user.numero_interior || "",
             neighborhood: user.colonia || "",
-            postal_code: user.codigo_postal || "",
-            full_address: [user.colonia, user.ciudad, user.estado, user.codigo_postal].filter(Boolean).join(", ")
+            city: user.ciudad || "",
+            state: user.estado || "",
+            postal_code: user.codigo_postal || ""
         };
 
         // Construir los datos finales según el esquema exacto del backend
-        const finalUserData = {
-            email: user.email,
-            name: user.name,
-            paternal_last_name: user.paternal_last_name,
+        const finalUserData: CreateUserRequest = {
+            email: user.email || "",
+            name: user.name || "",
+            paternal_last_name: user.paternal_last_name || "",
             maternal_last_name: user.maternal_last_name || "",
             phone: user.phone || "",
             address: address,
-            profile_picture: profilePictureBase64,
+            profile_picture: profilePictureBase64 || "",
             internal_notes: user.notas_internas || user.internal_notes || "",
-            password: user.password || undefined,
-            old_password: isEdit ? (user.old_password || undefined) : undefined,
-            role: user.role,
-            role_id: user.role ? Number(user.role) : 0,
+            password: user.password || "",
+            password_confirm: user.password_confirm || "",
+            role_id: Number(user.role) || 0,
             is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo',
             is_staff: true,
-            is_superuser: false,
+            is_superuser: user.is_superuser === true,
         };
 
         try {
@@ -271,6 +287,9 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                             'maternal_last_name': 'maternal_last_name',
                             'password': 'password',
                             'password_confirm': 'password_confirm',
+                            'street': 'street',
+                            'ext_number': 'ext_number',
+                            'int_number': 'int_number',
                             'role_id': 'role',
                             'is_active': 'is_active',
                             'is_staff': 'is_staff',
@@ -358,7 +377,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                         </div>
 
                         <AddInformationPersonal user={user} setUser={setUser} errors={errors} onImageChange={setProfileImage} rolesData={roles} />
-                        <AddPassword user={user} setUser={setUser} errors={errors} isEdit={isEdit} />
+                        <AddPassword user={user} setUser={setUser} errors={errors} isEdit={isEdit} userId={userId} />
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-end mt-5">
                             <button type="button" onClick={() => router.push("/settings/users-permissions")}

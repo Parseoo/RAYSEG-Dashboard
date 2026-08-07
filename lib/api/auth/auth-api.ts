@@ -1,4 +1,4 @@
-import { LoginForm, RegisterForm, ResetPasswordForm, LoginResponse, AuthUserResponse } from "@/lib/@type";
+import { LoginForm, ResetPasswordForm, LoginResponse, AuthUserResponse } from "@/lib/@type";
 import { httpClient } from "@/lib/api/fetch-client";
 import { useUserStore } from "@/lib/store/userStore";
 
@@ -24,16 +24,6 @@ export const clearAuthHeader = () => {
 // Iniciar sesión
 export async function LoginApi(data: LoginForm) {
   return httpClient.post<LoginResponse>('/api/auth/login', data);
-}
-
-// Registrarse
-export async function RegisterApi(data: RegisterForm) {
-  return httpClient.post<LoginResponse>('/api/auth/register', data);
-}
-
-// Resetear contraseña
-export async function ChangePassword(data: ResetPasswordForm) {
-  return httpClient.patch('/api/users/change-password', data);
 }
 
 // Obtener perfil
