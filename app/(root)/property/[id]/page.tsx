@@ -277,7 +277,7 @@ export default function PropertyDetailPage() {
                     src={activeMedia?.url || propertyMedia[0]?.url}
                     alt='Imagen de la propiedad'
                     fill
-                    className='object-cover cursor-pointer'
+                    className='object-contain cursor-pointer'
                     unoptimized={true}
                     onClick={() => setIsGalleryOpen(true)}
                   />
@@ -302,7 +302,7 @@ export default function PropertyDetailPage() {
                           src={media.url}
                           alt={`Miniatura ${idx + 1}`}
                           fill
-                          className='object-cover'
+                          className='object-contain'
                           unoptimized={true}
                         />
                       </button>
@@ -558,7 +558,7 @@ export default function PropertyDetailPage() {
                             src={media.url}
                             alt={`Miniatura plano ${idx + 1}`}
                             fill
-                            className='object-cover'
+                            className='object-contain'
                             unoptimized={true}
                           />
                         </button>

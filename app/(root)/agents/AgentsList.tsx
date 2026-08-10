@@ -61,7 +61,6 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
     setIsDeleting(true);
     // Aquí iría la lógica para eliminar el agente
     setTimeout(() => {
-      console.log('Eliminando agente:', deleteModal.item);
       setIsDeleting(false);
       setDeleteModal({ isOpen: false, item: null });
 

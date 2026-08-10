@@ -70,30 +70,35 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
         fetchAboutData();
     }, []);
 
-    const handleSave = async () => {
+    const aboutDataRef = useRef(aboutData);
+    useEffect(() => {
+        aboutDataRef.current = aboutData;
+    }, [aboutData]);
+
+    const handleSave = React.useCallback(async () => {
         try {
             setIsSaving(true);
+            const currentData = aboutDataRef.current;
             await UpdateAboutUs({
-                title: aboutData.titleAboutUs || "",
-                short_description: aboutData.aboutUsDescription || "",
-                history: aboutData.history || "",
-                mission: aboutData.mission || "",
-                vision: aboutData.vision || ""
+                title: currentData.titleAboutUs || "",
+                short_description: currentData.aboutUsDescription || "",
+                history: currentData.history || "",
+                mission: currentData.mission || "",
+                vision: currentData.vision || ""
             });
-            showToast.success('Información general guardada correctamente');
+            showToast.success('Información actualizada correctamente');
         } catch (error) {
-            console.error('Error saving about us data:', error);
             showToast.error('Error al guardar la información');
         } finally {
             setIsSaving(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (onSaveRef) {
             onSaveRef.current = handleSave;
         }
-    }, [onSaveRef, aboutData]);
+    }, [onSaveRef, handleSave]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -112,7 +117,6 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
             }
             showToast.success('Imagen subida correctamente');
         } catch (error: any) {
-            console.error('Error uploading image:', error);
             showToast.error(error?.response?.data?.detail || error?.response?.data?.message || 'Error al subir la imagen');
         } finally {
             setIsUploading(false);
@@ -136,7 +140,6 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
             setCorporateImages(prev => prev.filter(img => img.id !== imageId));
             showToast.success('Imagen eliminada correctamente');
         } catch (error) {
-            console.error('Error deleting image:', error);
             showToast.error('Error al eliminar la imagen');
         } finally {
             setIsDeleting(false);
@@ -220,12 +223,12 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                     {corporateImages.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
                             {corporateImages.map((image) => (
-                                <div key={image.id} className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
+                                <div key={image.id} className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img 
                                         src={getImageUrl(image.image_url)} 
                                         alt="Imagen corporativa" 
-                                        className="object-cover w-full h-full" 
+                                        className="object-contain w-full h-full" 
                                     />
 
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />

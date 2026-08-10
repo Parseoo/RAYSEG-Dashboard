@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import { DynamicInputs, InputFieldConfig } from "@/components/ui/Input";
 import { inputsServicesSection } from "../inputConfig";
@@ -240,13 +240,12 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
             setIsSaving(true);
 
             if (editingService) {
-                // Actualizar servicio existente
                 const payload: ServiceItem = {
                     id: Number(editingService.id),
-                    icon: selectedIcon,
+                    icon: "",
                     name: serviceTitle,
                     description: serviceDescription || "",
-                    order: serviceItems.length + 1,
+                    order: serviceItems.findIndex(s => s.id === editingService.id) + 1,
                 };
 
                 await UpdateServiceItem(Number(editingService.id), payload);
@@ -265,9 +264,8 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 setServiceDescription("");
                 setSelectedIcon("CirclePlus");
             } else {
-                // Crear nuevo servicio
                 const payload: ServiceItem = {
-                    icon: selectedIcon,
+                    icon: "",
                     name: serviceTitle,
                     description: serviceDescription || "",
                     order: serviceItems.length + 1,
@@ -438,12 +436,12 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 {headerImages.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
                         {headerImages.map((image) => (
-                            <div key={image.id} className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
+                            <div key={image.id} className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={getImageUrl(image.image_url)}
                                     alt="Imagen de encabezado"
-                                    className="object-cover w-full h-full"
+                                    className="object-contain w-full h-full"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
                                 <button
@@ -474,12 +472,12 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                     </div>
                 ) : headerImage ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
-                        <div className="group w-full relative aspect-[3/4] rounded-lg overflow-hidden border shadow-sm bg-gray-50">
+                        <div className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={getImageUrl(headerImage)}
                                 alt="Imagen de encabezado"
-                                className="object-cover w-full h-full"
+                                className="object-contain w-full h-full"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
                             <button
@@ -506,23 +504,23 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 {/* Modal para visualizar imagen en tamaño completo */}
                 {openImageModal && selectedHeaderImage && (
                     <div
-                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                         onClick={() => setOpenImageModal(false)}>
                         <div
-                            className="relative w-11/12 md:w-2/3 lg:w-1/2 bg-white rounded-lg overflow-hidden"
+                            className="relative w-full max-w-5xl h-full flex items-center justify-center"
                             onClick={(e) => e.stopPropagation()}>
                             <button
                                 type="button"
                                 onClick={() => setOpenImageModal(false)}
-                                className="absolute top-3 right-3 bg-white rounded-full p-2 shadow z-10 hover:bg-gray-100">
-                                <X size={20} />
+                                className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors">
+                                <X size={24} />
                             </button>
 
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={getImageUrl(selectedHeaderImage.image_url)}
                                 alt="Vista completa"
-                                className="w-full h-[30rem] object-contain bg-slate-900"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
                     </div>
@@ -544,46 +542,48 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                     Lista de servicios
                 </h1>
 
-                <div className="flex w-full items-start gap-x-4 py-3 px-4">
+                <div className="flex flex-col md:flex-row w-full items-stretch md:items-end gap-4 py-3 px-4">
 
 
-                    <div className="flex-1 -mt-7">
+                    <div className="flex-1 md:-mt-7">
                         <DynamicInputs inputs={inputsServiceItemControlled} withBgWhite={true} />
                     </div>
 
-                    <button
-                        type="button"
-                        disabled={isSaving}
-                        onClick={handleAddService}
-                        className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md shrink-0 disabled:opacity-60"
-                    >
-                        {isSaving ? (
-                            <>
-                                <Loader2 size={20} className="animate-spin" />
-                                Guardando...
-                            </>
-                        ) : editingService ? (
-                            <>
-                                <Plus size={20} />
-                                Actualizar Servicio
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={20} />
-                                Agregar Servicio
-                            </>
-                        )}
-                    </button>
-
-                    {editingService && (
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
                         <button
                             type="button"
-                            onClick={handleCancelEdit}
-                            className="bg-slate-200 text-gray-700 w-full sm:w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-300 transition-opacity font-medium shrink-0"
+                            disabled={isSaving}
+                            onClick={handleAddService}
+                            className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md shrink-0 disabled:opacity-60"
                         >
-                            Cancelar
+                            {isSaving ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : editingService ? (
+                                <>
+                                    <Save size={20} />
+                                    Actualizar Servicio
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={20} />
+                                    Agregar Servicio
+                                </>
+                            )}
                         </button>
-                    )}
+
+                        {editingService && (
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="bg-slate-200 text-gray-700 w-full sm:w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-300 transition-opacity font-medium shrink-0"
+                            >
+                                Cancelar
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="mt-4 w-full">

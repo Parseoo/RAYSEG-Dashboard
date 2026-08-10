@@ -1,7 +1,7 @@
 "use client"
 
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { Save, Loader2, X } from 'lucide-react';
+import { Save, Loader2, X, ArrowUpToLine } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { AddFooter } from './addFooter';
 import { GetFooter, UpdateFooter } from '@/lib/api/web-content-api';
@@ -138,8 +138,8 @@ const ContentWebFooterPage = () => {
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50">
-                                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />} 
-                                Guardar
+                                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <ArrowUpToLine size={20} />} 
+                                {isSaving ? "Publicando..." : "Publicar"}
                             </button>
                         </div>
                     </div>
