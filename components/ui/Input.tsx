@@ -104,7 +104,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
         <div className="relative">
             {input.type === 'select' ? (
                 <Select
-                    value={input.value !== undefined && input.value !== null && input.value !== '' ? String(input.value) : ''}
+                    value={input.value !== undefined && input.value !== null && input.value !== '' ? String(input.value) : undefined}
                     onValueChange={(val) => input.onChange && input.onChange(val)}
                 >
                     <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>

@@ -91,6 +91,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   ]);
   const [sourceOptions, setSourceOptions] = useState<any[]>([]);
   const [interestOptions, setInterestOptions] = useState<any[]>([]);
+  const [interestCatalog, setInterestCatalog] = useState<any[]>([]);
   const [agentOptions, setAgentOptions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -137,6 +138,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
 
         const interests = extractItems(interestRes);
         if (interests.length > 0) {
+          setInterestCatalog(interests);
           setInterestOptions(interests.map((i: any) => ({
             value: normalizeInterest(i.value || i.name) || i.name,
             label: i.name || formatInterestLabel(i.value)
@@ -282,12 +284,12 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
       <td className='py-4 px-4'>
         <Tag
           status={row.client_status}
-          variant={row.client_status === 'activo' ? 'emerald' : 'red'}
+          variant="blue"
         >
           {row.client_status || 'Unknown'}
         </Tag>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{formatInterestLabel(row.main_interest)}</td>
+      <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{formatInterestLabel(row.main_interest, interestCatalog)}</td>
       <td className='py-4 px-4 text-sm text-gray-700'>{row.origin || '-'}</td>
       <td className='py-4 px-4 text-sm text-gray-700'>{row.agent?.name || row.agent_id || '-'}</td>
       <td className='py-4 px-4 text-sm text-gray-500'>
@@ -401,7 +403,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Estado</p>
-          <Tag status={row.client_status} variant={row.client_status === 'activo' ? 'emerald' : 'red'}>
+          <Tag status={row.client_status} variant="blue">
             {row.client_status || 'Unknown'}
           </Tag>
         </div>
@@ -411,7 +413,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Interés principal</p>
-          <p className="font-medium">{formatInterestLabel(row.main_interest)}</p>
+          <p className="font-medium">{formatInterestLabel(row.main_interest, interestCatalog)}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Origen</p>
@@ -693,7 +695,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         itemDetails={deleteModal.item ? [
           { label: 'Email', value: deleteModal.item.contact?.email || '-' },
           { label: 'Tipo', value: deleteModal.item.client_type || '-' },
-          { label: 'Interés', value: formatInterestLabel(deleteModal.item.main_interest) },
+          { label: 'Interés', value: formatInterestLabel(deleteModal.item.main_interest, interestCatalog) },
           { label: 'Teléfono', value: deleteModal.item.contact?.phone || '-' },
           { label: 'Origen', value: deleteModal.item.origin || '-' }
         ] : []}

@@ -98,7 +98,7 @@ export default function CatalogItemDetailPage() {
 
     setIsDeleting(true);
     try {
-      await DeleteCatalogItem(itemData.catalogItemID);
+      await DeleteCatalogItem(itemId);
       showToast.success(`Ítem "${itemData.name}" eliminado correctamente`);
       setShowDeleteModal(false);
       router.push('/catalogs');
@@ -153,7 +153,7 @@ export default function CatalogItemDetailPage() {
         { label: 'Inicio', href: '/' },
         { label: 'Configuración', href: '/settings/users-permissions' },
         { label: 'Catálogos', href: '/catalogs' },
-        { label: itemData.name || `Ítem #${itemId}`, href: `/catalogs/item/${itemId}?catalog=${encodeURIComponent(catalogName)}`, active: true }
+        { label: 'Detalle del Ítem', href: `/catalogs/item/${itemId}?catalog=${encodeURIComponent(catalogName)}`, active: true }
       ]} />
 
       <div className='mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2'>
@@ -165,35 +165,6 @@ export default function CatalogItemDetailPage() {
           <span className='text-sm font-medium'>Volver a catálogos</span>
         </button>
 
-        {/* Acciones Rápidas */}
-        <div className="flex items-center gap-2">
-          <Link href={`/catalogs/edit-item/${itemData.catalogItemID}?catalog=${encodeURIComponent(catalogName)}`}>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
-              <Pencil size={15} />
-              <span>Editar</span>
-            </button>
-          </Link>
-
-          {!itemData.is_system ? (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors text-sm font-medium"
-            >
-              <Trash2 size={15} />
-              <span>Eliminar</span>
-            </button>
-          ) : (
-            <Tooltip content="Ítem protegido por el sistema">
-              <button
-                disabled
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
-              >
-                <Lock size={15} />
-                <span>Protegido</span>
-              </button>
-            </Tooltip>
-          )}
-        </div>
       </div>
 
       {/* DETALLE DEL ITEM */}
@@ -208,20 +179,16 @@ export default function CatalogItemDetailPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className='text-xl font-bold text-gray-900'>
-                  {itemData.name}
+                  Detalle del Ítem: {itemData.name}
                 </h1>
-                {itemData.is_system ? (
+                {itemData.is_system && (
                   <span className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 font-medium px-2.5 py-0.5 rounded border border-slate-200">
                     <Lock size={12} /> Sistema
-                  </span>
-                ) : (
-                  <span className="text-xs bg-emerald-50 text-emerald-700 font-medium px-2.5 py-0.5 rounded border border-emerald-200">
-                    Personalizado
                   </span>
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Catálogo: <span className="font-medium text-gray-700">{catalogName}</span> (ID: {itemData.catalogID})
+                Catálogo: <span className="font-medium text-gray-700">{catalogName}</span>
               </p>
             </div>
           </div>
@@ -229,7 +196,7 @@ export default function CatalogItemDetailPage() {
 
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {/* Clave / Slug */}
-          <div className='flex flex-col gap-1 p-3 bg-slate-50 rounded-lg border border-slate-100'>
+          <div className='flex flex-col gap-1'>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               <Key size={13} className="text-slate-400" />
               <span>Clave (Slug)</span>
@@ -237,30 +204,12 @@ export default function CatalogItemDetailPage() {
             <p className='text-sm font-mono font-semibold text-gray-900 mt-1'>{itemData.key || '-'}</p>
           </div>
 
-          {/* Valor / Código */}
-          <div className='flex flex-col gap-1 p-3 bg-slate-50 rounded-lg border border-slate-100'>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              <Hash size={13} className="text-slate-400" />
-              <span>Valor / Código</span>
-            </div>
-            <p className='text-sm font-mono font-semibold text-gray-900 mt-1'>{itemData.value || '-'}</p>
-          </div>
 
-          {/* Tipo de Elemento */}
-          <div className='flex flex-col gap-1 p-3 bg-slate-50 rounded-lg border border-slate-100'>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              <ShieldCheck size={13} className="text-slate-400" />
-              <span>Tipo de Elemento</span>
-            </div>
-            <p className='text-sm font-medium text-gray-900 mt-1'>
-              {itemData.is_system ? 'Elemento Protegido del Sistema' : 'Elemento Personalizado por Usuario'}
-            </p>
-          </div>
 
           {/* Descripción */}
-          <div className='flex flex-col gap-1 md:col-span-2 lg:col-span-3'>
+          <div className='flex flex-col gap-1 md:col-span-1 lg:col-span-2'>
             <p className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Descripción</p>
-            <p className='text-sm text-gray-700 bg-slate-50 p-4 rounded-lg border border-slate-100 min-h-[60px] leading-relaxed'>
+            <p className='text-sm text-gray-700 leading-relaxed mt-1'>
               {itemData.description || 'Sin descripción asignada para este ítem.'}
             </p>
           </div>

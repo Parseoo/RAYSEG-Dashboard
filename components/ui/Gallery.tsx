@@ -39,38 +39,38 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
 
   return (
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[999] flex flex-col items-center justify-between bg-black/95 backdrop-blur-md p-4"
       onClick={onClose}
     >
-      <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+      {/* Botón Cerrar */}
+      <div className="w-full flex justify-end">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+          className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 shadow transition-colors"
           title="Cerrar"
         >
           <X size={24} />
         </button>
+      </div>
 
+      {/* Visor Principal con Flechas */}
+      <div className="relative flex-1 w-full max-w-5xl flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
         {images.length > 1 && (
           <>
             <button
               onClick={prevImage}
-              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-3 shadow z-10 transition-colors"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 z-10 transition-colors"
               title="Anterior"
             >
-              <ChevronLeft size={30} />
+              <ChevronLeft size={48} strokeWidth={2.5} />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-3 shadow z-10 transition-colors"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 z-10 transition-colors"
               title="Siguiente"
             >
-              <ChevronRight size={30} />
+              <ChevronRight size={48} strokeWidth={2.5} />
             </button>
-            
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1 rounded-full text-sm">
-              {currentIndex + 1} / {images.length}
-            </div>
           </>
         )}
 
@@ -80,12 +80,46 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
           alt={`Imagen ${currentIndex + 1}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            if (!target.src.endsWith('/img/fallback-image.png')) {
-              target.src = '/img/fallback-image.png';
+            if (!target.src.endsWith('/property.jpg')) {
+              target.src = '/property.jpg';
             }
           }}
-          className="max-w-full max-h-full object-contain"
+          className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
         />
+      </div>
+
+      {/* Carrusel de Miniaturas en la parte inferior */}
+      <div className="w-full max-w-5xl py-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-2 overflow-x-auto justify-center py-2 px-4 bg-black/40 rounded-xl scrollbar-thin">
+          {images.map((img: string, idx: number) => {
+            const isActive = idx === currentIndex;
+            return (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                  isActive ? 'border-orange-500 scale-95 shadow-md shadow-orange-500/20' : 'border-white/20 hover:border-white/50'
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getImageUrl(img)}
+                  alt={`Miniatura ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.endsWith('/property.jpg')) {
+                      target.src = '/property.jpg';
+                    }
+                  }}
+                />
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-center text-xs text-white/50 mt-2 font-medium">
+          {currentIndex + 1} de {images.length}
+        </p>
       </div>
     </div>
   );

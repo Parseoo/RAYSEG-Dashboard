@@ -114,6 +114,21 @@ class FetchClient {
 
       const data = await this.parseResponse(response);
 
+      if (data && typeof data === 'object' && data.status === false) {
+        const error: any = new Error(data.message || `API Error at ${config.method || 'GET'} ${config.url}`);
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+          headers: response.headers,
+        };
+        error.config = config;
+        
+        console.error(`[FetchClient] Logical API Error: ${config.method || 'GET'} ${config.url} - Message: ${data.message}`);
+        
+        throw error;
+      }
+
       return {
         data,
         status: response.status,
@@ -146,9 +161,21 @@ class FetchClient {
   private async parseResponse(response: Response) {
     const contentType = response.headers.get('content-type');
 
-    if (!contentType) return null;
+    if (!contentType) {
+      const text = await response.text();
+      return text ? text : null;
+    }
 
-    if (contentType.includes('application/json')) return response.json();
+    if (contentType.includes('application/json')) {
+      const text = await response.text();
+      if (!text) return null;
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return text;
+      }
+    }
+
     if (contentType.includes('text/')) return response.text();
     if (contentType.includes('application/octet-stream') || contentType.includes('application/pdf')) return response.blob();
 

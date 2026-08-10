@@ -152,21 +152,21 @@ export const AddMultimediaProperty = () => {
                     </div>
                   )}
 
-                  {/* Hover Action - Eye (Top Left, o debajo de la etiqueta Principal) */}
+                  {/* Hover Action - Eye (Bottom Left if principal, Top Left otherwise) */}
                   <button
                     type="button"
                     onClick={() => handleViewImage(image)}
-                    className={`absolute ${image.is_main ? 'top-[36px] left-2' : 'top-2 left-2'} p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100`}
+                    className={`absolute ${image.is_main ? 'bottom-2 left-2' : 'top-2 left-2'} p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100`}
                     title="Ver imagen"
                   >
                     <Eye size={15} className="text-blue-600" />
                   </button>
 
-                  {/* Hover Action - Trash (Top Right) */}
+                  {/* Hover Action - Trash (Bottom Right if principal, Top Right otherwise) */}
                   <button
                     type="button"
                     onClick={() => triggerDeleteImage(image.fileID)}
-                    className="absolute top-2 right-2 p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100"
+                    className={`absolute ${image.is_main ? 'bottom-2 right-2' : 'top-2 right-2'} p-1.5 bg-white rounded-full hover:bg-gray-100 shadow-md transition-all duration-200 z-20 opacity-0 group-hover:opacity-100`}
                     title="Eliminar imagen"
                   >
                     <Trash2 size={15} className="text-red-600" />

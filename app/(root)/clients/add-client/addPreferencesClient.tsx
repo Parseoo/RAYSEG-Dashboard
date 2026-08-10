@@ -1,6 +1,6 @@
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useClient } from '../clientContext';
-import { normalizeInterest } from '@/lib/utils/catalog';
+import { normalizeInterest, resolveCatalogDisplayValue } from '@/lib/utils/catalog';
 
 export const AddPreferencesClient = () => {
     const { state, updateField, mainInterestTypes, targetPropertyTypes, paymentMethodTypes } = useClient();
@@ -14,7 +14,7 @@ export const AddPreferencesClient = () => {
     const interestOptions = mainInterestTypes && mainInterestTypes.length > 0
         ? mainInterestTypes.map(item => ({
             label: item.name,
-            value: normalizeInterest(item.value || item.name) || item.name
+            value: normalizeInterest(item.name)
         }))
         : defaultInterestOptions;
 
@@ -28,7 +28,8 @@ export const AddPreferencesClient = () => {
         value: item.name
     }));
 
-    const currentInterest = normalizeInterest(state.main_interest);
+    const resolvedInterestName = resolveCatalogDisplayValue(state.main_interest, mainInterestTypes);
+    const currentInterest = normalizeInterest(resolvedInterestName || state.main_interest);
     const isRenta = currentInterest === 'renta' || currentInterest === 'quiero_rentar' || currentInterest === 'rent';
     const isVenta = currentInterest === 'venta' || currentInterest === 'quiero_vender' || currentInterest === 'sale';
     const isCompra = currentInterest === 'compra' || currentInterest === 'quiero_comprar' || currentInterest === 'buy';
@@ -56,55 +57,57 @@ export const AddPreferencesClient = () => {
     let specificInputs: InputFieldConfig[] = [];
 
     if (currentInterest) {
-        // Grupo 2: Presupuesto
-        specificInputs.push(
-            {
-                type: 'number',
-                id: 'budget_min',
-                label: isVenta || isRenta ? 'Precio mínimo' : 'Presupuesto mínimo',
-                placeholder: 'Ej: 1,000,000',
-                group: 2
-            },
-            {
-                type: 'number',
-                id: 'budget_max',
-                label: isVenta || isRenta ? 'Precio máximo' : 'Presupuesto máximo',
-                placeholder: 'Ej: 3,500,000',
-                group: 2
-            }
-        );
+        if (isCompra || isRenta) {
+            // Grupo 2: Presupuesto
+            specificInputs.push(
+                {
+                    type: 'number',
+                    id: 'budget_min',
+                    label: isRenta ? 'Presupuesto mínimo mensual' : 'Presupuesto mínimo',
+                    placeholder: 'Ej: 1,000,000',
+                    group: 2
+                },
+                {
+                    type: 'number',
+                    id: 'budget_max',
+                    label: isRenta ? 'Presupuesto máximo mensual' : 'Presupuesto máximo',
+                    placeholder: 'Ej: 3,500,000',
+                    group: 2
+                }
+            );
 
-        // Grupo 3: Características
-        specificInputs.push(
-            {
-                type: 'number',
-                id: 'bedrooms',
-                label: 'Recámaras',
-                placeholder: 'Ej: 2',
-                group: 3
-            },
-            {
-                type: 'number',
-                id: 'bathrooms',
-                label: 'Baños',
-                placeholder: 'Ej: 2',
-                group: 3
-            },
-            {
-                type: 'number',
-                id: 'parking_spaces',
-                label: 'Estacionamientos',
-                placeholder: 'Ej: 1',
-                group: 3
-            }
-        );
+            // Grupo 3: Características
+            specificInputs.push(
+                {
+                    type: 'number',
+                    id: 'bedrooms',
+                    label: 'Recámaras',
+                    placeholder: 'Ej: 2',
+                    group: 3
+                },
+                {
+                    type: 'number',
+                    id: 'bathrooms',
+                    label: 'Baños',
+                    placeholder: 'Ej: 2',
+                    group: 3
+                },
+                {
+                    type: 'number',
+                    id: 'parking_spaces',
+                    label: 'Estacionamientos',
+                    placeholder: 'Ej: 1',
+                    group: 3
+                }
+            );
+        }
 
         // Grupo 4: Tiempo estimado
         specificInputs.push({
             type: 'text',
             id: 'estimated_time',
-            label: isVenta ? 'Tiempo estimado para vender' : (isRenta ? 'Tiempo estimado para rentar' : 'Tiempo estimado'),
-            placeholder: 'Ej: 1 mes, 3 meses',
+            label: isVenta ? 'Plazo estimado para vender' : (isRenta ? 'Plazo estimado para rentar' : 'Plazo estimado para comprar'),
+            placeholder: 'Ej: Urgente, 1 mes, 3 a 6 meses',
             group: 4
         });
 

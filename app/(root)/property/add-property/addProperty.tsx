@@ -11,7 +11,7 @@ import { AddMultimediaProperty } from './addMultimediaProperty';
 import { AddPublicationProperty } from './addPublication';
 import { PropertyProvider, useProperty } from '../propertyContext';
 import { EditProperty } from '@/lib/api/property/property-api';
-import { resolveCatalogItemId, resolveCatalogApiValue } from '@/lib/utils/catalog';
+import { resolveCatalogItemId, resolveCatalogApiValue, resolveCatalogDisplayValue } from '@/lib/utils/catalog';
 import { showToast } from 'nextjs-toast-notify';
 
 const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
@@ -174,13 +174,12 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
     if (!validatePropertyFields()) return;
     setIsSaving(true);
     try {
-      const geo = await geocodeAddress(
-        state.street || state.full_address.split(',')[0]?.trim() || "",
-        state.street_number || state.full_address.split(',')[1]?.trim() || "",
-        state.neighborhood || state.full_address.split(',')[2]?.trim() || "",
-        state.city,
-        state.postal_code
-      );
+      const amenityIds = (state.amenities || []).map(a => {
+        if (typeof a === 'number' && !isNaN(a)) return a;
+        const num = parseInt(String(a));
+        if (!isNaN(num) && num > 0) return num;
+        return resolveCatalogItemId(a, amenitiesCatalog);
+      }).filter((id): id is number => id !== null && !isNaN(id));
 
       const amenityIds = (state.amenities || []).map(a => {
         if (typeof a === 'number' && !isNaN(a)) return a;
@@ -205,7 +204,7 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : 0,
         floors: state.floors ? parseInt(String(state.floors)) : 1,
         construction_year: state.construction_year ? parseInt(String(state.construction_year)) : new Date().getFullYear(),
-        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
+        conservation_status: resolveCatalogDisplayValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
         property_status: resolveId(state.property_status, propertyStateCatalog, 1),
         outdoor_spaces: state.outdoor_spaces ? parseInt(String(state.outdoor_spaces)) : 0,
         note: state.note || "",
@@ -218,10 +217,6 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
           city: state.city || "",
           state: state.estado || "Guanajuato",
           zip_code: state.postal_code || ""
-        },
-        location: {
-          latitude: geo.latitude || 21.1222,
-          longitude: geo.longitude || -101.68
         },
         amenities: amenityIds,
         images: (state.images || [])
@@ -268,17 +263,16 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
     }
   };
 
-  const handleUpdateProperty = async () => {
+    const handleUpdateProperty = async () => {
     if (!validatePropertyFields()) return;
     setIsSaving(true);
     try {
-      const geo = await geocodeAddress(
-        state.street,
-        state.street_number,
-        state.neighborhood,
-        state.city,
-        state.postal_code
-      );
+      const amenityIds = (state.amenities || []).map(a => {
+        if (typeof a === 'number' && !isNaN(a)) return a;
+        const num = parseInt(String(a));
+        if (!isNaN(num) && num > 0) return num;
+        return resolveCatalogItemId(a, amenitiesCatalog);
+      }).filter((id): id is number => id !== null && !isNaN(id));
 
       const amenityIds = (state.amenities || []).map(a => {
         if (typeof a === 'number' && !isNaN(a)) return a;
@@ -306,7 +300,7 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : 0,
         floors: state.floors ? parseInt(String(state.floors)) : 1,
         construction_year: state.construction_year ? parseInt(String(state.construction_year)) : new Date().getFullYear(),
-        conservation_status: resolveCatalogApiValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
+        conservation_status: resolveCatalogDisplayValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
         outdoor_spaces: state.outdoor_spaces ? parseInt(String(state.outdoor_spaces)) : 0,
         note: state.note || "",
         is_featured: Boolean(state.is_featured),
@@ -319,13 +313,6 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
           state: state.estado || "Guanajuato",
           zip_code: state.postal_code || ""
         },
-        ...(state.addressId && !isNaN(Number(state.addressId)) ? {
-          location: {
-            property_address_id: Number(state.addressId),
-            latitude: geo.latitude || 21.1222,
-            longitude: geo.longitude || -101.68
-          }
-        } : {}),
         amenities: amenityIds,
         images: (state.images || [])
           .filter((img: any) => typeof img.file === 'string' && img.file.startsWith('data:'))
@@ -401,7 +388,7 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
             <div className='w-full flex flex-col gap-4'>
               <AddDetailProperty />
               <AddMultimediaProperty />
-              <AddPublicationProperty />
+              <AddPublicationProperty isEdit={isEdit} />
             </div>
           </div>
           <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 justify-end mt-6 pt-4 border-t border-gray-100'>

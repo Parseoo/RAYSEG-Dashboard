@@ -17,8 +17,8 @@ export async function CreateProperty(data: any) {
 }
 
 // Obtener una propiedad por id
-export async function GetPropertyById(id: string) {
-  return httpClient.get(`${BASE_URL}/${id}`);
+export async function GetPropertyById(property_id: string) {
+  return httpClient.get(`${BASE_URL}/${property_id}`);
 }
 
 // Editar una propiedad
@@ -27,8 +27,8 @@ export async function EditProperty(data: any) {
 }
 
 // Eliminar una propiedad
-export async function DeleteProperty(id: string) {
-  return httpClient.delete(`${BASE_URL}/${id}`);
+export async function DeleteProperty(property_id: string) {
+  return httpClient.delete(`${BASE_URL}/${property_id}`);
 }
 
 // LOCALIZACIONES

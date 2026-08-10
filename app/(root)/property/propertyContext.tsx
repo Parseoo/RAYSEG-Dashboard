@@ -112,13 +112,26 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const fetchCatalogs = useCallback(async () => {
     setCatalogsReady(false);
+
+    const safeCatalogByName = async (name: string, fallbackNames: string[] = []) => {
+      const names = [name, ...fallbackNames];
+      for (const n of names) {
+        try {
+          return await GetCatalogByName(n);
+        } catch {
+          // Ignorar error 404 y continuar con fallback
+        }
+      }
+      return null;
+    };
+
     const results = await Promise.allSettled([
       GetCatalogPropertyTypes(),
       GetCatalogAmenities(),
-      GetCatalogByName('operation-type'),
-      GetCatalogByName('property-type-status'),
-      GetCatalogByName('property-condition'),
-      GetCatalogByName('property-post-status'),
+      safeCatalogByName('operation-type', ['operation_type']),
+      safeCatalogByName('property-type-status', ['property_type_status', 'property-status']),
+      safeCatalogByName('property-condition', ['property_condition', 'conservation-status']),
+      safeCatalogByName('property-post-status', ['publication-status', 'post-status', 'property_post_status']),
       GetPropertyTerrainTypes(),
     ]);
 
@@ -136,43 +149,44 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (typeRes.status === 'fulfilled') {
       setPropertyTypes(extractItems(typeRes.value));
     } else {
-      console.error('Error fetching property types:', typeRes.reason);
+      console.warn('Error fetching property types:', typeRes.reason);
     }
 
     if (amenitiesRes.status === 'fulfilled') {
       setAmenitiesCatalog(extractItems(amenitiesRes.value));
     } else {
-      console.error('Error fetching amenities:', amenitiesRes.reason);
+      console.warn('Error fetching amenities:', amenitiesRes.reason);
     }
 
-    if (operationRes.status === 'fulfilled') {
+    if (operationRes.status === 'fulfilled' && operationRes.value) {
       setOperationCatalog(extractItems(operationRes.value));
-    } else {
-      console.error('Error fetching property operation:', operationRes.reason);
     }
 
-    if (propertyStateRes.status === 'fulfilled') {
+    if (propertyStateRes.status === 'fulfilled' && propertyStateRes.value) {
       setPropertyStateCatalog(extractItems(propertyStateRes.value));
-    } else {
-      console.error('Error fetching state property:', propertyStateRes.reason);
     }
 
-    if (conservationStatusRes.status === 'fulfilled') {
+    if (conservationStatusRes.status === 'fulfilled' && conservationStatusRes.value) {
       setConservationStatusCatalog(extractItems(conservationStatusRes.value));
-    } else {
-      console.error('Error fetching conservation status:', conservationStatusRes.reason);
     }
 
-    if (publicationStatusRes.status === 'fulfilled') {
-      setPublicationStatusCatalog(extractItems(publicationStatusRes.value));
+    const defaultPublicationStatuses = [
+      { catalogItemID: 1, name: 'Borrador', description: 'Borrador' },
+      { catalogItemID: 2, name: 'Publicado', description: 'Publicado' },
+      { catalogItemID: 3, name: 'Archivado', description: 'Archivado' }
+    ] as ItemResponse[];
+
+    if (publicationStatusRes.status === 'fulfilled' && publicationStatusRes.value) {
+      const items = extractItems(publicationStatusRes.value);
+      setPublicationStatusCatalog(items.length > 0 ? items : defaultPublicationStatuses);
     } else {
-      console.error('Error fetching publication status:', publicationStatusRes.reason);
+      setPublicationStatusCatalog(defaultPublicationStatuses);
     }
 
     if (terrainTypeRes.status === 'fulfilled') {
       setTerrainTypeCatalog(extractItems(terrainTypeRes.value));
     } else {
-      console.error('Error fetching terrain type:', terrainTypeRes.reason);
+      console.warn('Error fetching terrain type:', terrainTypeRes.reason);
     }
 
     setCatalogsReady(true);

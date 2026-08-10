@@ -345,7 +345,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
       const matchesStatusProperty = selectedStatusProperty === "all" || p.property_post_status?.name === selectedStatusProperty;
 
-      const matchesFeatured = !isFeaturedOnly || Boolean(p.is_featured);
+      const checkIsFeatured = (val: any): boolean => {
+        if (!val) return false;
+        if (val === true || val === 1) return true;
+        if (typeof val === 'string') {
+          const lower = val.trim().toLowerCase();
+          return lower === 'true' || lower === '1';
+        }
+        return false;
+      };
+
+      const matchesFeatured = !isFeaturedOnly || checkIsFeatured(p.is_featured);
 
       return matchesSearch && matchesEstado && matchesCity && matchesType && matchesOperation && matchesAvailability && matchesStatusProperty && matchesFeatured;
     });
@@ -430,7 +440,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
         <td className='py-4 px-4 whitespace-nowrap'>
           <div className='flex items-center justify-center'>
-            {property.is_featured ? (
+            {((property.is_featured as any) === true || (property.is_featured as any) === 1 || String(property.is_featured).toLowerCase() === 'true' || String(property.is_featured) === '1') ? (
               <Star size={20} fill="#eab308" stroke="#eab308" />
             ) : (
               <Star size={20} fill="none" stroke="#eab308" />
@@ -573,7 +583,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               Creado: {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
             </div>
             <div className="flex items-center gap-1.5">
-              {property.is_featured ? (
+              {((property.is_featured as any) === true || (property.is_featured as any) === 1 || String(property.is_featured).toLowerCase() === 'true' || String(property.is_featured) === '1') ? (
                 <Star size={20} fill="#eab308" stroke="#eab308" />
               ) : (
                 <Star size={20} fill="none" stroke="#eab308" />

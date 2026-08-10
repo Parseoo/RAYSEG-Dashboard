@@ -104,23 +104,25 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [markers]);
 
-    // ── Modo single (búsqueda manual) – solo cuando no hay markers ───────────
+    // ── Modo single (búsqueda manual / geocodificación automática por dirección) ──
     useEffect(() => {
         if (!mapRef.current) return;
-        
-        // Si hay markerPosition, lo mostramos SIEMPRE. Ocultamos los multi-markers (markers) 
-        // para dar prioridad a la edición de la posición.
-        if (markerPosition) {
-            if (layerRef.current) {
-                layerRef.current.clearLayers();
-            }
+        let isCancelled = false;
+
+        const hasValidMarkerPos = markerPosition && 
+            Number.isFinite(markerPosition.lat) && 
+            Number.isFinite(markerPosition.lng) && 
+            (markerPosition.lat !== 0 || markerPosition.lng !== 0);
+
+        if (hasValidMarkerPos) {
+            if (layerRef.current) layerRef.current.clearLayers();
             if (singleMarkerRef.current) {
                 singleMarkerRef.current.remove();
                 singleMarkerRef.current = null;
             }
 
             const marker = L.marker(
-                [markerPosition.lat, markerPosition.lng],
+                [markerPosition!.lat, markerPosition!.lng],
                 { 
                     icon: createFaviconIcon(),
                     draggable: !!onMarkerDragEnd 
@@ -129,27 +131,53 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
                 .addTo(mapRef.current)
                 .bindPopup(`
                     <div style="padding:8px">
-                        <strong>📍 Ubicación a fijar</strong>
+                        <strong>📍 Ubicación de la propiedad</strong>
                         <p style="margin:4px 0;color:#666">${address ?? ''}</p>
-                        <p style="margin:0;font-size:0.75rem;color:#999">
-                            Arrastra el pin para afinar la ubicación.
-                        </p>
                     </div>
-                `)
-                .openPopup();
+                `);
 
             if (onMarkerDragEnd) {
                 marker.on('dragend', (e) => {
                     const pos = e.target.getLatLng();
                     onMarkerDragEnd(pos.lat, pos.lng);
-                    marker.openPopup();
                 });
             }
 
             singleMarkerRef.current = marker;
-            mapRef.current.flyTo([markerPosition.lat, markerPosition.lng], 16, { duration: 1.5 });
+            mapRef.current.flyTo([markerPosition!.lat, markerPosition!.lng], 16, { duration: 1.5 });
+        } else if (address && address.trim().length > 3) {
+            // Geocodificación automática por dirección sin requerir estar en la lista de localizaciones
+            const cleanAddress = address.trim();
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanAddress)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (isCancelled || !mapRef.current) return;
+                    if (Array.isArray(data) && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lng = parseFloat(data[0].lon);
+                        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                            if (layerRef.current) layerRef.current.clearLayers();
+                            if (singleMarkerRef.current) {
+                                singleMarkerRef.current.remove();
+                                singleMarkerRef.current = null;
+                            }
+
+                            const marker = L.marker([lat, lng], { icon: createFaviconIcon() })
+                                .addTo(mapRef.current)
+                                .bindPopup(`
+                                    <div style="padding:8px">
+                                        <strong>📍 Ubicación de la propiedad</strong>
+                                        <p style="margin:4px 0;color:#666">${cleanAddress}</p>
+                                    </div>
+                                `);
+
+                            singleMarkerRef.current = marker;
+                            mapRef.current.flyTo([lat, lng], 15, { duration: 1.2 });
+                        }
+                    }
+                })
+                .catch(err => console.warn('Geocoding failed:', err));
         } else if (markers && markers.length > 0) {
-            // Si no hay markerPosition y sí hay markers, renderizamos los markers normales
             if (singleMarkerRef.current) {
                 singleMarkerRef.current.remove();
                 singleMarkerRef.current = null;
@@ -158,7 +186,6 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
                 renderMarkers(mapRef.current, layerRef.current, markers);
             }
         } else {
-            // No hay ni markerPosition ni markers
             if (singleMarkerRef.current) {
                 singleMarkerRef.current.remove();
                 singleMarkerRef.current = null;
@@ -167,7 +194,10 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
                 layerRef.current.clearLayers();
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        return () => {
+            isCancelled = true;
+        };
     }, [markerPosition, address, markers, onMarkerDragEnd]);
 
     return (

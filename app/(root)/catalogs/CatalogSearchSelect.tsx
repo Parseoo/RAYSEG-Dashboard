@@ -180,11 +180,6 @@ export default function CatalogSearchSelect({
                   >
                     <div className="flex flex-col truncate pr-2">
                       <span className="truncate">{catalog.name}</span>
-                      {catalog.key && (
-                        <span className="text-[10px] text-gray-400 font-mono truncate">
-                          {catalog.key}
-                        </span>
-                      )}
                     </div>
                     {isSelected && (
                       <Check className="w-4 h-4 text-primary_color shrink-0 ml-1" />
