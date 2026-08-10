@@ -6,7 +6,6 @@ import { ArrowLeft, Loader2, Save, X, CirclePlus, Lock, Key, Hash, Calendar, Shi
 import * as LucideIcons from "lucide-react";
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { showToast } from 'nextjs-toast-notify';
-import IconSelector from "@/components/ui/IconSelector";
 import { GetCatalogItemByID, EditCatalogItem } from '@/lib/api/catalog-api';
 import { ItemResponse } from '@/lib/types/catalogs';
 
@@ -24,8 +23,6 @@ export default function EditCatalogItemPage() {
   // Form State
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<keyof typeof LucideIcons>("CirclePlus");
-  const [showIconSelector, setShowIconSelector] = useState(false);
 
   useEffect(() => {
     if (!itemId) return;
@@ -39,12 +36,6 @@ export default function EditCatalogItemPage() {
           setItem(data);
           setName(data.name || '');
           setDescription(data.description || '');
-
-          if (data.icon && (LucideIcons as any)[data.icon]) {
-            setSelectedIcon(data.icon as keyof typeof LucideIcons);
-          } else {
-            setSelectedIcon("CirclePlus");
-          }
         }
       } catch (err: any) {
         console.error("Error al cargar el ítem:", err);
@@ -72,7 +63,6 @@ export default function EditCatalogItemPage() {
       await EditCatalogItem(itemId, {
         name: name.trim(),
         description: description.trim() || undefined,
-        icon: selectedIcon !== "CirclePlus" ? String(selectedIcon) : undefined,
       });
 
       showToast.success("Ítem actualizado exitosamente");
@@ -86,7 +76,6 @@ export default function EditCatalogItemPage() {
     }
   };
 
-  const SelectedIconComponent = LucideIcons[selectedIcon] as LucideIcons.LucideIcon;
 
   if (loading) {
     return (
@@ -152,7 +141,7 @@ export default function EditCatalogItemPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6">
             
             {/* Nombre del Ítem */}
             <div className="flex flex-col gap-2">
@@ -164,50 +153,26 @@ export default function EditCatalogItemPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full h-[40px] px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary_color text-sm"
-                placeholder="Nombre del ítem"
+                placeholder={
+                  (() => {
+                    if (!catalogNameFromQuery) return "Ej: Nombre del ítem...";
+                    const nameLower = catalogNameFromQuery.toLowerCase();
+                    if (nameLower.includes('amenidad')) return "Ej: Alberca climatizada, Gimnasio...";
+                    if (nameLower.includes('propiedad')) return "Ej: Casa, Departamento, Oficina...";
+                    if (nameLower.includes('operaci')) return "Ej: Venta, Renta, Traspaso...";
+                    if (nameLower.includes('terreno')) return "Ej: Regular, Plano, Ascendente...";
+                    if (nameLower.includes('moneda')) return "Ej: MXN, USD, EUR...";
+                    if (nameLower.includes('conservaci')) return "Ej: Nuevo, Excelente, Bueno, Remodelado...";
+                    if (nameLower.includes('estado')) return "Ej: Disponible, Reservado, Vendido...";
+                    return `Ej: Ingrese un ítem para ${catalogNameFromQuery}...`;
+                  })()
+                }
                 required
               />
             </div>
 
-            {/* Selector de Icono */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Icono asociado
-              </label>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowIconSelector(!showIconSelector)}
-                    className="h-[40px] px-3 bg-slate-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-slate-100 transition-colors text-sm"
-                  >
-                    {SelectedIconComponent ? (
-                      <SelectedIconComponent size={18} className="text-slate-700" />
-                    ) : (
-                      <CirclePlus size={18} className="text-slate-700" />
-                    )}
-                    <span className="text-slate-700">{selectedIcon !== "CirclePlus" ? String(selectedIcon) : "Seleccionar"}</span>
-                  </button>
-
-                  {showIconSelector && (
-                    <IconSelector
-                      selectedIcon={selectedIcon}
-                      onSelect={(iconName) => {
-                        setSelectedIcon(iconName as keyof typeof LucideIcons);
-                        setShowIconSelector(false);
-                      }}
-                      onClose={() => setShowIconSelector(false)}
-                    />
-                  )}
-                </div>
-                <span className="text-xs text-gray-400">
-                  {selectedIcon !== "CirclePlus" ? `Icono actual: ${String(selectedIcon)}` : "Sin icono"}
-                </span>
-              </div>
-            </div>
-
             {/* Descripción */}
-            <div className="flex flex-col gap-2 md:col-span-2">
+            <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">
                 Descripción
               </label>
@@ -221,31 +186,7 @@ export default function EditCatalogItemPage() {
             </div>
           </div>
 
-          {/* Información técnica del backend */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-            <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">
-              Información del Registro
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="bg-white p-2.5 rounded border border-slate-200 flex items-center gap-2">
-                <Key size={14} className="text-slate-400" />
-                <span className="text-gray-500">Clave:</span>
-                <span className="font-mono font-semibold text-slate-800 truncate">{item.key || '-'}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded border border-slate-200 flex items-center gap-2">
-                <Hash size={14} className="text-slate-400" />
-                <span className="text-gray-500">Valor / Código:</span>
-                <span className="font-mono font-semibold text-slate-800 truncate">{item.value || '-'}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded border border-slate-200 flex items-center gap-2">
-                <Calendar size={14} className="text-slate-400" />
-                <span className="text-gray-500">Creado:</span>
-                <span className="text-slate-800">
-                  {item.created_at ? new Date(item.created_at).toLocaleDateString('es-ES') : '-'}
-                </span>
-              </div>
-            </div>
-          </div>
+
 
           {/* Botones de acción */}
           <div className="flex flex-col sm:flex-row gap-4 justify-end mt-8 border-t border-gray-100 pt-6">

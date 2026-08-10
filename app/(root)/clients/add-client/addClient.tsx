@@ -101,9 +101,15 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
         other_source: state.other_source || null,
         agent_id: state.agent_id && state.agent_id > 0 ? Number(state.agent_id) : null,
         internal_notes: state.internal_notes || null,
-        profile_photo: state.profile_photo || null,
-        profile_picture: state.profile_photo || null,
       };
+
+      if (state.profile_photo && state.profile_photo.startsWith('data:image')) {
+        payload.profile_photo = state.profile_photo;
+        payload.profile_picture = state.profile_photo;
+      } else if (!state.profile_photo) {
+        payload.profile_photo = null;
+        payload.profile_picture = null;
+      }
 
       if (state.property && state.property > 0) {
         payload.property = { id: state.property };

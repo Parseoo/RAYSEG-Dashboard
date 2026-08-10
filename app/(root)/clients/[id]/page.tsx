@@ -21,6 +21,8 @@ export default function ClientDetailPage() {
     const [loading, setLoading] = useState(true);
     const [propertyLoading, setPropertyLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [interestCatalog, setInterestCatalog] = useState<any[]>([]);
+    const [propertyTypeCatalog, setPropertyTypeCatalog] = useState<any[]>([]);
 
     useEffect(() => {
         if (!clientId) return;
@@ -44,6 +46,22 @@ export default function ClientDetailPage() {
                     } finally {
                         setPropertyLoading(false);
                     }
+                }
+                
+                // Fetch catalogs for labels
+                try {
+                    const { GetCatalogByName } = await import('@/lib/api/catalog-api');
+                    const [intRes, propRes, opRes] = await Promise.all([
+                        GetCatalogByName('primary_interest').catch(() => null),
+                        GetCatalogByName('property-types').catch(() => null),
+                        GetCatalogByName('operation-type').catch(() => null)
+                    ]);
+                    const intData = opRes?.data?.items || opRes?.data?.catalogItems || intRes?.data?.items || intRes?.data?.catalogItems || [];
+                    setInterestCatalog(intData);
+                    const propData = propRes?.data?.items || propRes?.data?.catalogItems || [];
+                    setPropertyTypeCatalog(propData);
+                } catch (catErr) {
+                    console.error("Error fetching catalogs:", catErr);
                 }
             } catch (err: any) {
                 console.error("Error fetching client details:", err);
@@ -83,12 +101,15 @@ export default function ClientDetailPage() {
         );
     }
 
-    const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
-        <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-slate-100 rounded-lg text-slate-600">
-                <Icon size={18} />
+    const SectionHeader = ({ title, icon: Icon, extra }: { title: string, icon: any, extra?: React.ReactNode }) => (
+        <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-slate-100 rounded-lg text-slate-600">
+                    <Icon size={18} />
+                </div>
+                <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
             </div>
-            <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
+            {extra && <div>{extra}</div>}
         </div>
     );
 
@@ -130,38 +151,122 @@ export default function ClientDetailPage() {
             </div>
 
             {/* HEADER / SUMMARY */}
-            <div className='bg-primary_color/5 rounded-2xl p-6 mb-8 border border-primary_color/10 flex flex-col md:flex-row md:items-center justify-between gap-6'>
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-primary_color text-white rounded-2xl flex items-center justify-center text-2xl font-bold shadow-lg shadow-primary_color/20">
-                        {clientData.name?.charAt(0).toUpperCase()}
+            <div className="w-full bg-white rounded-lg p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col gap-6 mb-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                    <div className="flex items-center gap-5">
+                        {/* Avatar circular */}
+                        <div className="relative group">
+                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
+                                {(clientData.profile_photo || clientData.profile_picture) ? (
+                                    <Image
+                                        src={getImageUrl(clientData.profile_photo || clientData.profile_picture)}
+                                        alt={clientData.name}
+                                        fill
+                                        sizes="96px"
+                                        unoptimized={true}
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            if (target && !target.src.endsWith('/user.svg')) {
+                                                target.src = '/user.svg';
+                                            }
+                                        }}
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className="text-3xl font-bold text-slate-400">
+                                        {clientData.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Información Principal */}
+                        <div className="flex flex-col gap-1.5 min-w-0 justify-center">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                                    {clientData.name} {clientData.paternal_last_name} {clientData.maternal_last_name}
+                                </h1>
+                                <span className="text-xs text-gray-400 font-mono font-medium">
+                                    CLI-{clientId}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{clientData.name}</h1>
-                        <p className="text-slate-500 text-sm font-medium">CLI-{clientData.id} • Registrado el {new Date(clientData.created_at || Date.now()).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+
+                    {/* Badges con descripción estilo tags */}
+                    <div className="flex flex-wrap items-center justify-start sm:justify-end gap-6 mt-4 sm:mt-0">
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado</span>
+                            <Tag status={typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.value || clientData.client_status?.name || 'activo')} variant="blue" className="!px-4">
+                                {typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.name || clientData.client_status?.value || 'Desconocido')}
+                            </Tag>
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo de Cliente</span>
+                            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 capitalize">
+                                {clientData.client_type_name || (typeof clientData.client_type === 'string'
+                                    ? clientData.client_type.replace('_', ' ')
+                                    : (clientData.client_type?.name || clientData.client_type?.value || 'Cliente'))}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                 <div className="flex flex-wrap gap-3">
-                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Estado</span>
-                        <Tag
-                            status={typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.value || clientData.client_status?.name || 'activo')}
-                            variant={(typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.value || clientData.client_status?.name)) === 'activo' ? 'emerald' : 'red'}
-                            className="mt-1"
-                        >
-                            {typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.name || clientData.client_status?.value || 'Desconocido')}
-                        </Tag>
+
+                {/* Metadatos en cuadrícula responsiva */}
+                <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs sm:text-sm text-gray-600">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-slate-50 text-slate-500 rounded-lg shrink-0">
+                            <Mail size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="block text-[11px] text-gray-400 font-medium">Correo electrónico</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.email || clientData.contact?.email || "-"}</span>
+                        </div>
                     </div>
-                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Tipo de Cliente</span>
-                        <span className="text-sm font-bold text-slate-700 mt-1 capitalize">
-                            {typeof clientData.client_type === 'string'
-                                ? clientData.client_type.replace('_', ' ')
-                                : (clientData.client_type?.name || clientData.client_type?.value || '-')}
-                        </span>
+
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-slate-50 text-slate-500 rounded-lg shrink-0">
+                            <Phone size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="block text-[11px] text-gray-400 font-medium">Teléfono de contacto</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.phone || clientData.contact?.phone || "-"}</span>
+                        </div>
                     </div>
-                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Agente</span>
-                        <span className="text-sm font-bold text-slate-700 mt-1">{clientData.agent?.name || '-'}</span>
+
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-slate-50 text-slate-500 rounded-lg shrink-0">
+                            <User size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="block text-[11px] text-gray-400 font-medium">Agente asignado</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.agent?.name || '-'}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-slate-50 text-slate-500 rounded-lg shrink-0">
+                            <Calendar size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="block text-[11px] text-gray-400 font-medium">Registrado el</span>
+                            <span className="text-gray-800 font-semibold truncate block">
+                                {new Date(clientData.created_at || Date.now()).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-slate-50 text-slate-500 rounded-lg shrink-0">
+                            <Calendar size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <span className="block text-[11px] text-gray-400 font-medium">Última actualización</span>
+                            <span className="text-gray-800 font-semibold truncate block">
+                                {clientData.updated_at ? new Date(clientData.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -170,11 +275,12 @@ export default function ClientDetailPage() {
                 {/* PERSONAL INFO */}
                 <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
                     <SectionHeader title="Información Personal" icon={User} />
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
                         <InfoBlock label="Nombre Completo" value={clientData.name} />
                         <InfoBlock label="Tipo de Persona" value={clientData.taxpayer_type} />
                         <InfoBlock label="Identificación Fiscal" value={clientData.tax_id} />
                         <InfoBlock label="Medio de contacto preferido" value={clientData.preferred_contact} />
+                        <InfoBlock label="Origen del Prospecto" value={clientData.lead_source_name || clientData.other_source || '-'} />
                     </div>
                 </div>
 
@@ -199,23 +305,49 @@ export default function ClientDetailPage() {
 
                 {/* PREFERENCES */}
                 <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
-                    <SectionHeader title="Preferencias y Criterios" icon={Target} />
+                    <SectionHeader title="Preferencias de operación" icon={Target} />
+                    <p className='text-sm text-gray-500 mb-6 -mt-2'>Configura que busca o que ofrece este cliente en el mercado inmobiliario.</p>
                     <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-                        <InfoBlock label="Interés Principal" value={formatInterestLabel(clientData.preferences?.main_interest || clientData.main_interest)} />
-                        <InfoBlock label="Tipo de Propiedad" value={clientData.preferences?.target_property_type || clientData.target_property_type} />
-                        <InfoBlock label="Presupuesto Mínimo" value={(clientData.preferences?.budget_min || clientData.budget_min) ? `$${(clientData.preferences?.budget_min || clientData.budget_min).toLocaleString()}` : null} />
-                        <InfoBlock label="Presupuesto Máximo" value={(clientData.preferences?.budget_max || clientData.budget_max) ? `$${(clientData.preferences?.budget_max || clientData.budget_max).toLocaleString()}` : null} />
-                        <InfoBlock label="Recámaras" value={clientData.preferences?.bedrooms || clientData.bedrooms} />
-                        <InfoBlock label="Baños" value={clientData.preferences?.bathrooms || clientData.bathrooms} />
-                        <InfoBlock label="Estacionamientos" value={clientData.preferences?.parking_spaces || clientData.parking_spaces} />
-                        <InfoBlock label="Forma de Pago" value={clientData.preferences?.payment_method || clientData.payment_method} />
-                        <InfoBlock label="Tiempo Estimado" value={clientData.preferences?.estimated_time || clientData.estimated_time} />
+                        {(() => {
+                            const rawInterest = clientData.preferences?.main_interest || clientData.main_interest;
+                            const currentInterest = normalizeInterest(rawInterest);
+                            const isRenta = currentInterest === 'renta' || currentInterest === 'quiero_rentar' || currentInterest === 'rent';
+                            const isVenta = currentInterest === 'venta' || currentInterest === 'quiero_vender' || currentInterest === 'sale';
+                            
+                            const timeLabel = isVenta ? 'Plazo estimado para vender' : (isRenta ? 'Plazo estimado para rentar' : 'Plazo estimado para comprar');
+                            const budgetMinLabel = isRenta ? 'Presupuesto mínimo mensual' : 'Presupuesto mínimo';
+                            const budgetMaxLabel = isRenta ? 'Presupuesto máximo mensual' : 'Presupuesto máximo';
+
+                            return (
+                                <>
+                                    <InfoBlock label="Interés principal" value={formatInterestLabel(rawInterest, interestCatalog)} />
+                                    <InfoBlock label="Tipo de propiedad objetivo" value={(propertyTypeCatalog.find(p => String(p.id) === String(clientData.preferences?.target_property_type || clientData.target_property_type) || String(p.value) === String(clientData.preferences?.target_property_type || clientData.target_property_type) || String(p.name) === String(clientData.preferences?.target_property_type || clientData.target_property_type))?.name) || clientData.preferences?.target_property_type || clientData.target_property_type} />
+                                    {(clientData.preferences?.budget_min ?? clientData.budget_min) != null ? <InfoBlock label={budgetMinLabel} value={`$${(clientData.preferences?.budget_min ?? clientData.budget_min).toLocaleString()}`} /> : null}
+                                    {(clientData.preferences?.budget_max ?? clientData.budget_max) != null ? <InfoBlock label={budgetMaxLabel} value={`$${(clientData.preferences?.budget_max ?? clientData.budget_max).toLocaleString()}`} /> : null}
+                                    {(clientData.preferences?.bedrooms ?? clientData.bedrooms) != null ? <InfoBlock label="Recámaras" value={clientData.preferences?.bedrooms ?? clientData.bedrooms} /> : null}
+                                    {(clientData.preferences?.bathrooms ?? clientData.bathrooms) != null ? <InfoBlock label="Baños" value={clientData.preferences?.bathrooms ?? clientData.bathrooms} /> : null}
+                                    {(clientData.preferences?.parking_spaces ?? clientData.parking_spaces) != null ? <InfoBlock label="Estacionamientos" value={clientData.preferences?.parking_spaces ?? clientData.parking_spaces} /> : null}
+                                    {(clientData.preferences?.payment_method ?? clientData.payment_method) != null ? <InfoBlock label="Forma de pago" value={clientData.preferences?.payment_method ?? clientData.payment_method} /> : null}
+                                    {(clientData.preferences?.estimated_time ?? clientData.estimated_time) != null ? <InfoBlock label={timeLabel} value={clientData.preferences?.estimated_time ?? clientData.estimated_time} /> : null}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
 
                 {/* PROPIEDADES VINCULADAS */}
                 <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
-                    <SectionHeader title="Propiedad Vinculada" icon={Home} />
+                    <SectionHeader 
+                        title="Propiedad Vinculada" 
+                        icon={Home} 
+                        extra={
+                            clientData.linked_properties !== undefined && clientData.linked_properties > 0 ? (
+                                <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full border border-slate-200">
+                                    {clientData.linked_properties} vinculada(s)
+                                </span>
+                            ) : null
+                        } 
+                    />
                     {propertyLoading ? (
                         <div className="flex items-center gap-3 text-slate-500 py-4">
                             <Loader2 className="w-5 h-5 text-primary_color animate-spin" />
@@ -353,23 +485,29 @@ export default function ClientDetailPage() {
                 </div>
 
                 {/* EXTRA INFO */}
-                <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
-                    <SectionHeader title="Información Adicional" icon={FileText} />
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                        <div>
-                            <p className='text-[11px] font-bold text-gray-400 uppercase leading-none mb-2'>Mensaje del Cliente</p>
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 italic">
-                                &ldquo;{clientData.message || 'Sin mensaje'}&rdquo;
-                            </div>
-                        </div>
-                        <div>
-                            <p className='text-[11px] font-bold text-gray-400 uppercase leading-none mb-2'>Notas Internas</p>
-                            <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 text-sm text-slate-700">
-                                {clientData.internal_notes || 'Sin notas internas'}
-                            </div>
+                {(clientData.message || clientData.internal_notes) && (
+                    <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
+                        <SectionHeader title="Información Adicional" icon={FileText} />
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+                            {clientData.message && (
+                                <div>
+                                    <p className='text-[11px] font-bold text-gray-400 uppercase leading-none mb-2'>Mensaje del Cliente</p>
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm text-slate-700 italic">
+                                        &ldquo;{clientData.message}&rdquo;
+                                    </div>
+                                </div>
+                            )}
+                            {clientData.internal_notes && (
+                                <div>
+                                    <p className='text-[11px] font-bold text-gray-400 uppercase leading-none mb-2'>Notas Internas</p>
+                                    <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 text-sm text-slate-700">
+                                        {clientData.internal_notes}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

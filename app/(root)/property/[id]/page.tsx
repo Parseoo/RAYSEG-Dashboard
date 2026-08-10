@@ -45,9 +45,11 @@ export default function PropertyDetailPage() {
   const router = useRouter();
   const propertyId = params?.id as string;
   const [activeMedia, setActiveMedia] = useState<any>(null);
+  const [activePlan, setActivePlan] = useState<any>(null);
   const [property, setProperty] = useState<PropertyDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isPlanGalleryOpen, setIsPlanGalleryOpen] = useState(false);
 
   useEffect(() => {
     if (!propertyId) return;
@@ -100,8 +102,11 @@ export default function PropertyDetailPage() {
   const Home = (LucideIcons as any).Home;
 
   useEffect(() => {
-    if (allMedia.length > 0) {
-      setActiveMedia(allMedia[0]);
+    if (propertyMedia.length > 0) {
+      setActiveMedia(propertyMedia[0]);
+    }
+    if (plansMedia.length > 0) {
+      setActivePlan(plansMedia[0]);
     }
   }, [property]);
 
@@ -119,6 +124,9 @@ export default function PropertyDetailPage() {
   const addressObj = Array.isArray(property.address) ? (property.address as any)[0] || {} : property.address || {};
   const fullAddress = (property as any).full_address || `${addressObj.street || ''} ${addressObj.exterior_number || addressObj.street_number || ''}, ${addressObj.neighborhood || ''}, ${addressObj.city || ''}, ${addressObj.state || ''}${addressObj.postal_code ? `, ${addressObj.postal_code}` : ''}`.replace(/^[\s,]+|[\s,]+$/g, '');
   const locationObj = (property as any).location || addressObj;
+  const rawLat = locationObj?.latitude || addressObj?.latitude || (property as any).latitude;
+  const rawLng = locationObj?.longitude || addressObj?.longitude || (property as any).longitude;
+  const hasCoords = rawLat && rawLng && !isNaN(parseFloat(rawLat)) && !isNaN(parseFloat(rawLng)) && parseFloat(rawLat) !== 0;
 
   const mlsClean = property.number_mls ? String(property.number_mls).trim() : '';
   const mlsDisplay = mlsClean
@@ -132,6 +140,42 @@ export default function PropertyDetailPage() {
   const propertyStatusDisplay = typeof property.property_status === 'object' && property.property_status !== null
     ? (property.property_status as any).name
     : property.property_status;
+
+  const checkIsFeatured = (val: any): boolean => {
+    if (!val) return false;
+    if (val === true || val === 1) return true;
+    if (typeof val === 'string') {
+      const lower = val.trim().toLowerCase();
+      return lower === 'true' || lower === '1';
+    }
+    return false;
+  };
+
+  const formatConservationStatus = (raw: any): string => {
+    if (!raw) return '';
+    if (typeof raw === 'object' && raw !== null) {
+      return raw.name || raw.value || raw.key || '';
+    }
+    const str = String(raw).trim();
+    const lower = str.toLowerCase();
+    const translations: Record<string, string> = {
+      excellent: 'Excelente',
+      excelente: 'Excelente',
+      good: 'Bueno',
+      bueno: 'Bueno',
+      new: 'Nuevo',
+      nuevo: 'Nuevo',
+      regular: 'Regular',
+      remodelado: 'Remodelado',
+      renovated: 'Remodelado',
+      bad: 'Malo',
+      malo: 'Malo',
+      needs_renovation: 'Para remodelar',
+      para_remodelar: 'Para remodelar',
+    };
+    if (translations[lower]) return translations[lower];
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
 
   return (
     <>
@@ -198,7 +242,7 @@ export default function PropertyDetailPage() {
                   </div>
                 </div>
 
-                {property.is_featured && (
+                {checkIsFeatured(property.is_featured) && (
                   <div className='flex flex-col gap-1.5'>
                     <span className='text-[11px] text-gray-500 font-medium uppercase tracking-wider'>Prioridad</span>
                     <div className='inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium'>
@@ -226,31 +270,31 @@ export default function PropertyDetailPage() {
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 p-5 sm:p-6 bg-slate-50/50'>
           <div className='lg:col-span-2 space-y-6'>
-            {allMedia.length > 0 && (
+            {propertyMedia.length > 0 && (
               <div className='bg-white p-4 sm:p-5 rounded-lg border border-gray-200 shadow-xs space-y-4'>
-                <div className='relative w-full max-w-md mx-auto aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs'>
+                <div className='relative w-full aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs'>
                   <Image
-                    src={activeMedia?.url || allMedia[0]?.url}
+                    src={activeMedia?.url || propertyMedia[0]?.url}
                     alt='Imagen de la propiedad'
                     fill
                     className='object-cover cursor-pointer'
                     unoptimized={true}
                     onClick={() => setIsGalleryOpen(true)}
                   />
-                  {(activeMedia?.isMain || (!activeMedia && allMedia[0]?.isMain)) && (
+                  {(activeMedia?.isMain || (!activeMedia && propertyMedia[0]?.isMain)) && (
                     <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-sm font-medium px-4 py-1.5 rounded-full z-20">
                       Principal
                     </div>
                   )}
                 </div>
                 <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-thin'>
-                  {allMedia.map((media, idx) => {
+                  {propertyMedia.map((media, idx) => {
                     const isActive = activeMedia ? activeMedia.url === media.url : idx === 0;
                     return (
                       <button
                         key={idx}
                         onClick={() => setActiveMedia(media)}
-                        className={`relative w-20 h-16 rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
+                        className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
                           isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -271,44 +315,72 @@ export default function PropertyDetailPage() {
             <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
               <h2 className='text-lg font-semibold text-gray-800 mb-4'>Información general</h2>
               <div className='divide-y divide-gray-100'>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Descripción</span>
-                  <span className='col-span-2 text-gray-800 font-normal whitespace-pre-wrap'>{property.description || '—'}</span>
+                  <span className='text-gray-800 font-normal whitespace-pre-wrap'>{property.description || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Dirección completa</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{fullAddress || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{fullAddress || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Calle</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.street || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.street || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Número exterior</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.exterior_number || addressObj.street_number || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.exterior_number || addressObj.street_number || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Número interior</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.interior_number || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.interior_number || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Colonia / Fraccionamiento</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.neighborhood || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.neighborhood || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Ciudad</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.city || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.city || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Estado</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.state || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.state || '—'}</span>
                 </div>
-                <div className='grid grid-cols-3 py-3 text-sm'>
+                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Código postal</span>
-                  <span className='col-span-2 text-gray-800 font-normal'>{addressObj.postal_code || addressObj.zip_code || '—'}</span>
+                  <span className='text-gray-800 font-normal'>{addressObj.postal_code || addressObj.zip_code || '—'}</span>
                 </div>
               </div>
             </div>
+
+            {property.amenities && property.amenities.length > 0 && (
+              <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+                <h2 className='text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2'>
+                  {Award && <Award size={18} className='text-blue-600' />}
+                  Amenidades
+                </h2>
+                <div className='flex flex-wrap gap-2.5'>
+                  {property.amenities.map((item: any, idx: number) => {
+                    const name = typeof item === 'object' ? item.name || item.value || item.key : String(item);
+                    const iconName = typeof item === 'object' ? item.icon : null;
+                    return (
+                      <span
+                        key={idx}
+                        className='inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 text-xs sm:text-sm font-semibold px-3.5 py-1.5 rounded-full shadow-2xs transition-all hover:bg-blue-100'
+                      >
+                        {iconName ? (
+                          <DynamicIcon name={iconName} size={14} className='text-blue-600' />
+                        ) : (
+                          <Award size={14} className='text-blue-500' />
+                        )}
+                        <span>{name}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
               <h2 className='text-lg font-semibold text-gray-800 mb-1'>Notas internas <span className='text-xs font-normal text-gray-400'>(solo administradores)</span></h2>
@@ -403,7 +475,7 @@ export default function PropertyDetailPage() {
                     </div>
                     <div>
                       <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5'>Estado de conservación</p>
-                      <p className='text-sm font-bold text-gray-800'>{(property as any).conservation_status}</p>
+                      <p className='text-sm font-bold text-gray-800'>{formatConservationStatus((property as any).conservation_status)}</p>
                     </div>
                   </div>
                 )}
@@ -435,14 +507,21 @@ export default function PropertyDetailPage() {
                       {Award && <Award size={16} />}
                     </div>
                     <div>
-                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1'>Amenidades</p>
-                      <div className='flex flex-wrap gap-1'>
-                        {property.amenities.map((item: any, idx: number) => (
-                          <span key={idx} className='inline-flex items-center gap-1 bg-slate-100 text-gray-800 text-[10px] font-semibold px-2 py-0.5 rounded border border-gray-200'>
-                            {item.icon && <DynamicIcon name={item.icon} size={11} />}
-                            {item.name || item}
-                          </span>
-                        ))}
+                      <p className='text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1.5'>Amenidades</p>
+                      <div className='flex flex-wrap gap-1.5'>
+                        {property.amenities.map((item: any, idx: number) => {
+                          const name = typeof item === 'object' ? item.name || item.value || item.key : String(item);
+                          const iconName = typeof item === 'object' ? item.icon : null;
+                          return (
+                            <span
+                              key={idx}
+                              className='inline-flex items-center gap-1 bg-blue-50 text-blue-800 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-blue-200'
+                            >
+                              {iconName && <DynamicIcon name={iconName} size={12} className="text-blue-600" />}
+                              <span>{name}</span>
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -450,13 +529,53 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
+            {plansMedia.length > 0 && (
+              <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+                <h3 className='text-base font-semibold text-gray-800 mb-3'>Planos</h3>
+                <div className='relative w-full aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs mt-3'>
+                  <Image
+                    src={activePlan?.url || plansMedia[0]?.url}
+                    alt='Plano de la propiedad'
+                    fill
+                    className='object-contain cursor-pointer'
+                    unoptimized={true}
+                    onClick={() => setIsPlanGalleryOpen(true)}
+                  />
+                </div>
+                {plansMedia.length > 1 && (
+                  <div className='flex gap-3 overflow-x-auto pb-2 scrollbar-thin mt-4'>
+                    {plansMedia.map((media: any, idx: number) => {
+                      const isActive = activePlan ? activePlan.url === media.url : idx === 0;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setActivePlan(media)}
+                          className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
+                            isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <Image
+                            src={media.url}
+                            alt={`Miniatura plano ${idx + 1}`}
+                            fill
+                            className='object-cover'
+                            unoptimized={true}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
               <h3 className='text-base font-semibold text-gray-800 mb-3'>Ubicación en mapa</h3>
               <div className='w-full h-[300px] overflow-hidden rounded-lg border border-gray-200 mt-3 shadow-2xs'>
                 <MapWithMarker
                   markerPosition={
-                    locationObj.latitude && locationObj.longitude
-                      ? { lat: parseFloat(locationObj.latitude), lng: parseFloat(locationObj.longitude) }
+                    hasCoords
+                      ? { lat: parseFloat(rawLat), lng: parseFloat(rawLng) }
                       : null
                   }
                   address={fullAddress}
@@ -495,7 +614,14 @@ export default function PropertyDetailPage() {
         <Gallery
           isOpen={isGalleryOpen}
           onClose={() => setIsGalleryOpen(false)}
-          images={allMedia.map(m => m.url)}
+          images={propertyMedia.map(m => m.url)}
+        />
+      )}
+      {isPlanGalleryOpen && (
+        <Gallery
+          isOpen={isPlanGalleryOpen}
+          onClose={() => setIsPlanGalleryOpen(false)}
+          images={plansMedia.map((m: any) => m.url)}
         />
       )}
     </>

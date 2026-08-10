@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { GetAllCatalogs, GetCatalogByName } from '@/lib/api/catalog-api';
+import { GetAllCatalogs, GetCatalogByID } from '@/lib/api/catalog-api';
 import { CatalogResponse, ItemResponse } from '@/lib/types/catalogs';
 import { Loader2, Plus } from 'lucide-react';
 import { showToast } from 'nextjs-toast-notify';
@@ -54,7 +54,7 @@ export default function CatalogsPage() {
     setSelectedCatalog(catalog);
     try {
       setItemsLoading(true);
-      const response = await GetCatalogByName(catalog.key || catalog.name);
+      const response = await GetCatalogByID(String(catalog.catalogoID));
       
       let items: ItemResponse[] = [];
       if (response?.data?.catalogItems) {

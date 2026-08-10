@@ -16,23 +16,41 @@ export function mapPropertyApiToFormState(
   const rawAddress = data.address;
   const address = Array.isArray(rawAddress) ? rawAddress[0] : rawAddress;
 
-  // Helper para resolver conservation_status que viene como string "5" del API
+  // Helper para resolver conservation_status que viene como string "5" o "excellent" del API
   const resolveConservationStatus = (raw: any): string => {
     if (!raw) return '';
     // Si es un objeto con name, usar resolveCatalogDisplayValue
     if (typeof raw === 'object' && raw.name) {
       return resolveCatalogDisplayValue(raw.name, catalogs.conservationStatusCatalog);
     }
-    // Si es string/number (como "5"), buscar por value/key y devolver name
+    // Si es string/number (como "5" o "excellent"), buscar por value/key y devolver name
     const trimmed = String(raw).trim();
-    if (!catalogs.conservationStatusCatalog.length) return trimmed;
-    const match = catalogs.conservationStatusCatalog.find(
-      item => String(item.value) === trimmed || String(item.key) === trimmed || String(item.catalogItemID) === trimmed
-    );
-    return match?.name || trimmed;
+    if (catalogs.conservationStatusCatalog.length) {
+      const match = catalogs.conservationStatusCatalog.find(
+        item => String(item.value) === trimmed || String(item.key) === trimmed || String(item.catalogItemID) === trimmed
+      );
+      if (match?.name) return match.name;
+    }
+    const lower = trimmed.toLowerCase();
+    const translations: Record<string, string> = {
+      excellent: 'Excelente',
+      excelente: 'Excelente',
+      good: 'Bueno',
+      bueno: 'Bueno',
+      new: 'Nuevo',
+      nuevo: 'Nuevo',
+      regular: 'Regular',
+      remodelado: 'Remodelado',
+      renovated: 'Remodelado',
+      bad: 'Malo',
+      malo: 'Malo',
+      needs_renovation: 'Para remodelar',
+      para_remodelar: 'Para remodelar',
+    };
+    return translations[lower] || trimmed;
   };
 
-  console.log('Mapping property data, ambientes:', data.ambientes);
+  console.log('Mapping property data, ambientes:', (data as any).ambientes);
 
   return {
     number_mls: data.number_mls || '',
@@ -65,7 +83,7 @@ export function mapPropertyApiToFormState(
     postal_code: address?.zip_code || address?.postal_code || '',
     status_publication: (data.property_post_status as any)?.name ?? data.property_post_status ?? '',
     note: (data as any).note || '',
-    is_featured: data.is_featured || false,
+    is_featured: (data.is_featured as any) === true || (data.is_featured as any) === 1 || String(data.is_featured).toLowerCase() === 'true' || String(data.is_featured) === '1',
     amenities: data.amenities?.map((a) => String(a.catalogItemID)) || [],
     images: (() => {
       const rawImages: any[] = Array.isArray(data.images) && data.images.length > 0

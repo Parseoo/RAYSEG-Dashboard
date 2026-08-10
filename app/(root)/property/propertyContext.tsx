@@ -170,11 +170,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setConservationStatusCatalog(extractItems(conservationStatusRes.value));
     }
 
-    const defaultPublicationStatuses: ItemResponse[] = [
-      { id: 1, name: 'Borrador', description: 'Borrador' },
-      { id: 2, name: 'Publicado', description: 'Publicado' },
-      { id: 3, name: 'Archivado', description: 'Archivado' }
-    ];
+    const defaultPublicationStatuses = [
+      { catalogItemID: 1, name: 'Borrador', description: 'Borrador' },
+      { catalogItemID: 2, name: 'Publicado', description: 'Publicado' },
+      { catalogItemID: 3, name: 'Archivado', description: 'Archivado' }
+    ] as ItemResponse[];
 
     if (publicationStatusRes.status === 'fulfilled' && publicationStatusRes.value) {
       const items = extractItems(publicationStatusRes.value);

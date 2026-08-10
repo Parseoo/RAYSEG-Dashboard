@@ -6,7 +6,20 @@ import { Tag } from './badges';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { NotificationCategory, NotificationItem } from '@/lib/types/notifications';
 
-type FilterType = 'all' | 'unread' | 'property' | 'lead' | 'system' | 'users' | 'sales' | 'visits';
+type FilterType = 'all' | 'unread' | string;
+
+const getCategoryLabel = (category: string): string => {
+    const upper = (category || '').toUpperCase();
+    if (categoryLabels[upper]) {
+        return categoryLabels[upper];
+    }
+    const clean = category.trim();
+    if (!clean) return category;
+    return clean
+        .split(/[\s_]+/)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+};
 
 const getNotificationIcon = (category?: string, type?: string) => {
     const cat = (category || '').toUpperCase();
@@ -115,6 +128,8 @@ interface NotificationsModalProps {
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
     const [filter, setFilter] = useState<FilterType>('all');
     const [showAllFilters, setShowAllFilters] = useState(false);
+    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
     const {
         notifications,
         unreadCount,
@@ -126,24 +141,33 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         markAllAsRead
     } = useNotificationStore();
 
+    useEffect(() => {
+        if (notifications.length > 0) {
+            const cats = Array.from(
+                new Set(
+                    notifications
+                        .map((n) => n.category)
+                        .filter((c): c is string => Boolean(c && typeof c === 'string'))
+                )
+            );
+
+            setAvailableCategories((prev) => {
+                if (filter === 'all' || filter === 'unread' || prev.length === 0) {
+                    return cats;
+                }
+                return Array.from(new Set([...prev, ...cats]));
+            });
+        }
+    }, [notifications, filter]);
+
     const loadFilteredNotifications = useCallback((selectedFilter: FilterType) => {
         let category: NotificationCategory | undefined = undefined;
         let unread: boolean | undefined = undefined;
 
         if (selectedFilter === 'unread') {
             unread = true;
-        } else if (selectedFilter === 'property') {
-            category = 'PROPERTIES';
-        } else if (selectedFilter === 'lead') {
-            category = 'LEADS';
-        } else if (selectedFilter === 'system') {
-            category = 'SYSTEM';
-        } else if (selectedFilter === 'users') {
-            category = 'USERS';
-        } else if (selectedFilter === 'sales') {
-            category = 'SALES';
-        } else if (selectedFilter === 'visits') {
-            category = 'VISITS';
+        } else if (selectedFilter !== 'all') {
+            category = selectedFilter;
         }
 
         fetchNotifications({
@@ -172,22 +196,27 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         loadFilteredNotifications(newFilter);
     };
 
-    const filters: { id: FilterType; label: string }[] = useMemo(() => [
-        { id: 'all', label: 'Todas' },
-        { id: 'unread', label: 'Sin leer' },
-        { id: 'property', label: 'Propiedades' },
-        { id: 'lead', label: 'Leads' },
-        { id: 'system', label: 'Sistema' },
-        { id: 'users', label: 'Usuarios' },
-        { id: 'sales', label: 'Ventas' },
-        { id: 'visits', label: 'Visitas' }
-    ], []);
+    const filters: { id: FilterType; label: string }[] = useMemo(() => {
+        const list: { id: FilterType; label: string }[] = [
+            { id: 'all', label: 'Todas' },
+            { id: 'unread', label: 'Sin leer' }
+        ];
+
+        availableCategories.forEach((cat) => {
+            list.push({
+                id: cat,
+                label: getCategoryLabel(cat)
+            });
+        });
+
+        return list;
+    }, [availableCategories]);
 
     const displayedFilters = useMemo(() => {
         if (showAllFilters) return filters;
-        const initial = filters.slice(0, 2);
-        if (!initial.some(f => f.id === filter)) {
-            const active = filters.find(f => f.id === filter);
+        const initial = filters.slice(0, 3);
+        if (!initial.some((f) => f.id === filter)) {
+            const active = filters.find((f) => f.id === filter);
             if (active) return [...initial, active];
         }
         return initial;
@@ -248,17 +277,19 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                             </button>
                         ))}
 
-                        <button
-                            onClick={() => setShowAllFilters(!showAllFilters)}
-                            className="px-3.5 py-2 rounded-full text-sm font-medium transition-all bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200 flex items-center gap-1"
-                        >
-                            <span>{showAllFilters ? 'Ver menos' : 'Ver más'}</span>
-                            {showAllFilters ? (
-                                <ChevronUp className="w-4 h-4 text-gray-500" />
-                            ) : (
-                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                            )}
-                        </button>
+                        {filters.length > 3 && (
+                            <button
+                                onClick={() => setShowAllFilters(!showAllFilters)}
+                                className="px-3.5 py-2 rounded-full text-sm font-medium transition-all bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200 flex items-center gap-1"
+                            >
+                                <span>{showAllFilters ? 'Ver menos' : 'Ver más'}</span>
+                                {showAllFilters ? (
+                                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 

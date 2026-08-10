@@ -69,7 +69,7 @@ const initialState: ClientState = {
   name: '',
   client_type: '',
   taxpayer_type: '',
-  client_status: 'activo',
+  client_status: '',
   tax_id: '',
   email: '',
   phone: '',

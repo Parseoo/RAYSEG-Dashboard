@@ -5,31 +5,32 @@ import { useMemo } from 'react';
 export const AddNotesClient = () => {
     const { state, updateField, clientOriginTypes, leadSourceTypes } = useClient();
 
-    const leadSourceOptions = useMemo(() => {
-        const catalog = (clientOriginTypes && clientOriginTypes.length > 0)
-            ? clientOriginTypes
-            : (leadSourceTypes && leadSourceTypes.length > 0)
-                ? leadSourceTypes
-                : [
-                    { name: 'Facebook' },
-                    { name: 'Instagram' },
-                    { name: 'Sitio Web' },
-                    { name: 'Recomendación' },
-                    { name: 'Llamada' },
-                    { name: 'WhatsApp' },
-                    { name: 'Portal Inmobiliario' },
-                    { name: 'Otro' }
-                ];
-        return catalog
-            .map((item: any) => {
-                const label = item.name || item.label || item.value || (typeof item === 'string' ? item : '');
-                return label ? { label: String(label), value: String(label) } : null;
-            })
-            .filter(Boolean) as { label: string; value: string }[];
-    }, [clientOriginTypes, leadSourceTypes]);
+    const catalog = (clientOriginTypes && clientOriginTypes.length > 0)
+        ? clientOriginTypes
+        : (leadSourceTypes && leadSourceTypes.length > 0)
+            ? leadSourceTypes
+            : [
+                { name: 'Facebook' },
+                { name: 'Instagram' },
+                { name: 'Sitio Web' },
+                { name: 'Recomendación' },
+                { name: 'Llamada' },
+                { name: 'WhatsApp' },
+                { name: 'Portal Inmobiliario' },
+                { name: 'Otro' }
+            ];
+
+    const leadSourceOptions = catalog
+        .map((item: any) => {
+            const label = item.name || item.label || item.value || (typeof item === 'string' ? item : '');
+            return label ? { label: String(label), value: String(label) } : null;
+        })
+        .filter(Boolean) as { label: string; value: string }[];
+
+    const isOtro = state.lead_source?.toLowerCase() === 'otro';
 
     // Configuración de los inputs
-    const baseInputs: InputFieldConfig[] = useMemo(() => [
+    const inputs: InputFieldConfig[] = [
         {
             type: 'select',
             id: 'lead_source',
@@ -37,23 +38,26 @@ export const AddNotesClient = () => {
             placeholder: 'Seleccione una opción',
             group: 1,
             options: leadSourceOptions
-        },
-        { type: 'textarea', id: 'internal_notes', label: 'Notas internas', placeholder: 'Escribe aquí las notas internas del cliente...', group: 2 },
-    ], [leadSourceOptions]);
+        }
+    ];
 
-    // Recalcular inputs cuando lead_source cambie
-    const inputs = useMemo(() => {
-        const isOtro = state.lead_source?.toLowerCase() === 'otro';
-        const otherSourceInput: InputFieldConfig | null = isOtro ? {
+    if (isOtro) {
+        inputs.push({
             type: 'text',
             id: 'other_source',
             label: 'Otra fuente',
             placeholder: 'Especifique otra fuente del prospecto',
             group: 1
-        } : null;
+        });
+    }
 
-        return otherSourceInput ? [...baseInputs.slice(0, 1), otherSourceInput, ...baseInputs.slice(1)] : baseInputs;
-    }, [state.lead_source]);
+    inputs.push({
+        type: 'textarea',
+        id: 'internal_notes',
+        label: 'Notas internas',
+        placeholder: 'Escribe aquí las notas internas del cliente...',
+        group: 2
+    });
 
     const mappedInputs = inputs.map(input => ({
         ...input,

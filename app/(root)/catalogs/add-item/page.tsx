@@ -185,7 +185,20 @@ export default function AddCatalogItemPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full h-[40px] px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary_color text-sm"
-                placeholder="Ej: Alberca climatizada, Terreno comercial..."
+                placeholder={
+                  (() => {
+                    if (!selectedCatalogName) return "Ej: Nombre del ítem...";
+                    const nameLower = selectedCatalogName.toLowerCase();
+                    if (nameLower.includes('amenidad')) return "Ej: Alberca climatizada, Gimnasio...";
+                    if (nameLower.includes('propiedad')) return "Ej: Casa, Departamento, Oficina...";
+                    if (nameLower.includes('operaci')) return "Ej: Venta, Renta, Traspaso...";
+                    if (nameLower.includes('terreno')) return "Ej: Regular, Plano, Ascendente...";
+                    if (nameLower.includes('moneda')) return "Ej: MXN, USD, EUR...";
+                    if (nameLower.includes('conservaci')) return "Ej: Nuevo, Excelente, Bueno, Remodelado...";
+                    if (nameLower.includes('estado')) return "Ej: Disponible, Reservado, Vendido...";
+                    return `Ej: Ingrese un ítem para ${selectedCatalogName}...`;
+                  })()
+                }
                 required
                 autoFocus
               />

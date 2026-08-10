@@ -71,9 +71,23 @@ export async function PreviewCatalogItem(data: PreviewCatalogItemRequest) {
   return httpClient.post<PreviewCatalogItemResponse>(`${BASE_URL}/items/preview`, data);
 }
 
-// 9. Obtener un catálogo por nombre o clave (incluye catalogItems)
+// 9. Obtener catálogo por su id
+export async function GetCatalogByID(catalog_id: string) {
+  return httpClient.get<CatalogResponse>(`${BASE_URL}/${catalog_id}`);
+}
+
+// Helper de compatibilidad: Busca un catálogo por nombre y luego obtiene sus detalles por ID
 export async function GetCatalogByName(catalog_name: string) {
-  return httpClient.get<CatalogResponse>(`${BASE_URL}/${catalog_name}`);
+  const allCatalogs = await GetAllCatalogs({ search: catalog_name, perPage: 100 });
+  const catalogs = allCatalogs?.data?.catalogs || [];
+  const found = catalogs.find((c: any) => c.key === catalog_name || c.name === catalog_name);
+  
+  if (found && found.catalogoID) {
+    return GetCatalogByID(String(found.catalogoID));
+  }
+  
+  // Si no se encuentra, retornar un mock vacío para evitar romper la UI
+  return { data: { catalogItems: [] } } as any;
 }
 
 // 10. Obtener un item de catálogo por ID

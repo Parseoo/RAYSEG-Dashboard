@@ -8,6 +8,8 @@ function findCatalogItem(raw: string, catalog: ItemResponse[]): ItemResponse | u
   const normalized = normalize(raw);
   return catalog.find(
     (item) =>
+      String(item.id) === normalized ||
+      String(item.catalogItemID) === normalized ||
       normalize(item.name ?? '') === normalized ||
       normalize(item.value ?? '') === normalized ||
       normalize(item.key ?? '') === normalized
