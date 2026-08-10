@@ -114,9 +114,6 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
       if (state.property && state.property > 0) {
         payload.property = { id: state.property };
       }
-
-      console.log(`Payload enviado al backend (${isEdit ? 'EditClient' : 'CreateClient'}):`, payload);
-
       if (isEdit) {
         const { EditClient } = await import('@/lib/api/client-api');
         await EditClient(clientId, payload);

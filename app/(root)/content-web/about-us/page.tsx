@@ -1,6 +1,6 @@
 "use client"
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { ArrowUpToLine, Save, X } from 'lucide-react';
+import { ArrowUpToLine, Save, X, Loader2 } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { AddAboutUs } from './addAboutUs';
 
@@ -9,7 +9,8 @@ const ContentWebAboutUsPage = () => {
     const onClearRef = useRef<(() => void) | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = async () => {
+    const handleSave = async (e?: React.MouseEvent) => {
+        e?.preventDefault();
         if (onSaveRef.current) {
             setIsSaving(true);
             try {
@@ -56,7 +57,8 @@ const ContentWebAboutUsPage = () => {
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-60">
-                                {isSaving ? <Save size={20} className="animate-spin" /> : <Save size={20} />} Guardar
+                                {isSaving ? <Loader2 size={20} className="animate-spin" /> : <ArrowUpToLine size={20} />} 
+                                {isSaving ? "Publicando..." : "Publicar"}
                             </button>
                         </div>
                     </div>

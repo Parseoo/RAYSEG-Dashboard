@@ -181,13 +181,6 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         return resolveCatalogItemId(a, amenitiesCatalog);
       }).filter((id): id is number => id !== null && !isNaN(id));
 
-      const amenityIds = (state.amenities || []).map(a => {
-        if (typeof a === 'number' && !isNaN(a)) return a;
-        const num = parseInt(String(a));
-        if (!isNaN(num) && num > 0) return num;
-        return resolveCatalogItemId(a, amenitiesCatalog);
-      }).filter((id): id is number => id !== null && !isNaN(id));
-
       // Mapear el estado del context al formato esperado por el API para creación
       const payload = {
         number_mls: state.number_mls || '',
@@ -267,13 +260,6 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
     if (!validatePropertyFields()) return;
     setIsSaving(true);
     try {
-      const amenityIds = (state.amenities || []).map(a => {
-        if (typeof a === 'number' && !isNaN(a)) return a;
-        const num = parseInt(String(a));
-        if (!isNaN(num) && num > 0) return num;
-        return resolveCatalogItemId(a, amenitiesCatalog);
-      }).filter((id): id is number => id !== null && !isNaN(id));
-
       const amenityIds = (state.amenities || []).map(a => {
         if (typeof a === 'number' && !isNaN(a)) return a;
         const num = parseInt(String(a));

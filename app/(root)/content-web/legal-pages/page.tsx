@@ -3,7 +3,7 @@
 import Breadcrumb from "@/components/ui/breadcrumb"
 import { AddPrivacyNotice } from "../privacy-notice/addPrivacyNotice"
 import { useState, useEffect } from "react"
-import { FileKey, Save, ScrollText, Loader2, X } from "lucide-react"
+import { FileKey, ScrollText, Loader2, X, ArrowUpToLine } from "lucide-react"
 import { AddTermsConditions } from "../terms-and-conditions/addTermsConditions"
 import { GetLegalPages, UpdateLegalPages } from "@/lib/api/web-content-api"
 import { showToast } from "nextjs-toast-notify"
@@ -149,7 +149,7 @@ const ContentWebPrivacyNoticePage = () => {
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50 text-sm">
-                                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Guardar
+                                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <ArrowUpToLine size={18} />} {isSaving ? "Publicando..." : "Publicar"}
                             </button>
                         </div>
                     </div>

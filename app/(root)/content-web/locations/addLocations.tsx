@@ -112,7 +112,6 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         const fetchProperties = async () => {
             try {
                 const res: any = await GetAllProperties(1, 100)
-                console.log('Respuesta completa de GetAllProperties:', res)
                 let items: any[] = []
                 if (Array.isArray(res?.data?.properties)) {
                     items = res.data.properties

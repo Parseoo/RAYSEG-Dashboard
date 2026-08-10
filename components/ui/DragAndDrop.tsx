@@ -146,13 +146,15 @@ const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChang
                     return (
                         <div
                             key={item.id}
-                            className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm"
+                            className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className="bg-blue-50 p-2.5 rounded-lg shrink-0">
-                                        {Icon ? <Icon size={20} className="text-blue-500" /> : <House size={20} className="text-blue-500" />}
-                                    </div>
+                                    {Icon && (
+                                        <div className="bg-blue-50 p-2.5 rounded-lg shrink-0">
+                                            <Icon size={20} className="text-blue-500" />
+                                        </div>
+                                    )}
                                     <div className="min-w-0 flex-1">
                                         <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">{item.title}</h3>
                                         {item.description && (
@@ -168,19 +170,21 @@ const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChang
             </div>
 
             {/* Vista Desktop: Lista Drag & Drop original */}
-            <ul ref={containerRef} id="hs-basic-usage-example-sortable" className={`w-full flex-col hidden md:flex ${className ?? ""}`}>
+            <ul ref={containerRef} id="hs-basic-usage-example-sortable" className={`w-full flex-col hidden md:flex gap-3 ${className ?? ""}`}>
                 {list.map((item) => {
                     const Icon = item.icon as any;
                     return (
                         <li key={item.id} data-id={item.id}
-                            className="flex items-center gap-x-3 py-3 px-4 cursor-grab text-sm font-medium bg-white border border-gray-200 text-gray-800 -mt-px first:rounded-t-lg first:mt-0 last:rounded-b-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-200">
+                            className="flex items-center gap-x-3 py-3 px-4 cursor-grab text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-800 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-200 shadow-sm">
                             <span className="handle shrink-0">
                                 <GripVertical size={16} className="text-gray-500" />
                             </span>
-                            <a href="#" className="bg-blue-50 block p-2 rounded-sm shadow-xs hover:bg-neutral-secondary-medium shrink-0">
-                                {Icon ? <Icon size={16} className="hover: text-blue-500" /> : <House size={16} className="text-blue-500" />}
-                            </a>
-                            <div className="ms-2 flex-1 min-w-0">
+                            {Icon && (
+                                <a href="#" className="bg-blue-50 block p-2 rounded-sm shadow-xs hover:bg-neutral-secondary-medium shrink-0">
+                                    <Icon size={20} className="text-blue-500" />
+                                </a>
+                            )}
+                            <div className="flex flex-col min-w-0 flex-1">
                                 <div className="text-sm font-medium truncate">{item.title}</div>
                                 {item.description ? <p className="text-xs text-gray-500 truncate">{item.description}</p> : null}
                             </div>
