@@ -71,22 +71,39 @@ export async function PreviewCatalogItem(data: PreviewCatalogItemRequest) {
   return httpClient.post<PreviewCatalogItemResponse>(`${BASE_URL}/items/preview`, data);
 }
 
-// 9. Obtener catálogo por su id
+// 9. Obtener catálogo por su id (con fallback si el endpoint no existe en backend)
 export async function GetCatalogByID(catalog_id: string) {
-  return httpClient.get<CatalogResponse>(`${BASE_URL}/${catalog_id}`);
+  try {
+    return await httpClient.get<CatalogResponse>(`${BASE_URL}/${catalog_id}`);
+  } catch (error: any) {
+    console.warn(`[GetCatalogByID] GET ${BASE_URL}/${catalog_id} retornó ${error?.response?.status || 'error'}. Usando fallback local.`);
+    return {
+      status: 200,
+      data: {
+        catalogoID: Number(catalog_id),
+        catalogItems: [],
+      } as any,
+      headers: new Headers(),
+    };
+  }
 }
 
 // Helper de compatibilidad: Busca un catálogo por nombre y luego obtiene sus detalles por ID
 export async function GetCatalogByName(catalog_name: string) {
-  const allCatalogs = await GetAllCatalogs({ search: catalog_name, perPage: 100 });
-  const catalogs = allCatalogs?.data?.catalogs || [];
-  const found = catalogs.find((c: any) => c.key === catalog_name || c.name === catalog_name);
-  
-  if (found && found.catalogoID) {
-    return GetCatalogByID(String(found.catalogoID));
+  try {
+    const allCatalogs = await GetAllCatalogs({ search: catalog_name, perPage: 100 });
+    const rawData: any = allCatalogs?.data;
+    const catalogs = rawData?.catalogs || (Array.isArray(rawData) ? rawData : rawData?.items || []);
+    const found = catalogs.find((c: any) => c.key === catalog_name || c.name === catalog_name);
+    
+    if (found) {
+      const items = found.catalogItems || found.items || found.catalog_items || [];
+      return { data: { catalogItems: items, ...found } } as any;
+    }
+  } catch (error) {
+    console.warn(`[GetCatalogByName] Error buscando catálogo "${catalog_name}":`, error);
   }
   
-  // Si no se encuentra, retornar un mock vacío para evitar romper la UI
   return { data: { catalogItems: [] } } as any;
 }
 

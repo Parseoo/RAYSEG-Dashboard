@@ -201,7 +201,7 @@ export default function CatalogItemDetailPage() {
               <Key size={13} className="text-slate-400" />
               <span>Clave (Slug)</span>
             </div>
-            <p className='text-sm font-mono font-semibold text-gray-900 mt-1'>{itemData.key || '-'}</p>
+            <p className='text-sm font-mono font-semibold text-gray-900 mt-1'>{itemData.key}</p>
           </div>
 
 
@@ -244,7 +244,7 @@ export default function CatalogItemDetailPage() {
           itemName={itemData.name}
           itemDetails={[
             { label: "Catálogo", value: catalogName },
-            { label: "Clave / Código", value: itemData.key || itemData.value || '-' },
+            { label: "Clave / Código", value: itemData.key || itemData.value },
             { label: "Descripción", value: itemData.description || 'Sin descripción' },
           ]}
           isDeleting={isDeleting}

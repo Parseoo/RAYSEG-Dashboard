@@ -130,3 +130,79 @@ export const fileToBase64 = (file: File): Promise<string> =>
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = (error) => reject(error);
   });
+
+export function shortenPlaceholder(placeholder?: string): string {
+  if (!placeholder) return "";
+  const trimmed = placeholder.trim();
+  if (trimmed.length <= 18) return trimmed.replace(/\.+$|\.\.\.+$/, '');
+
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes('título') && (lower.includes('dirección') || lower.includes('colonia') || lower.includes('calle'))) {
+    return "Buscar propiedad";
+  }
+  if (lower.includes('nombre') && (lower.includes('rfc') || lower.includes('curp'))) {
+    return "Buscar agente";
+  }
+  if (lower.includes('propiedad') && lower.includes('contrato')) {
+    return "Buscar contrato";
+  }
+  if (lower.includes('cliente') && (lower.includes('email') || lower.includes('teléfono'))) {
+    return "Buscar cliente";
+  }
+  if (lower.includes('nombre') && lower.includes('email') && lower.includes('teléfono')) {
+    return "Buscar usuario";
+  }
+  if (lower.includes('buscar propiedad o ubicación')) {
+    return "Buscar ubicación";
+  }
+  if (lower.includes('buscar por nombre o clave')) {
+    return "Buscar catálogo";
+  }
+  if (lower.includes('ingrese un ítem para')) {
+    return "Ej: Nombre";
+  }
+  if (lower.includes('alberca climatizada')) {
+    return "Ej: Alberca";
+  }
+  if (lower.includes('casa, departamento')) {
+    return "Ej: Casa";
+  }
+  if (lower.includes('venta, renta')) {
+    return "Ej: Venta";
+  }
+  if (lower.includes('nuevo, excelente')) {
+    return "Ej: Nuevo";
+  }
+  if (lower.includes('disponible, reservado')) {
+    return "Ej: Disponible";
+  }
+  if (lower.includes('añade una descripción')) {
+    return "Descripción";
+  }
+  if (lower.includes('calle 123, colonia')) {
+    return "Ej: Calle, Ciudad";
+  }
+  if (lower.includes('términos y condiciones')) {
+    return "Escribe términos";
+  }
+  if (lower.includes('aviso de privacidad')) {
+    return "Escribe privacidad";
+  }
+
+  if (lower.startsWith('buscar por ')) {
+    const mainPart = trimmed.slice(11).split(/,|\s+o\s+|\s+y\s+/)[0].trim();
+    return mainPart.length > 18 ? `Buscar ${mainPart.slice(0, 15)}` : `Buscar ${mainPart}`;
+  }
+
+  if (lower.startsWith('buscar ')) {
+    const mainPart = trimmed.slice(7).split(/,|\s+o\s+|\s+y\s+/)[0].trim();
+    return mainPart.length > 18 ? `Buscar ${mainPart.slice(0, 15)}` : `Buscar ${mainPart}`;
+  }
+
+  const firstSegment = trimmed.split(/,|\(|\./)[0].trim();
+  if (firstSegment.length > 20) {
+    return firstSegment.slice(0, 17);
+  }
+  return firstSegment;
+}

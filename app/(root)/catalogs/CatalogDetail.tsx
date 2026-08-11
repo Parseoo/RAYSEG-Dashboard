@@ -118,15 +118,22 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
   const handleDeleteItem = async () => {
     if (!itemToDelete) return;
 
-    if (itemToDelete.is_system) {
+    const isProtected = itemToDelete.is_system || (itemToDelete as any).is_system_item || (itemToDelete as any).isSystem;
+    if (isProtected) {
       showToast.warning("Los elementos protegidos del sistema no pueden ser eliminados.");
       setItemToDelete(null);
       return;
     }
 
+    const itemId = itemToDelete.catalogItemID ?? (itemToDelete as any).id ?? (itemToDelete as any).item_id;
+    if (!itemId) {
+      showToast.error("No se pudo identificar el ID del ítem");
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      await DeleteCatalogItem(itemToDelete.catalogItemID);
+      await DeleteCatalogItem(itemId);
       showToast.success(`Ítem "${itemToDelete.name}" eliminado correctamente`);
       setItemToDelete(null);
       if (onRefreshItems) {
@@ -220,7 +227,7 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                                     className="py-3 px-4 font-semibold w-32 cursor-pointer hover:bg-slate-200 transition-colors select-none"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span>Creado en</span>
+                                        <span>Fecha de Creación</span>
                                         <span className="text-gray-400">
                                             {sortField === 'created_at' && sortDirection === 'asc' && <ArrowUp size={14} className="text-primary_color font-bold" />}
                                             {sortField === 'created_at' && sortDirection === 'desc' && <ArrowDown size={14} className="text-primary_color font-bold" />}
@@ -233,13 +240,15 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                         </thead>
                         <tbody>
                             {paginatedItems.map((item, index) => {
+                                const itemId = item.catalogItemID ?? (item as any).id ?? (item as any).item_id ?? index;
+                                const isProtected = item.is_system || (item as any).is_system_item || (item as any).isSystem;
                                 const IconComponent = getLucideIcon(item.icon, item.name, item.key);
                                 const formattedDate = item.created_at
-                                    ? new Date(item.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                    ? new Date(item.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
                                     : '-';
                                 
                                 return (
-                                    <tr key={item.catalogItemID || index} className="border-b border-gray-200 hover:bg-slate-50 transition-colors">
+                                    <tr key={itemId} className="border-b border-gray-200 hover:bg-slate-50 transition-colors">
                                         <td className="py-3 px-4 font-medium text-sm text-gray-900 truncate">
                                             {item.name}
                                         </td>
@@ -259,20 +268,20 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                                         <td className="py-3 px-4 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <Tooltip content="Ver detalle">
-                                                    <Link href={`/catalogs/item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                                    <Link href={`/catalogs/item/${itemId}?catalog=${encodeURIComponent(catalog.name || '')}`}>
                                                         <button className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 flex items-center justify-center transition-colors">
                                                             <Eye size={16} className="text-gray-700" />
                                                         </button>
                                                     </Link>
                                                 </Tooltip>
                                                 <Tooltip content="Editar">
-                                                    <Link href={`/catalogs/edit-item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                                    <Link href={`/catalogs/edit-item/${itemId}?catalog=${encodeURIComponent(catalog.name || '')}`}>
                                                         <button className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 flex items-center justify-center transition-colors">
                                                             <Pencil size={16} className="text-gray-700" />
                                                         </button>
                                                     </Link>
                                                 </Tooltip>
-                                                {item.is_system ? (
+                                                {isProtected ? (
                                                     <Tooltip content="Ítem de sistema protegido">
                                                         <button 
                                                             disabled
@@ -312,13 +321,15 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
             {/* Mobile: Cards */}
             <div className="md:hidden mt-4 flex flex-col gap-4">
                 {paginatedItems.map((item, index) => {
+                    const itemId = item.catalogItemID ?? (item as any).id ?? (item as any).item_id ?? index;
+                    const isProtected = item.is_system || (item as any).is_system_item || (item as any).isSystem;
                     const IconComponent = getLucideIcon(item.icon, item.name, item.key);
                     const formattedDate = item.created_at
-                        ? new Date(item.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+                        ? new Date(item.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
                         : '-';
 
                     return (
-                        <div key={item.catalogItemID || index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+                        <div key={itemId} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <p className='font-bold text-base text-gray-800'>{item.name}</p>
@@ -327,25 +338,25 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
 
                                 <div className="relative">
                                     <button
-                                        onClick={() => setOpenActionMenu(prev => prev === item.catalogItemID ? null : item.catalogItemID)}
+                                        onClick={() => setOpenActionMenu(prev => prev === (itemId as any) ? null : (itemId as any))}
                                         className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
                                     >
                                         <MoreVertical size={20} />
                                     </button>
 
-                                    {openActionMenu === item.catalogItemID && (
+                                    {openActionMenu === (itemId as any) && (
                                         <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
-                                            <Link href={`/catalogs/item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                            <Link href={`/catalogs/item/${itemId}?catalog=${encodeURIComponent(catalog.name || '')}`}>
                                                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                                                     <Eye size={16} /> Ver
                                                 </button>
                                             </Link>
-                                            <Link href={`/catalogs/edit-item/${item.catalogItemID}?catalog=${encodeURIComponent(catalog.name || '')}`}>
+                                            <Link href={`/catalogs/edit-item/${itemId}?catalog=${encodeURIComponent(catalog.name || '')}`}>
                                                 <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                                                     <Pencil size={16} /> Editar
                                                 </button>
                                             </Link>
-                                            {item.is_system ? (
+                                            {isProtected ? (
                                                 <button disabled className="w-full text-left px-4 py-2 text-sm text-gray-300 cursor-not-allowed flex items-center gap-2">
                                                     <Lock size={16} /> Protegido
                                                 </button>
@@ -373,7 +384,7 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado en</p>
+                                    <p className="text-xs text-gray-500 font-semibold mb-0.5">Fecha de Creación</p>
                                     <p>{formattedDate}</p>
                                 </div>
                             </div>
@@ -403,7 +414,7 @@ export default function CatalogDetail({ catalog, items, loading, onRefreshItems 
           itemName={itemToDelete.name}
           itemDetails={[
             { label: "Catálogo", value: catalog.name },
-            { label: "Clave / Código", value: itemToDelete.key || itemToDelete.value || '-' },
+            { label: "Clave / Código", value: itemToDelete.key || itemToDelete.value},
             { label: "Descripción", value: itemToDelete.description || 'Sin descripción' },
           ]}
           isDeleting={isDeleting}

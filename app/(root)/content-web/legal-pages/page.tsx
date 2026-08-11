@@ -3,7 +3,7 @@
 import Breadcrumb from "@/components/ui/breadcrumb"
 import { AddPrivacyNotice } from "../privacy-notice/addPrivacyNotice"
 import { useState, useEffect } from "react"
-import { FileKey, ScrollText, Loader2, X, ArrowUpToLine } from "lucide-react"
+import { FileKey, ScrollText, Loader2, X, ArrowUpToLine, Info } from "lucide-react"
 import { AddTermsConditions } from "../terms-and-conditions/addTermsConditions"
 import { GetLegalPages, UpdateLegalPages } from "@/lib/api/web-content-api"
 import { showToast } from "nextjs-toast-notify"
@@ -59,10 +59,10 @@ const ContentWebPrivacyNoticePage = () => {
             if (res.data) {
                 setLegalData(res.data);
             }
-            showToast.success("Páginas legales actualizadas correctamente");
+            showToast.success(activeTab === 'privacy' ? "Aviso de privacidad actualizado correctamente" : "Términos y condiciones actualizados correctamente");
         } catch (error) {
             console.error("Error saving legal pages:", error);
-            showToast.error("Error al actualizar las páginas legales");
+            showToast.error(activeTab === 'privacy' ? "Error al actualizar el aviso de privacidad" : "Error al actualizar los términos y condiciones");
         } finally {
             setIsSaving(false);
         }
@@ -136,19 +136,23 @@ const ContentWebPrivacyNoticePage = () => {
                         )}
                     </div>
 
-                    <div className="flex items-center mt-4 sm:mt-6">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:justify-end">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mt-6 gap-4 border-t border-gray-100 pt-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Info size={16} className="shrink-0" />
+                            <span>Los cambios se aplicarán directamente al sitio público.</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
                             <button
                                 type="button"
                                 onClick={() => setLegalData({ privacy_title: '', privacy_content: '', terms_title: '', terms_content: '' })}
-                                className="bg-slate-100 w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-md text-sm">
+                                className="bg-slate-100 w-full sm:w-auto min-w-[160px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:bg-slate-200 transition-all font-medium shadow-sm text-sm">
                                 <X size={18} /> Limpiar campos
                             </button>
                             <button
                                 type="button"
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md disabled:opacity-50 text-sm">
+                                className="bg-primary_color text-white w-full sm:w-auto min-w-[160px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-sm disabled:opacity-50 text-sm">
                                 {isSaving ? <Loader2 className="animate-spin" size={18} /> : <ArrowUpToLine size={18} />} {isSaving ? "Publicando..." : "Publicar"}
                             </button>
                         </div>

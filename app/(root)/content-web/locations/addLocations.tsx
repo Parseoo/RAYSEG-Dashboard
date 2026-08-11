@@ -601,7 +601,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                             type="text"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
-                            placeholder="Ej: Calle 123, Colonia, Ciudad, Estado"
+                            placeholder={typeof window !== 'undefined' && window.innerWidth < 640 ? "Ej: Calle, Ciudad" : "Ej: Calle 123, Colonia, Ciudad, Estado"}
                             className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm h-[42px]"
                             onKeyDown={(e) => e.key === "Enter" && fijarEnMapa()}
                         />

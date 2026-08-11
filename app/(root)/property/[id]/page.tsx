@@ -261,7 +261,7 @@ export default function PropertyDetailPage() {
               <p className='text-2xl sm:text-3xl font-bold text-gray-800'>
                 ${Number(property.price || 0).toLocaleString('es-MX')}
                 <span className='text-sm sm:text-base font-normal text-gray-500 ml-1.5'>
-                  {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? '/ mes' : 'MXN'}
+                  {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? 'MXN / mes' : 'MXN'}
                 </span>
               </p>
             </div>
@@ -589,7 +589,7 @@ export default function PropertyDetailPage() {
                 <div className='grid grid-cols-2 py-3 text-sm'>
                   <span className='text-gray-500 font-medium'>Precio de referencia</span>
                   <span className='text-gray-800 font-semibold text-right sm:text-left'>
-                    ${Number(property.price || 0).toLocaleString('es-MX')} {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? '/ mes' : 'MXN'}
+                    ${Number(property.price || 0).toLocaleString('es-MX')} {String(operationTypeDisplay || '').toLowerCase() === 'renta' ? 'MXN / mes' : 'MXN'}
                   </span>
                 </div>
                 <div className='grid grid-cols-2 py-3 text-sm'>

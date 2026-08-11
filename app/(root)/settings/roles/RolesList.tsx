@@ -11,7 +11,7 @@ import { showToast } from 'nextjs-toast-notify';
 import { InputField } from '@/components/ui/Input';
 import { Save } from 'lucide-react';
 
-const headers = ['ID', 'Nombre del Rol', 'Descripción', 'Sistema', 'Creado El', 'Actualizado El', 'Acciones'];
+const headers = ['ID', 'Nombre del Rol', 'Descripción', 'Sistema', 'Fecha de Creación', 'Fecha de Modificación', 'Acciones'];
 
 function RolesList() {
     const [roles, setRoles] = useState<any[]>([]);
@@ -118,10 +118,10 @@ function RolesList() {
                     </span>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {role.created_at ? new Date(role.created_at).toLocaleString('es-MX', { timeZone: 'UTC' }) : "-"}
+                    {role.created_at ? new Date(role.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }) : "-"}
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {role.updated_at ? new Date(role.updated_at).toLocaleString('es-MX', { timeZone: 'UTC' }) : "-"}
+                    {role.updated_at ? new Date(role.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }) : "-"}
                 </td>
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
@@ -212,12 +212,12 @@ function RolesList() {
                         </span>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado El</p>
-                        <p>{role.created_at ? new Date(role.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Fecha de Creación</p>
+                        <p>{role.created_at ? new Date(role.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Actualizado El</p>
-                        <p>{role.updated_at ? new Date(role.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Fecha de Modificación</p>
+                        <p>{role.updated_at ? new Date(role.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                 </div>
             </div>

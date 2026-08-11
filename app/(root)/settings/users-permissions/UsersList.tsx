@@ -20,7 +20,7 @@ import { showToast } from 'nextjs-toast-notify';
 import { statusOptions } from './selectUsers';
 import { getUserImageUrl } from '@/lib/utils';
 
-const headers = ['Imagen', 'Usuario', 'Contacto', 'Rol', 'Estatus', 'Creado en', 'Modificado en', 'Acciones'];
+const headers = ['Imagen', 'Usuario', 'Contacto', 'Rol', 'Estatus', 'Fecha de Creación', 'Fecha de Modificación', 'Acciones'];
 
 function UsersList() {
     const router = useRouter();
@@ -252,10 +252,10 @@ function UsersList() {
                     </Tag>
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-"}
                 </td>
                 <td className='py-4 px-4 text-sm text-gray-700'>
-                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
+                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-"}
                 </td>
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
@@ -381,12 +381,12 @@ function UsersList() {
                         <p>{role}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Creado en</p>
-                        <p>{user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Fecha de Creación</p>
+                        <p>{user.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Modificado en</p>
-                        <p>{user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                        <p className="text-xs text-gray-500 font-semibold mb-0.5">Fecha de Modificación</p>
+                        <p>{user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                 </div>
             </div>

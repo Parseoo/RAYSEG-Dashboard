@@ -107,7 +107,7 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
                 {/* Estado de cuenta */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1">
                     <span className="text-gray-500 font-medium text-sm">Estado de cuenta</span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold w-fit shrink-0 ${
                         user?.is_active
                             ? "bg-emerald-100 text-emerald-800"
                             : "bg-red-100 text-red-800"

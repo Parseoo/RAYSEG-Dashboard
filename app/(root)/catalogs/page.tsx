@@ -26,18 +26,35 @@ export default function CatalogsPage() {
     try {
       setLoading(true);
       const response = await GetAllCatalogs();
-      const fetchedCatalogs: CatalogResponse[] = response?.data?.catalogs || (Array.isArray(response?.data) ? response.data : []);
+      const rawData: any = response?.data;
+      let fetchedCatalogs: CatalogResponse[] = [];
+
+      if (Array.isArray(rawData)) {
+        fetchedCatalogs = rawData;
+      } else if (Array.isArray(rawData?.catalogs)) {
+        fetchedCatalogs = rawData.catalogs;
+      } else if (Array.isArray(rawData?.items)) {
+        fetchedCatalogs = rawData.items;
+      } else if (Array.isArray(rawData?.data)) {
+        fetchedCatalogs = rawData.data;
+      } else if (Array.isArray(response as any)) {
+        fetchedCatalogs = response as any;
+      }
+
       setCatalogs(fetchedCatalogs);
       
       if (fetchedCatalogs.length > 0) {
         let target = fetchedCatalogs[0];
         if (selectCatalogKeyOrId) {
           const found = fetchedCatalogs.find(
-            c => c.catalogoID === Number(selectCatalogKeyOrId) || c.key === selectCatalogKeyOrId || c.name === selectCatalogKeyOrId
+            c => {
+              const catId = c.catalogoID ?? (c as any).catalogID ?? (c as any).id ?? (c as any).catalog_id;
+              return String(catId) === String(selectCatalogKeyOrId) || c.key === selectCatalogKeyOrId || c.name === selectCatalogKeyOrId;
+            }
           );
           if (found) target = found;
         }
-        handleSelectCatalog(target);
+        await handleSelectCatalog(target);
       } else {
         setSelectedCatalog(null);
         setCatalogItems([]);
@@ -51,24 +68,43 @@ export default function CatalogsPage() {
   };
 
   const handleSelectCatalog = async (catalog: CatalogResponse) => {
+    if (!catalog) return;
     setSelectedCatalog(catalog);
+
+    const embeddedItems = catalog.catalogItems || (catalog as any).items || (catalog as any).catalog_items || [];
+    setCatalogItems(embeddedItems);
+
+    if (embeddedItems.length > 0) {
+      return;
+    }
+
+    const catId = catalog.catalogoID ?? (catalog as any).catalogID ?? (catalog as any).id ?? (catalog as any).catalog_id;
+
+    if (!catId) {
+      return;
+    }
+
     try {
       setItemsLoading(true);
-      const response = await GetCatalogByID(String(catalog.catalogoID));
+      const response = await GetCatalogByID(String(catId));
       
+      const rawResData: any = response?.data;
       let items: ItemResponse[] = [];
-      if (response?.data?.catalogItems) {
-        items = response.data.catalogItems;
-      } else if (response?.data && Array.isArray((response.data as any).items)) {
-        items = (response.data as any).items;
-      } else if (Array.isArray(response?.data)) {
-        items = response.data;
+      if (rawResData?.catalogItems && Array.isArray(rawResData.catalogItems)) {
+        items = rawResData.catalogItems;
+      } else if (rawResData?.items && Array.isArray(rawResData.items)) {
+        items = rawResData.items;
+      } else if (rawResData?.data && Array.isArray(rawResData.data)) {
+        items = rawResData.data;
+      } else if (Array.isArray(rawResData)) {
+        items = rawResData;
       }
-      setCatalogItems(items);
+
+      if (items.length > 0) {
+        setCatalogItems(items);
+      }
     } catch (error) {
-      console.error("Error fetching catalog items:", error);
-      showToast.error(`Error al cargar ítems del catálogo ${catalog.name}`);
-      setCatalogItems([]);
+      console.warn("Error fetching catalog items:", error);
     } finally {
       setItemsLoading(false);
     }
@@ -111,7 +147,8 @@ export default function CatalogsPage() {
             <button 
                 onClick={() => {
                     if (selectedCatalog) {
-                        router.push(`/catalogs/add-item?catalog=${encodeURIComponent(selectedCatalog.name)}&catalogId=${selectedCatalog.catalogoID}`);
+                        const catId = selectedCatalog.catalogoID ?? (selectedCatalog as any).catalogID ?? (selectedCatalog as any).id ?? (selectedCatalog as any).catalog_id;
+                        router.push(`/catalogs/add-item?catalog=${encodeURIComponent(selectedCatalog.name || '')}&catalogId=${catId || ''}`);
                     } else {
                         showToast.warning("Selecciona un catálogo primero");
                     }

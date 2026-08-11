@@ -32,17 +32,16 @@ export const AddTermsConditions = ({ data, updatedAt, onChange }: AddTermsCondit
     return (
         <>
             <div className='w-full max-h-max rounded-lg p-5 border flex flex-col'>
-                <div className='flex justify-between items-center mb-2'>
-                    <h1 className='font-[500] text-lg'>Datos de los Términos y Condiciones</h1>
-                    <div className="flex items-center gap-2">
+                <div className='mb-4'>
+                    <h1 className='font-[500] text-lg mb-1'>Datos de los Términos y Condiciones</h1>
+                    <div className="flex items-center gap-2 mb-2">
                         <Info className="flex-shrink-0 text-gray-500 w-4 h-4" />
                         <p className="text-gray-500 text-sm">Última actualización: {formatDate(updatedAt || data.updated_at)}</p>
                     </div>
+                    <p className='text-md text-gray-500'>
+                        Configura el título y el texto que conforman los términos y condiciones.
+                    </p>
                 </div>
-
-                <p className='text-md text-gray-500'>
-                    Configura el título y el texto que conforman los términos y condiciones.
-                </p>
 
                 <div className="mt-4">
                     <DynamicInputs inputs={[mappedTitleInput]} withBgWhite={true} />
