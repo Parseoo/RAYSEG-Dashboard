@@ -23,7 +23,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { showToast } from 'nextjs-toast-notify';
 import { getImageUrl } from '@/lib/utils';
 
-const headers = ['Propiedad', 'Tipo', 'Operación', 'Precio', 'Estatus', 'Publicación web', 'Creado en', 'Destacada', 'Acciones'];
+const headers = ['Propiedad', 'Tipo', 'Operación', 'Precio', 'Estatus', 'Publicación web', 'Fecha de Creación', 'Destacada', 'Acciones'];
 
 function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -308,8 +308,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
   const formatPrice = (price: string) => {
     const num = parseFloat(price);
-    if (isNaN(num)) return price;
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
+    if (isNaN(num)) return price ? `${price} MXN` : '-';
+    const formatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
+    return `${formatted} MXN`;
   };
 
   const formatOperationType = useCallback((op: any) => {
@@ -437,7 +438,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         <td className='py-4 px-4 text-sm text-gray-700 font-medium whitespace-nowrap'>{formatPrice(property.price)}</td>
         <td className='py-4 px-4 whitespace-nowrap'><Tag status={property.property_status} statusType='property'>{property.property_status || '-'}</Tag></td>
         <td className='py-4 px-4 whitespace-nowrap'><Tag status={property.property_post_status?.name} statusType='publication'>{property.property_post_status?.name || '-'}</Tag></td>
-        <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX') : '-'}</td>
+        <td className='py-4 px-4 text-sm text-gray-700 whitespace-nowrap'>{property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</td>
         <td className='py-4 px-4 whitespace-nowrap'>
           <div className='flex items-center justify-center'>
             {((property.is_featured as any) === true || (property.is_featured as any) === 1 || String(property.is_featured).toLowerCase() === 'true' || String(property.is_featured) === '1') ? (
@@ -580,7 +581,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           {/* Footer with Featured Star and Date */}
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-500">
-              Creado: {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+              Fecha de Creación: {property.created_at ? new Date(property.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
             </div>
             <div className="flex items-center gap-1.5">
               {((property.is_featured as any) === true || (property.is_featured as any) === 1 || String(property.is_featured).toLowerCase() === 'true' || String(property.is_featured) === '1') ? (
@@ -636,7 +637,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
           <div className="mb-6 space-y-5">
             {/* Buscador y Botón Destacadas */}
-            <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-4 w-full'>
               <div className='flex-1 min-w-0'>
                 <Search
                   title="Buscar por título, descripción, dirección (ciudad, colonia, calle)"
@@ -648,10 +649,10 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               <button
                 type="button"
                 onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
-                className={`h-[40px] px-3.5 rounded-lg flex items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer ${
+                className={`h-[40px] px-4 rounded-lg flex items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap self-start sm:self-auto ${
                   isFeaturedOnly
                     ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm'
-                    : 'bg-slate-100 border-slate-200 text-gray-700 hover:bg-slate-200'
+                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                 }`}
                 title="Filtrar sólo destacadas"
               >

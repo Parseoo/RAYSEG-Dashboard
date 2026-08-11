@@ -224,10 +224,10 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
         title="Eliminar Agente"
         itemName={deleteModal.item?.name || ''}
         itemDetails={deleteModal.item ? [
-          { label: 'Email', value: deleteModal.item.email || '-' },
-          { label: 'Rol', value: deleteModal.item.type || '-' },
-          { label: 'Propiedades activas', value: deleteModal.item.propertiesActive || '-' },
-          { label: 'Estatus', value: deleteModal.item.statusLabel || '-' }
+          { label: 'Email', value: deleteModal.item.email},
+          { label: 'Rol', value: deleteModal.item.type},
+          { label: 'Propiedades activas', value: deleteModal.item.propertiesActive},
+          { label: 'Estatus', value: deleteModal.item.statusLabel}
         ] : []}
         isDeleting={isDeleting}
       />

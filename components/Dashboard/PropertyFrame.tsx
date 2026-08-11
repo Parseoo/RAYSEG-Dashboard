@@ -13,8 +13,9 @@ import { getImageUrl } from '@/lib/utils';
 
 const formatPrice = (price: string) => {
   const num = parseFloat(price);
-  if (isNaN(num)) return price;
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
+  if (isNaN(num)) return price ? `${price} MXN` : '-';
+  const formatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
+  return `${formatted} MXN`;
 };
 
 export const PropertyList = () => {

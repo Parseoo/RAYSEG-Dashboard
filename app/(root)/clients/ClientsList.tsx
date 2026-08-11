@@ -31,7 +31,7 @@ const headers = [
   'Interés principal',
   'Origen',
   'Agente',
-  'Creado en',
+  'Fecha de Creación',
   'Acciones'
 ];
 
@@ -269,18 +269,18 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
             )}
           </div>
           <div>
-            <p className='font-medium text-sm'>{row.name || '-'}</p>
+            <p className='font-medium text-sm'>{row.name}</p>
             <p className='text-xs text-gray-500'>CLI-{row.id}</p>
           </div>
         </div>
       </td>
       <td className='py-4 px-4'>
         <div>
-          <p className='text-sm'>{row.contact?.email || '-'}</p>
-          <p className='text-xs text-gray-500'>{row.contact?.phone || '-'}</p>
+          <p className='text-sm'>{row.contact?.email}</p>
+          <p className='text-xs text-gray-500'>{row.contact?.phone}</p>
         </div>
       </td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.client_type || '-'}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.client_type}</td>
       <td className='py-4 px-4'>
         <Tag
           status={row.client_status}
@@ -290,10 +290,10 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </Tag>
       </td>
       <td className='py-4 px-4 text-sm text-gray-700 font-medium'>{formatInterestLabel(row.main_interest, interestCatalog)}</td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.origin || '-'}</td>
-      <td className='py-4 px-4 text-sm text-gray-700'>{row.agent?.name || row.agent_id || '-'}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.origin}</td>
+      <td className='py-4 px-4 text-sm text-gray-700'>{row.agent?.name || row.agent_id}</td>
       <td className='py-4 px-4 text-sm text-gray-500'>
-        {row.created_date ? new Date(row.created_date).toLocaleDateString('es-MX', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+        {row.created_date ? new Date(row.created_date).toLocaleDateString('es-MX', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
       </td>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-2'>
@@ -354,7 +354,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
             )}
           </div>
           <div>
-            <p className='font-bold text-base text-gray-800'>{row.name || '-'}</p>
+            <p className='font-bold text-base text-gray-800'>{row.name}</p>
             <p className='text-xs text-gray-500'>CLI-{row.id}</p>
           </div>
         </div>
@@ -398,8 +398,8 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
       <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Contacto</p>
-          <p className="truncate" title={row.contact?.email}>{row.contact?.email || '-'}</p>
-          <p className="text-xs text-gray-600">{row.contact?.phone || '-'}</p>
+          <p className="truncate" title={row.contact?.email}>{row.contact?.email}</p>
+          <p className="text-xs text-gray-600">{row.contact?.phone}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Estado</p>
@@ -409,7 +409,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Tipo</p>
-          <p>{row.client_type || '-'}</p>
+          <p>{row.client_type}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Interés principal</p>
@@ -417,11 +417,11 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Origen</p>
-          <p>{row.origin || '-'}</p>
+          <p>{row.origin}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Agente</p>
-          <p className="truncate" title={row.agent?.name || row.agent_id}>{row.agent?.name || row.agent_id || '-'}</p>
+          <p className="truncate" title={row.agent?.name || row.agent_id}>{row.agent?.name || row.agent_id}</p>
         </div>
       </div>
     </div>
@@ -693,11 +693,11 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         title="Eliminar Cliente"
         itemName={deleteModal.item?.name || ''}
         itemDetails={deleteModal.item ? [
-          { label: 'Email', value: deleteModal.item.contact?.email || '-' },
-          { label: 'Tipo', value: deleteModal.item.client_type || '-' },
+          { label: 'Email', value: deleteModal.item.contact?.email },
+          { label: 'Tipo', value: deleteModal.item.client_type },
           { label: 'Interés', value: formatInterestLabel(deleteModal.item.main_interest, interestCatalog) },
-          { label: 'Teléfono', value: deleteModal.item.contact?.phone || '-' },
-          { label: 'Origen', value: deleteModal.item.origin || '-' }
+          { label: 'Teléfono', value: deleteModal.item.contact?.phone },
+          { label: 'Origen', value: deleteModal.item.origin }
         ] : []}
         isDeleting={isDeleting}
       />

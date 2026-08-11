@@ -141,7 +141,7 @@ export default function CatalogSearchSelect({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre o clave..."
+                placeholder={typeof window !== 'undefined' && window.innerWidth < 640 ? "Buscar" : "Buscar por nombre o clave..."}
                 className="w-full bg-white border border-gray-200 rounded-md pl-8 pr-7 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary_color focus:border-primary_color"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -165,11 +165,16 @@ export default function CatalogSearchSelect({
                 <span>Buscando catálogos...</span>
               </div>
             ) : filteredCatalogs.length > 0 ? (
-              filteredCatalogs.map((catalog) => {
-                const isSelected = selectedCatalog?.catalogoID === catalog.catalogoID || selectedCatalog?.key === catalog.key;
+              filteredCatalogs.map((catalog, index) => {
+                const catId = catalog.catalogoID ?? (catalog as any).catalogID ?? (catalog as any).id ?? (catalog as any).catalog_id;
+                const selId = selectedCatalog?.catalogoID ?? (selectedCatalog as any)?.catalogID ?? (selectedCatalog as any)?.id ?? (selectedCatalog as any)?.catalog_id;
+                const isSelected = (selId !== undefined && catId !== undefined && String(selId) === String(catId)) ||
+                  (selectedCatalog?.key && catalog.key && selectedCatalog.key === catalog.key) ||
+                  (selectedCatalog?.name && catalog.name && selectedCatalog.name === catalog.name);
+                
                 return (
                   <button
-                    key={catalog.catalogoID || catalog.key || catalog.name}
+                    key={catId || catalog.key || catalog.name || index}
                     type="button"
                     onClick={() => handleSelect(catalog)}
                     className={`w-full text-left px-3 py-2 rounded-md text-xs flex items-center justify-between transition-colors ${
