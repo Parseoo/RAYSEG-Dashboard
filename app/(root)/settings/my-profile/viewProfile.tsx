@@ -70,12 +70,7 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
                                     fill
                                     sizes="96px"
                                     unoptimized={true}
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        if (target && !target.src.endsWith('/user.svg')) {
-                                            target.src = '/user.svg';
-                                        }
-                                    }}
+                                    
                                     className="object-cover"
                                 />
                             ) : (

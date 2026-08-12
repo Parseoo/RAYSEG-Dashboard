@@ -53,6 +53,7 @@ const initialUser: UserForm = {
     role: "",
     is_active: "true",
     is_superuser: false,
+    es_agente: false,
     street: "",
     ext_number: "",
     int_number: "",
@@ -238,7 +239,8 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             role_id: Number(user.role) || 0,
             is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo',
             is_staff: true,
-            is_superuser: user.is_superuser === true,
+            is_superuser: false,
+            es_agente: user.es_agente === 'true' || user.es_agente === true,
         };
 
         try {
@@ -294,6 +296,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                             'is_active': 'is_active',
                             'is_staff': 'is_staff',
                             'is_superuser': 'is_superuser',
+                            'es_agente': 'es_agente',
                             'phone': 'phone',
                             'address': 'address',
                             'internal_notes': 'notas_internas'

@@ -22,7 +22,7 @@ export function MarkerHouse(props: MarkerHouseProps) {
                         <span className='mr-2 text-2xl text-secondary'>📍</span>
                         <h5 className='text-md text-secondary'>{name}</h5>
                     </div>
-                    <Image src='/casa.jpeg' alt={name} width={100} height={100} className="w-full h-auto" />
+                    {image && <Image src={image} alt={name} width={100} height={100} className="w-full h-auto" />}
                     <button className="px-3 py-2 mt-2 text-white rounded-lg bg-secondary mx-auto">Ver popiedad</button>
                 </Popup>
             </Marker>

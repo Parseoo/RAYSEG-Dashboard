@@ -46,7 +46,8 @@ export const PropertyList = () => {
       try {
         const response = await GetAllProperties(1);
         if (response.data?.properties) {
-          setProperties(response.data.properties.slice(0, 10)); // Show latest 10
+          const featured = response.data.properties.filter((p: any) => p.is_featured === true || p.is_featured === 'true' || p.is_featured === 1);
+          setProperties(featured.slice(0, 10)); // Show latest 10
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -132,7 +133,7 @@ export const PropertyList = () => {
 
   const renderMobileCard = (property: any) => {
     const images = property.images;
-    let imageUrl = '/property.jpg';
+    let imageUrl = '';
     if (images && Array.isArray(images) && images.length > 0) {
       const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
       const imgPath = mainImage?.image || mainImage?.file || mainImage?.image_url || mainImage?.url || mainImage?.src || (typeof mainImage === 'string' ? mainImage : null);
@@ -147,20 +148,17 @@ export const PropertyList = () => {
       <div key={property.property_id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         {/* Image */}
         <div className="relative w-full h-48 bg-slate-100">
-          <Image
-            src={imageUrl}
-            alt={property.title || 'Property'}
-            fill
-            sizes="(max-width: 640px) 100vw, 50vw"
-            unoptimized={true}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                target.src = '/property.jpg';
-              }
-            }}
-            className='object-cover'
-          />
+          {imageUrl && (
+            <Image
+              src={imageUrl}
+              alt={property.title || 'Property'}
+              fill
+              sizes="(max-width: 640px) 100vw, 50vw"
+              unoptimized={true}
+              
+              className='object-cover'
+            />
+          )}
           {/* Menu Button */}
           <div className="absolute top-2 right-2">
             <button 
@@ -231,7 +229,7 @@ export const PropertyList = () => {
   return (
     <section className='w-full mt-6 rounded-lg bg-white p-5 shadow-md'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
-        <h2 className='font-[600] text-xl'>Lista de Propiedades</h2>
+        <h2 className='font-[600] text-xl'>Lista de propiedades destacadas</h2>
         <Link href="/property" className='w-full sm:w-auto text-center px-4 py-2 bg-primary_color text-white rounded-lg font-medium text-sm shadow-md hover:opacity-90 transition-opacity'>Ver todas</Link>
       </div>
 
@@ -271,7 +269,7 @@ export const PropertyList = () => {
               <tbody>
                 {sortedProperties.map((property: any) => {
                   const images = property.images;
-                  let imageUrl = '/property.jpg';
+                  let imageUrl = '';
                   if (images && Array.isArray(images) && images.length > 0) {
                     const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
                     const imgPath = mainImage?.image || mainImage?.file || mainImage?.image_url || mainImage?.url || mainImage?.src || (typeof mainImage === 'string' ? mainImage : null);
@@ -287,20 +285,17 @@ export const PropertyList = () => {
                       <td className='py-3 px-4 min-w-[200px]'>
                         <div className='flex items-center gap-3'>
                           <div className='relative w-[68px] h-[48px] rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-200 shadow-sm'>
-                            <Image
-                              src={imageUrl}
-                              alt={property.title || 'Property'}
-                              fill
-                              sizes="68px"
-                              unoptimized={true}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                                  target.src = '/property.jpg';
-                                }
-                              }}
-                              className='object-cover'
-                            />
+                            {imageUrl && (
+                              <Image
+                                src={imageUrl}
+                                alt={property.title || 'Property'}
+                                fill
+                                sizes="68px"
+                                unoptimized={true}
+                                
+                                className='object-cover'
+                              />
+                            )}
                           </div>
                           <div className='min-w-0'>
                             <p className='font-medium text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>

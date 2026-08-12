@@ -230,8 +230,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   };
 
   const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-    <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-full">
-      <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{label}:</span>
+    <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
+      <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
       <div className="flex flex-wrap items-center gap-1.5 py-1">
         <button
           onClick={() => onChange('all')}
@@ -382,7 +382,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const renderRow = (property: PropertyListItemResponse) => {
     // Priorizar la imagen marcada como principal (is_main === true) dentro del arreglo `images`
     const images = (property as any).images;
-    let imageUrl = '/property.jpg'; // Default
+    let imageUrl = '';
 
     if (images && Array.isArray(images) && images.length > 0) {
       const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
@@ -411,20 +411,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         <td className='py-4 px-4 min-w-[220px]'>
           <div className='flex items-center gap-3.5'>
             <div className='relative w-[84px] h-[58px] rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-200 shadow-sm'>
-              <Image
-                src={imageUrl}
-                alt={property.title || 'Property'}
-                fill
-                sizes="84px"
-                unoptimized={true}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                    target.src = '/property.jpg';
-                  }
-                }}
-                className='object-cover'
-              />
+              {imageUrl && (
+                <Image
+                  src={imageUrl}
+                  alt={property.title || 'Property'}
+                  fill
+                  sizes="84px"
+                  unoptimized={true}
+                  
+                  className='object-cover'
+                />
+              )}
             </div>
             <div className='min-w-0 flex flex-col justify-center'>
               <p className='text-xs text-gray-500 font-medium line-clamp-1'>{property.number_mls || '-'}</p>
@@ -471,7 +468,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
   const renderMobileCard = (property: PropertyListItemResponse) => {
     const images = (property as any).images;
-    let imageUrl = '/property.jpg';
+    let imageUrl = '';
 
     if (images && Array.isArray(images) && images.length > 0) {
       const mainImage = images.find((img: any) => img.is_main === true || img.is_main === 1 || img.is_main === 'true' || img.isMain === true) || images[0];
@@ -487,20 +484,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       <div key={property.property_id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         {/* Image */}
         <div className="relative w-full h-48 bg-slate-100">
-          <Image
-            src={imageUrl}
-            alt={property.title || 'Property'}
-            fill
-            sizes="(max-width: 768px) 100vw, 400px"
-            unoptimized={true}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                target.src = '/property.jpg';
-              }
-            }}
-            className='object-cover'
-          />
+          {imageUrl && (
+            <Image
+              src={imageUrl}
+              alt={property.title || 'Property'}
+              fill
+              sizes="(max-width: 768px) 100vw, 400px"
+              unoptimized={true}
+              
+              className='object-cover'
+            />
+          )}
           {/* Actions Button */}
           <div className="absolute top-2 right-2">
             <button 
@@ -606,20 +600,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
               <p className='text-xs sm:text-sm text-gray-500'>Listado principal de propiedades</p>
             </div>
-            <div className='flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto'>
-              <button
-                type='button'
-                onClick={() => setIsFilterOpen(true)}
-                className='h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2 shrink-0 font-medium text-xs sm:text-sm'
-              >
-                <SlidersHorizontal className='w-4 h-4 sm:w-4.5 sm:h-4.5' />
-                <span>Filtros</span>
-                {activeFiltersCount > 0 && (
-                  <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
+            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+              {activeFiltersCount > 0 && (
+                <button
+                  type='button'
+                  onClick={handleClearFilters}
+                  className='hidden sm:flex h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors items-center justify-center relative border border-slate-200 shadow-sm gap-2 shrink-0 font-medium text-xs sm:text-sm'
+                >
+                  <X className='w-4 h-4 sm:w-4.5 sm:h-4.5' />
+                  <span>Limpiar Filtros</span>
+                </button>
+              )}
               <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
                 <button type="button" className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[170px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-xs sm:text-sm whitespace-nowrap">
                   <Plus size={18} /> <span>Agregar Propiedad</span>
@@ -636,20 +627,35 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           </div>
 
           <div className="mb-6 space-y-5">
-            {/* Buscador y Botón Destacadas */}
-            <div className='flex flex-col sm:flex-row sm:items-center gap-4 w-full'>
-              <div className='flex-1 min-w-0'>
-                <Search
-                  title="Buscar por título, descripción, dirección (ciudad, colonia, calle)"
-                  className="w-full"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            {/* Buscador, Botón Destacadas y Píldoras de Filtros */}
+            <div className='flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 lg:gap-6 w-full'>
+              <div className='flex items-center gap-2 w-full lg:w-fit lg:max-w-none'>
+                <div className='flex-1'>
+                  <Search
+                    title='Buscar propiedad por título, ID o ubicación'
+                    className='w-full lg:w-[450px]'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button
+                  type='button'
+                  onClick={() => setIsFilterOpen(true)}
+                  className='sm:hidden h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm shrink-0'
+                  title="Filtros"
+                >
+                  <SlidersHorizontal className='w-5 h-5 text-gray-600' />
+                  {activeFiltersCount > 0 && (
+                    <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
               </div>
               <button
                 type="button"
                 onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
-                className={`h-[40px] px-4 rounded-lg flex items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap self-start sm:self-auto ${
+                className={`hidden sm:flex h-[40px] px-4 rounded-lg items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap self-start sm:self-auto ${
                   isFeaturedOnly
                     ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm'
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
@@ -659,11 +665,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 <Star size={18} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
                 <span>Destacadas</span>
               </button>
-            </div>
-
-            {/* Píldoras de Filtro Operación y Disponibilidad */}
-            <div className='py-1 flex flex-col lg:flex-row gap-4 w-full'>
-              <div className='flex-grow min-w-0'>
+              <div className='hidden sm:block flex-auto lg:flex-none'>
                 <FilterPills
                   label="Operación"
                   options={operationOptions}
@@ -671,7 +673,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   onChange={setSelectedOperation}
                 />
               </div>
-              <div className='flex-grow min-w-0'>
+              <div className='hidden sm:block flex-auto lg:flex-none'>
                 <FilterPills
                   label="Disponibilidad"
                   options={availabilityOptions}
@@ -679,11 +681,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   onChange={setSelectedAvailability}
                 />
               </div>
-            </div>
-
-            {/* Píldoras de Filtro Tipo de Propiedad y Estatus */}
-            <div className='py-1 flex flex-col lg:flex-row gap-4 w-full'>
-              <div className='flex-grow min-w-0'>
+              <div className='hidden sm:block flex-auto lg:flex-none'>
                 <FilterPills
                   label="Tipo de propiedad"
                   options={propertyTypeOptions}
@@ -691,7 +689,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   onChange={setSelectedType}
                 />
               </div>
-              <div className='flex-grow min-w-0'>
+              <div className='hidden sm:block flex-auto lg:flex-none'>
                 <FilterPills
                   label="Estatus"
                   options={[
@@ -706,7 +704,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </div>
 
             {/* Filtros Secundarios Desplegables */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
+            <div className='hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
               <div className='flex flex-col'>
                 <label className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
                 <Select value={selectedEstado} onValueChange={setSelectedEstado}>
@@ -769,133 +767,113 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         </div>
       </div>
 
-      {/* Filter Sidebar de Filtros Aplicados */}
       <FilterSidebar
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onClear={handleClearFilters}
         onApply={handleApplyFilters}
-        title="Filtros Aplicados"
+        title="Filtros"
       >
-        <div className="space-y-4">
-          {activeFiltersCount === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No hay filtros aplicados actualmente.</p>
-          ) : (
-            <div className="space-y-5">
-              {selectedEstado !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</label>
-                  <Select value={selectedEstado} onValueChange={setSelectedEstado}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      {estados.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedCity !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ciudad</label>
-                  <Select value={selectedCity} onValueChange={setSelectedCity}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar ciudad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las ciudades</SelectItem>
-                      {citiesOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedType !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo de propiedad</label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los tipos</SelectItem>
-                      {propertyTypeOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedOperation !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Operación</label>
-                  <Select value={selectedOperation} onValueChange={setSelectedOperation}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar operación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las operaciones</SelectItem>
-                      {operationOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedAvailability !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Disponibilidad</label>
-                  <Select value={selectedAvailability} onValueChange={setSelectedAvailability}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar disponibilidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las disponibilidades</SelectItem>
-                      {availabilityOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedStatusProperty !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estatus</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Borrador', 'Publicado', 'Archivado'].map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => setSelectedStatusProperty(opt)}
-                        className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${selectedStatusProperty === opt
-                            ? 'bg-primary_color text-white font-medium shadow-md'
-                            : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-                          }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {isFeaturedOnly && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Destacada</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
-                    className="px-3 py-1.5 text-xs rounded-md bg-amber-100 text-amber-900 border border-amber-300 font-medium flex items-center gap-2 w-fit"
-                  >
-                    <Star size={16} fill="#eab308" stroke="#eab308" />
-                    <span>Solo destacadas</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+        <div className="space-y-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Estado</label>
+            <Select value={selectedEstado} onValueChange={setSelectedEstado}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                {estados.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Ciudad</label>
+            <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar ciudad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ciudades</SelectItem>
+                {citiesOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Operación</label>
+            <Select value={selectedOperation} onValueChange={setSelectedOperation}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar operación" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las operaciones</SelectItem>
+                {operationOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Disponibilidad</label>
+            <Select value={selectedAvailability} onValueChange={setSelectedAvailability}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar disponibilidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las disponibilidades</SelectItem>
+                {availabilityOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Tipo de propiedad</label>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                {propertyTypeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Estatus</label>
+            <Select value={selectedStatusProperty} onValueChange={setSelectedStatusProperty}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estatus" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estatus</SelectItem>
+                <SelectItem value="Borrador">Borrador</SelectItem>
+                <SelectItem value="Publicado">Publicado</SelectItem>
+                <SelectItem value="Archivado">Archivado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Destacada</label>
+            <button
+              type="button"
+              onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
+              className={`px-3 py-1.5 text-xs rounded-md font-medium flex items-center justify-center gap-2 w-full transition-colors ${
+                isFeaturedOnly
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-slate-100 text-gray-600 border border-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              <Star size={16} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
+              <span>{isFeaturedOnly ? "Solo destacadas" : "Todas"}</span>
+            </button>
+          </div>
         </div>
       </FilterSidebar>
 

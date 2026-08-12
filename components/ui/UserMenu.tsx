@@ -67,12 +67,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
                                     fill
                                     sizes="56px"
                                     unoptimized={true}
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        if (target && !target.src.endsWith('/user.svg')) {
-                                            target.src = '/user.svg';
-                                        }
-                                    }}
+                                    
                                     className="object-cover"
                                 />
                             ) : (
