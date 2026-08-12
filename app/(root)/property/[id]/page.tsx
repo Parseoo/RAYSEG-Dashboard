@@ -320,10 +320,6 @@ export default function PropertyDetailPage() {
                   <span className='text-gray-800 font-normal whitespace-pre-wrap'>{property.description || '—'}</span>
                 </div>
                 <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
-                  <span className='text-gray-500 font-medium'>Dirección completa</span>
-                  <span className='text-gray-800 font-normal'>{fullAddress || '—'}</span>
-                </div>
-                <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
                   <span className='text-gray-500 font-medium'>Calle</span>
                   <span className='text-gray-800 font-normal'>{addressObj.street || '—'}</span>
                 </div>

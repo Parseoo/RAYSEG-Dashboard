@@ -189,7 +189,7 @@ export const PropertyList = () => {
             <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1">
               {property.title || '-'}
             </h3>
-            <p className="text-xs text-gray-500">MLS: {property.number_mls || '-'}</p>
+            <p className="text-xs text-gray-500">{property.number_mls || '-'}</p>
           </div>
 
           {/* Price */}

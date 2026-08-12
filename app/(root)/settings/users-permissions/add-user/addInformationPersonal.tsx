@@ -201,12 +201,7 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             label: 'Estatus del usuario',
             group: 3
         },
-        {
-            type: 'switch',
-            id: 'is_superuser',
-            label: 'Acceso de Superadministrador',
-            group: 3
-        },
+
         {
             type: 'textarea',
             id: 'notas_internas',

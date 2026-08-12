@@ -148,8 +148,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                         } else {
                             const street = addr.street || ""
                             const exterior = addr.exterior_number || addr.street_number || ""
-                            const interior = addr.interior_number ? ` Int ${addr.interior_number}` : ""
-                            const streetNumber = `${exterior}${interior}`.trim()
+                            const streetNumber = `${exterior}`.trim()
 
                             const segments = [
                                 addr.street,

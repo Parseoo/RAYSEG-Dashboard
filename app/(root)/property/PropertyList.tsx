@@ -427,7 +427,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               />
             </div>
             <div className='min-w-0 flex flex-col justify-center'>
-              <p className='text-xs text-gray-500 font-medium line-clamp-1'>MLS: {property.number_mls || '-'}</p>
+              <p className='text-xs text-gray-500 font-medium line-clamp-1'>{property.number_mls || '-'}</p>
               <p className='font-semibold text-sm text-gray-900 line-clamp-1'>{property.title || '-'}</p>
               <p className='text-xs text-gray-500 line-clamp-1'>{getAddressString(property)}</p>
             </div>
@@ -540,7 +540,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         <div className="p-4">
           {/* Title, MLS and Address */}
           <div className="mb-3">
-            <p className="text-xs text-gray-500 font-medium mb-0.5">MLS: {property.number_mls || '-'}</p>
+            <p className="text-xs text-gray-500 font-medium mb-0.5">{property.number_mls || '-'}</p>
             <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-0.5">
               {property.title || '-'}
             </h3>
