@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User, MoreVertical } from 'lucide-react';
+import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User, MoreVertical, X } from 'lucide-react';
 import { responsibleOptions } from '../../../components/selectClients.data';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import Search from '../../../components/ui/Search';
@@ -249,19 +249,14 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
           <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
-            {(row.profile_photo || row.profile_picture) ? (
+            {getUserImageUrl(row.profile_photo || row.profile_picture) && !getUserImageUrl(row.profile_photo || row.profile_picture).includes('ui-avatars.com') ? (
               <Image
                 src={getUserImageUrl(row.profile_photo || row.profile_picture)}
                 alt={row.name || 'Cliente'}
                 fill
                 sizes="48px"
                 unoptimized={true}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target && !target.src.endsWith('/user.svg')) {
-                    target.src = '/user.svg';
-                  }
-                }}
+                
                 className='object-cover'
               />
             ) : (
@@ -334,19 +329,14 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <div className='relative w-12 h-12 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
-            {(row.profile_photo || row.profile_picture) ? (
+            {getUserImageUrl(row.profile_photo || row.profile_picture) && !getUserImageUrl(row.profile_photo || row.profile_picture).includes('ui-avatars.com') ? (
               <Image
                 src={getUserImageUrl(row.profile_photo || row.profile_picture)}
                 alt={row.name || 'Cliente'}
                 fill
                 sizes="48px"
                 unoptimized={true}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target && !target.src.endsWith('/user.svg')) {
-                    target.src = '/user.svg';
-                  }
-                }}
+                
                 className='object-cover'
               />
             ) : (
@@ -428,8 +418,8 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   );
 
   const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-wrap max-w-full">
-      <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{label}:</span>
+    <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
+      <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
       <div className="flex flex-wrap items-center gap-1.5 py-1">
         <button
           onClick={() => onChange('all')}
@@ -473,19 +463,16 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
               <p className='text-sm sm:text-md text-gray-500'>Filtra por estado, tipo, interés y agente</p>
             </div>
             <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
-              <button
-                type='button'
-                onClick={() => setIsFilterOpen(true)}
-                className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2'
-              >
-                <SlidersHorizontal className='w-5 h-5' />
-                <span className='text-sm text-gray-600'>Filtros</span>
-                {activeFiltersCount > 0 && (
-                  <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
+              {activeFiltersCount > 0 && (
+                <button
+                  type='button'
+                  onClick={handleClearFilters}
+                  className='hidden sm:flex p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors items-center justify-center relative border border-slate-200 shadow-sm gap-2'
+                >
+                  <X className='w-5 h-5 text-gray-600' />
+                  <span className='text-sm text-gray-600'>Limpiar Filtros</span>
+                </button>
+              )}
               <Link href='/clients/add-client' className='w-full sm:w-auto'>
                 <button type='button'
                   className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
@@ -496,17 +483,31 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
           </div>
 
           <div className='mb-6 space-y-6'>
-            {/* Buscador y Estatus al lado derecho */}
-            <div className='flex flex-col sm:flex-row sm:items-end gap-4 w-full'>
-              <div className='max-w-[420px] w-full'>
-                <Search
-                  title='Buscar por nombre, email, teléfono, RFC o CURP'
-                  className='w-full'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            {/* Buscador y Filtros */}
+            <div className='flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 lg:gap-6 w-full'>
+              <div className='flex items-center gap-2 w-full lg:w-fit lg:max-w-none'>
+                <div className='flex-1'>
+                  <Search
+                    title='Buscar por nombre, email, teléfono, RFC o CURP'
+                    className='w-full lg:w-[450px]'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button
+                  type='button'
+                  onClick={() => setIsFilterOpen(true)}
+                  className='sm:hidden h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm shrink-0'
+                >
+                  <SlidersHorizontal className='w-5 h-5 text-gray-600' />
+                  {activeFiltersCount > 0 && (
+                    <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
               </div>
-              <div className='flex flex-col w-full sm:w-[200px]'>
+              <div className='hidden sm:flex flex-col w-full sm:w-[200px]'>
                 <label className="text-xs text-gray-500 mb-1 font-semibold">Estatus</label>
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger className='w-full'>
@@ -520,26 +521,26 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Píldoras de Filtros - Tipo de cliente e Interés principal */}
-            <div className='flex flex-col xl:flex-row xl:items-center gap-6 w-full py-1'>
-              <FilterPills
-                label="Tipo de cliente"
-                options={typeOptions}
-                selectedValue={selectedType}
-                onChange={setSelectedType}
-              />
-              <FilterPills
-                label="Interés principal"
-                options={interestOptions}
-                selectedValue={selectedInterest}
-                onChange={setSelectedInterest}
-              />
+              <div className='hidden sm:block flex-auto lg:flex-none'>
+                <FilterPills
+                  label="Tipo de cliente"
+                  options={typeOptions}
+                  selectedValue={selectedType}
+                  onChange={setSelectedType}
+                />
+              </div>
+              <div className='hidden sm:block flex-auto lg:flex-none'>
+                <FilterPills
+                  label="Interés principal"
+                  options={interestOptions}
+                  selectedValue={selectedInterest}
+                  onChange={setSelectedInterest}
+                />
+              </div>
             </div>
 
             {/* Filtros Secundarios Desplegables: Agente y Origen del prospecto */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+            <div className='hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-6'>
               <div className='flex flex-col pb-2 sm:pb-0'>
                 <label className="text-xs text-gray-500 mb-1 font-semibold">Agente</label>
                 <Select value={selectedAgent} onValueChange={setSelectedAgent}>
@@ -609,79 +610,79 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         onClose={() => setIsFilterOpen(false)}
         onClear={handleClearFilters}
         onApply={handleApplyFilters}
-        title="Filtros Aplicados"
+        title="Filtros"
       >
-        <div className="space-y-4">
-          {activeFiltersCount === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No hay filtros aplicados actualmente.</p>
-          ) : (
-            <div className="space-y-5">
-              {selectedStatus !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estatus</label>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar estatus" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estatus</SelectItem>
-                      {statusOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedType !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo de cliente</label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los tipos</SelectItem>
-                      {typeOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedSource !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Origen</label>
-                  <Select value={selectedSource} onValueChange={setSelectedSource}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar origen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los orígenes</SelectItem>
-                      {sourceOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {selectedInterest !== 'all' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Interés</label>
-                  <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar interés" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Cualquier interés</SelectItem>
-                      {interestOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          )}
+        <div className="space-y-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Estatus</label>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar estatus" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estatus</SelectItem>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Tipo de cliente</label>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                {typeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Origen</label>
+            <Select value={selectedSource} onValueChange={setSelectedSource}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar origen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los orígenes</SelectItem>
+                {sourceOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Interés</label>
+            <Select value={selectedInterest} onValueChange={setSelectedInterest}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar interés" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Cualquier interés</SelectItem>
+                {interestOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">Agente</label>
+            <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todos los agentes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los agentes</SelectItem>
+                {agentOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </FilterSidebar>
 

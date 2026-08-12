@@ -37,7 +37,7 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
   const propertiesData = [
     {
       id: 1,
-      image: '/user.svg',
+      image: '',
       name: 'Carlos Fernandez',
       document: 'INE 327872739732',
       type: 'Agente Senior',
@@ -79,19 +79,14 @@ function AgentsList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
           <div className='relative w-[48px] h-[48px] rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center'>
-            {row.image && row.image !== '/user.svg' ? (
+            {row.image ? (
               <Image
                 src={row.image}
                 alt={row.name || 'Agente'}
                 fill
                 sizes="48px"
                 unoptimized={true}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target && !target.src.endsWith('/user.svg')) {
-                    target.src = '/user.svg';
-                  }
-                }}
+                
                 className='object-cover'
               />
             ) : (

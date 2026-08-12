@@ -164,18 +164,11 @@ export default function ClientDetailPage() {
                                         fill
                                         sizes="96px"
                                         unoptimized={true}
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            if (target && !target.src.endsWith('/user.svg')) {
-                                                target.src = '/user.svg';
-                                            }
-                                        }}
+                                        
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="text-3xl font-bold text-slate-400">
-                                        {clientData.name?.charAt(0).toUpperCase()}
-                                    </div>
+                                    <User className="w-12 h-12 text-slate-400" />
                                 )}
                             </div>
                         </div>

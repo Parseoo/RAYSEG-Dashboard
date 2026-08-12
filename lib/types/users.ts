@@ -22,6 +22,7 @@ export interface UserResponse {
   updated_at: string;
   last_access_date?: string;
   last_password_change?: string;
+  es_agente?: boolean;
 }
 
 export interface Address {
@@ -59,6 +60,7 @@ export interface User {
   title?: string;
   properties_created_count?: number;
   clients_created_count?: number;
+  es_agente?: boolean;
 }
 
 export interface UserState {
@@ -125,6 +127,7 @@ export interface AuthUserResponse {
   last_password_change?: string;
   properties_created_count?: number;
   clients_created_count?: number;
+  es_agente?: boolean;
 }
 
 // Users
@@ -145,6 +148,7 @@ export interface UserForm {
   is_active: boolean | string;
   is_staff?: boolean;
   is_superuser?: boolean | string;
+  es_agente?: boolean | string;
   permissions?: { [key: string]: boolean | string[] };
   profile_picture?: string;
   street?: string;
@@ -184,6 +188,7 @@ export interface CreateUserRequest {
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
+  es_agente?: boolean;
 }
 
 export interface Role {

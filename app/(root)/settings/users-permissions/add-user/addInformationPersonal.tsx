@@ -201,7 +201,12 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
             label: 'Estatus del usuario',
             group: 3
         },
-
+        {
+            type: 'switch',
+            id: 'es_agente',
+            label: 'Es Agente',
+            group: 3
+        },
         {
             type: 'textarea',
             id: 'notas_internas',

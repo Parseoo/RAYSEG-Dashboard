@@ -49,7 +49,7 @@ export const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
                             fill
                             sizes="96px"
                             unoptimized={true}
-                            onError={() => setPreview("")}
+                            
                         />
                     ) : (
                         <div className="w-full h-full bg-gray-100 flex items-center justify-center">

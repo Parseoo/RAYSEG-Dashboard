@@ -21,15 +21,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
   const { unreadCount, fetchNotifications } = useNotificationStore()
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
-  const mobileInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (isMobileSearchOpen && mobileInputRef.current) {
-      mobileInputRef.current.focus();
-    }
-  }, [isMobileSearchOpen]);
 
   useEffect(() => {
     fetchNotifications();
@@ -45,36 +37,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
     <>
       <header className='w-full'>
         <div className='bg-white p-3 sm:p-[12px]'>
-          {isMobileSearchOpen ? (
-            /* Mobile Search Bar Expanded */
-            <div className='flex lg:hidden items-center gap-2 w-full'>
-              <div className='relative flex-1'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Image
-                    src='/search.svg'
-                    alt='search'
-                    width={16}
-                    height={16}
-                    className='text-gray-400'
-                  />
-                </div>
-                <input
-                  ref={mobileInputRef}
-                  type='text'
-                  placeholder='Buscar propiedad, cliente, etc.'
-                  className='w-full pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 text-sm'
-                />
-              </div>
-              <button
-                onClick={() => setIsMobileSearchOpen(false)}
-                className='p-2 hover:bg-slate-100 rounded-lg text-gray-500 shrink-0'
-                aria-label='Cerrar búsqueda'
-              >
-                <X className='w-5 h-5' />
-              </button>
-            </div>
-          ) : (
-            <div className='flex items-center gap-2 sm:gap-4 justify-between lg:justify-start'>
+            <div className='flex items-center gap-2 sm:gap-4 justify-between'>
               {/* Logo and menu icon */}
               <div className='flex items-center gap-2 sm:gap-4'>
                 <button
@@ -105,35 +68,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
                   </div>
                 </Link>
               </div>
-
-              {/* Desktop Search input */}
-              <div className='relative hidden lg:flex flex-1 max-w-full lg:max-w-none'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Image
-                    src='/search.svg'
-                    alt='search'
-                    width={16}
-                    height={16}
-                    className='text-gray-400'
-                  />
-                </div>
-                <input
-                  type='text'
-                  placeholder='Buscar propiedad, cliente, etc.'
-                  className='w-full max-w-[480px] pl-10 pr-4 py-2 rounded-lg outline-none bg-gray-100 transition-all hover:ring-2 hover:ring-primary_color text-sm sm:text-base'
-                />
-              </div>
-
-              {/* Icons and user info */}
               <div className='flex items-center gap-2 sm:gap-[15px] flex-shrink-0'>
-                {/* Mobile Search Toggle Icon */}
-                <button
-                  onClick={() => setIsMobileSearchOpen(true)}
-                  className='lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-all text-gray-600'
-                  aria-label='Buscar'
-                >
-                  <Search className='w-5 h-5' />
-                </button>
 
                 <button
                   onClick={() => setIsNotificationsOpen(true)}
@@ -163,12 +98,7 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
                           fill
                           sizes="40px"
                           unoptimized={true}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            if (target && !target.src.endsWith('/user.svg')) {
-                              target.src = '/user.svg';
-                            }
-                          }}
+                          
                           className="object-cover"
                         />
                       ) : (
@@ -190,7 +120,6 @@ const SideBarTop = ({ onMenuClick }: SideBarTopProps) => {
                 </div>
               </div>
             </div>
-          )}
         </div>
       </header>
 

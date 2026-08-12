@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User, MoreVertical } from 'lucide-react';
+import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User, MoreVertical, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
@@ -60,9 +60,9 @@ function UsersList() {
     };
 
     const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-        <div className="flex items-center gap-3 flex-shrink-0 max-w-full">
-            <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">{label}:</span>
-            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-1">
+        <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
+            <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
+            <div className="flex flex-wrap items-center gap-1.5 py-1">
                 <button
                     onClick={() => onChange('all')}
                     className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
@@ -225,12 +225,7 @@ function UsersList() {
                                 fill
                                 sizes="48px"
                                 unoptimized={true}
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    if (target && !target.src.endsWith('/user.svg')) {
-                                        target.src = '/user.svg';
-                                    }
-                                }}
+                                
                                 className='object-cover' 
                             />
                         ) : (
@@ -311,12 +306,7 @@ function UsersList() {
                                     fill
                                     sizes="48px"
                                     unoptimized={true}
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        if (target && !target.src.endsWith('/user.svg')) {
-                                            target.src = '/user.svg';
-                                        }
-                                    }}
+                                    
                                     className='object-cover' 
                                 />
                             ) : (
@@ -413,19 +403,16 @@ function UsersList() {
                         <p className='text-gray-500 text-sm'>Administra quién puede acceder al sistema.</p>
                     </div>
                     <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
-                        <button
-                            type='button'
-                            onClick={() => setIsFilterOpen(true)}
-                            className='p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm gap-2'
-                        >
-                            <SlidersHorizontal size={20} className='text-gray-600' />
-                            <span className='text-sm text-gray-600'>Filtros</span>
-                            {activeFiltersCount > 0 && (
-                                <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
-                                    {activeFiltersCount}
-                                </span>
-                            )}
-                        </button>
+                        {activeFiltersCount > 0 && (
+                            <button
+                                type='button'
+                                onClick={handleClearFilters}
+                                className='hidden sm:flex p-2.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors items-center justify-center relative border border-slate-200 shadow-sm gap-2'
+                            >
+                                <X size={20} className='text-gray-600' />
+                                <span className='text-sm text-gray-600'>Limpiar Filtros</span>
+                            </button>
+                        )}
                         <Link href='/settings/users-permissions/add-user' className='w-full sm:w-auto'>
                             <button className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm'>
                                 <UserPlus size={18} />
@@ -435,21 +422,39 @@ function UsersList() {
                     </div>
                 </div>
                 <div className="mb-6 space-y-4">
-                    {/* Buscador y Filtros Lado a Lado */}
-                    <div className='flex flex-col lg:flex-row lg:items-center gap-4 w-full'>
-                        <Search
-                            title='Buscar por nombre, apellido o correo'
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="max-w-[350px] w-full"
-                        />
-                        <div className='flex flex-wrap lg:flex-nowrap items-center gap-4 w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-1'>
+                    {/* Buscador y Filtros */}
+                    <div className='flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 lg:gap-6 w-full'>
+                        <div className='flex items-center gap-2 w-full lg:w-fit lg:max-w-none'>
+                            <div className='flex-1'>
+                                <Search
+                                    title='Buscar por nombre, apellido o correo'
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full lg:w-[450px]"
+                                />
+                            </div>
+                            <button
+                                type='button'
+                                onClick={() => setIsFilterOpen(true)}
+                                className='sm:hidden h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm shrink-0'
+                            >
+                                <SlidersHorizontal size={20} className='text-gray-600' />
+                                {activeFiltersCount > 0 && (
+                                    <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                                        {activeFiltersCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                        <div className='hidden sm:block flex-auto lg:flex-none'>
                             <FilterPills
                                 label="Rol"
                                 options={roleOptions}
                                 selectedValue={selectedRole}
                                 onChange={setSelectedRole}
                             />
+                        </div>
+                        <div className='hidden sm:block flex-auto lg:flex-none'>
                             <FilterPills
                                 label="Estatus"
                                 options={statusOptions}

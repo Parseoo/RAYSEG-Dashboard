@@ -36,9 +36,9 @@ const EditUserPage = () => {
                     role: typeof apiData.role === 'object' && apiData.role !== null
                         ? String((apiData.role as any).id)
                         : (apiData.role || ""),
-                    // is_active e is_superuser como string para el formulario
                     is_active: apiData.is_active ? true : false,
                     is_superuser: apiData.is_superuser ? true : false,
+                    es_agente: apiData.es_agente ? true : false,
                     phone: apiData.phone || "",
                     // Mapear address del API a campos separados del formulario
                     street: apiData.address?.street || "",
@@ -95,6 +95,7 @@ const EditUserPage = () => {
                 is_active: formData.is_active === 'true' || formData.is_active === true || formData.is_active === 'activo',
                 is_staff: false,
                 is_superuser: formData.is_superuser === 'true' || formData.is_superuser === true,
+                es_agente: formData.es_agente === 'true' || formData.es_agente === true,
                 address: address,
                 internal_notes: formData.notas_internas || undefined,
             };

@@ -1,4 +1,4 @@
-import { cn, shortenPlaceholder } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import React, { useMemo, useState, useEffect } from 'react';
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from './select';
 import { Switch } from './Switch';
@@ -48,18 +48,6 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
     const Icon = input.icon;
     const isInlineIcon = input.iconLayout === 'inline';
     const errorClass = input.error ? 'border-red-500 border-2 focus:ring-2 focus:ring-red-200 focus:border-red-500 bg-red-50/20' : 'border-gray-300 focus:ring-2 focus:ring-blue-500';
-    const [showPassword, setShowPassword] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 640);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const activePlaceholder = isMobile ? shortenPlaceholder(input.placeholder) : input.placeholder;
-
     const isPasswordType = input.type === 'password';
     const isCurrency = input.type === 'currency';
 
@@ -118,7 +106,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                     onValueChange={(val) => input.onChange && input.onChange(val)}
                 >
                     <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>
-                        <SelectValue placeholder={activePlaceholder || 'Seleccionar...'} />
+                        <SelectValue placeholder={input.placeholder || 'Seleccionar...'} />
                     </SelectTrigger>
                     <SelectContent>
                         {input.options?.map(opt => (
@@ -131,7 +119,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
             ) : input.type === 'textarea' ? (
                 <textarea
                     id={input.id}
-                    placeholder={activePlaceholder}
+                    placeholder={input.placeholder}
                     rows={input.rows}
                     value={(input.value as string | number | readonly string[]) ?? ''}
                     onChange={input.onChange as any}
@@ -158,7 +146,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                         type={isPasswordType ? (showPassword ? 'text' : 'password') : (isCurrency ? 'text' : input.type === 'number' ? 'text' : input.type)}
                         inputMode={input.type === 'number' || isCurrency ? 'numeric' : input.type === 'tel' ? 'tel' : undefined}
                         id={input.id}
-                        placeholder={activePlaceholder}
+                        placeholder={input.placeholder}
                         value={(input.value as string | number | readonly string[]) ?? ''}
                         onKeyDown={handleKeyDown}
                         onChange={handleChange}
@@ -260,17 +248,6 @@ export const DynamicInputs = React.memo(({ inputs, withBgWhite = false }: Dynami
 DynamicInputs.displayName = 'DynamicInputs';
 
 export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, value, onChange }) => {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 640);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const activePlaceholder = isMobile ? shortenPlaceholder(title) : title;
-
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (type === 'number') {
             const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
@@ -292,7 +269,7 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
                 required={required}
                 id={id}
                 type={type || 'text'}
-                placeholder={activePlaceholder}
+                placeholder={title}
                 value={value ?? ''}
                 onKeyDown={handleKeyDown}
                 onChange={handleChange}

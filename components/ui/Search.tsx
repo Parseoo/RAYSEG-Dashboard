@@ -1,6 +1,6 @@
 "use client"
 
-import { cn, shortenPlaceholder } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 
@@ -13,18 +13,6 @@ interface SearchItem {
 }
 const Search: React.FC<SearchItem> = ({ title, className, value, mobileTitle, onChange }) => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 640);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const activePlaceholder = isMobile
-        ? (mobileTitle || shortenPlaceholder(title))
-        : title;
 
     return (
         <div className={cn(
@@ -42,7 +30,7 @@ const Search: React.FC<SearchItem> = ({ title, className, value, mobileTitle, on
             </div>
             <input
                 type='text'
-                placeholder={activePlaceholder}
+                placeholder={title}
                 value={value}
                 onChange={onChange}
                 className={cn(

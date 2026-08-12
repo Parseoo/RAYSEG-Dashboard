@@ -78,12 +78,7 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
         <img
           src={getImageUrl(images[currentIndex])}
           alt={`Imagen ${currentIndex + 1}`}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            if (!target.src.endsWith('/property.jpg')) {
-              target.src = '/property.jpg';
-            }
-          }}
+          
           className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
         />
       </div>
@@ -106,12 +101,7 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
                   src={getImageUrl(img)}
                   alt={`Miniatura ${idx + 1}`}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (!target.src.endsWith('/property.jpg')) {
-                      target.src = '/property.jpg';
-                    }
-                  }}
+                  
                 />
               </button>
             );

@@ -135,12 +135,7 @@ export const AddMultimediaProperty = () => {
                     alt="imagen de propiedad"
                     fill
                     unoptimized={true}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                        target.src = '/property.jpg';
-                      }
-                    }}
+                    
                     className="object-cover"
                   />
 
@@ -237,12 +232,7 @@ export const AddMultimediaProperty = () => {
                       alt="plano de propiedad"
                       fill
                       unoptimized={true}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target && !target.src.endsWith('/property.jpg') && !target.src.endsWith('/casa.jpeg')) {
-                          target.src = '/property.jpg';
-                        }
-                      }}
+                      
                       className="object-contain"
                     />
                   )}
@@ -320,9 +310,7 @@ export const AddMultimediaProperty = () => {
                   <img
                     src={modalUrl}
                     alt="Vista completa"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/img/fallback-image.png';
-                    }}
+                    
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
