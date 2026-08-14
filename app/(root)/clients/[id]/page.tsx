@@ -3,13 +3,90 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, Loader2, User, Mail, Phone, MapPin, Target, Wallet, Calendar, FileText, MessageSquare, Home, BedDouble, Bath, Car, Ruler, Eye } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Mail, Phone, MapPin, Target, Calendar, FileText } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
 import { GetClientById } from '@/lib/api/client-api';
 import { showToast } from 'nextjs-toast-notify';
 import { getImageUrl } from '@/lib/utils';
 import { formatInterestLabel, normalizeInterest } from '@/lib/utils/catalog';
+
+const SectionHeader = ({ title, icon: Icon, extra }: { title: string, icon: any, extra?: React.ReactNode }) => (
+    <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-slate-100 rounded-lg text-slate-600">
+                <Icon size={18} />
+            </div>
+            <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
+        </div>
+        {extra && <div>{extra}</div>}
+    </div>
+);
+
+const InfoBlock = ({ label, value }: { label: string, value: any }) => {
+    if (value === null || value === undefined || value === '' || value === 0 || value === '0') {
+        return null;
+    }
+    let displayValue = '';
+    if (typeof value === 'object') {
+        displayValue = value.name || value.value || value.label || JSON.stringify(value);
+    } else {
+        displayValue = String(value);
+    }
+    if (!displayValue || displayValue === '-') return null;
+
+    return (
+        <div className="flex flex-col gap-1">
+            <p className='text-[11px] font-bold text-gray-400 uppercase leading-none'>{label}</p>
+            <p className='text-sm font-semibold text-gray-800 break-words'>{displayValue}</p>
+        </div>
+    );
+};
+
+const resolveTargetPropertyType = (clientData: any, propertyTypeCatalog: any[]) => {
+    const rawType = clientData.preferences?.target_property_type || clientData.target_property_type;
+    if (!rawType) return '';
+    const strVal = String(rawType);
+    const found = propertyTypeCatalog.find(
+        p => String(p.id) === strVal || String(p.value) === strVal || String(p.name) === strVal
+    );
+    return found?.name || rawType;
+};
+
+const getPref = (clientData: any, key: string) => clientData.preferences?.[key] ?? clientData[key];
+const formatBudget = (value: any) => value && Number(value) > 0 ? `$${Number(value).toLocaleString()}` : null;
+
+const ClientPreferencesSection = ({ clientData, interestCatalog, propertyTypeCatalog }: { clientData: any, interestCatalog: any[], propertyTypeCatalog: any[] }) => {
+    const rawInterest = getPref(clientData, 'main_interest');
+    const currentInterest = normalizeInterest(rawInterest);
+    const isRenta = ['renta', 'quiero_rentar', 'rent'].includes(currentInterest);
+    const isVenta = ['venta', 'quiero_vender', 'sale'].includes(currentInterest);
+
+    let timeLabel = 'Plazo estimado';
+    if (isVenta) timeLabel = 'Plazo estimado para vender';
+    else if (isRenta) timeLabel = 'Plazo estimado para rentar';
+    else if (['comprar', 'quiero_comprar', 'buy'].includes(currentInterest)) timeLabel = 'Plazo estimado para comprar';
+    const budgetMinLabel = isRenta ? 'Presupuesto mínimo mensual' : 'Presupuesto mínimo';
+    const budgetMaxLabel = isRenta ? 'Presupuesto máximo mensual' : 'Presupuesto máximo';
+
+    return (
+        <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
+            <SectionHeader title="Preferencias de operación" icon={Target} />
+            <p className='text-sm text-gray-500 mb-6 -mt-2'>Configura que busca o que ofrece este cliente en el mercado inmobiliario.</p>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
+                <InfoBlock label="Interés principal" value={rawInterest ? formatInterestLabel(rawInterest, interestCatalog) : null} />
+                <InfoBlock label="Tipo de propiedad objetivo" value={resolveTargetPropertyType(clientData, propertyTypeCatalog)} />
+                <InfoBlock label={budgetMinLabel} value={formatBudget(getPref(clientData, 'budget_min'))} />
+                <InfoBlock label={budgetMaxLabel} value={formatBudget(getPref(clientData, 'budget_max'))} />
+                <InfoBlock label="Recámaras" value={getPref(clientData, 'bedrooms')} />
+                <InfoBlock label="Baños" value={getPref(clientData, 'bathrooms')} />
+                <InfoBlock label="Estacionamientos" value={getPref(clientData, 'parking_spaces')} />
+                <InfoBlock label="Forma de pago" value={getPref(clientData, 'payment_method')} />
+                <InfoBlock label={timeLabel} value={getPref(clientData, 'estimated_time')} />
+            </div>
+        </div>
+    );
+};
 
 export default function ClientDetailPage() {
     const params = useParams();
@@ -33,7 +110,7 @@ export default function ClientDetailPage() {
                 const response = await GetClientById(clientId);
                 const client = response.data;
                 setClientData(client);
-                
+
                 const propId = client.property?.id || client.property_id;
                 if (propId) {
                     setPropertyLoading(true);
@@ -47,7 +124,7 @@ export default function ClientDetailPage() {
                         setPropertyLoading(false);
                     }
                 }
-                
+
                 // Fetch catalogs for labels
                 try {
                     const { GetCatalogByName } = await import('@/lib/api/catalog-api');
@@ -90,7 +167,7 @@ export default function ClientDetailPage() {
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="bg-red-50 p-6 rounded-lg border border-red-100 text-center max-w-md">
                     <p className="text-red-600 font-medium mb-4">{error || "Cliente no encontrado"}</p>
-                    <button
+                    <button type='button'
                         onClick={() => router.push('/clients')}
                         className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                     >
@@ -101,34 +178,7 @@ export default function ClientDetailPage() {
         );
     }
 
-    const SectionHeader = ({ title, icon: Icon, extra }: { title: string, icon: any, extra?: React.ReactNode }) => (
-        <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-slate-100 rounded-lg text-slate-600">
-                    <Icon size={18} />
-                </div>
-                <h2 className='text-sm font-bold text-gray-500 uppercase tracking-widest'>{title}</h2>
-            </div>
-            {extra && <div>{extra}</div>}
-        </div>
-    );
 
-    const InfoBlock = ({ label, value }: { label: string, value: any }) => {
-        let displayValue = '-';
-        if (value !== null && value !== undefined) {
-            if (typeof value === 'object') {
-                displayValue = value.name || value.value || value.label || JSON.stringify(value);
-            } else {
-                displayValue = String(value);
-            }
-        }
-        return (
-            <div className="flex flex-col gap-1">
-                <p className='text-[11px] font-bold text-gray-400 uppercase leading-none'>{label}</p>
-                <p className='text-sm font-semibold text-gray-800 break-words'>{displayValue}</p>
-            </div>
-        );
-    };
 
     return (
         <div className="pb-10">
@@ -139,7 +189,7 @@ export default function ClientDetailPage() {
             ]} />
 
             <div className='mb-6'>
-                <button
+                <button type='button'
                     onClick={() => router.push('/clients')}
                     className='flex items-center gap-2 text-gray-600 hover:text-primary_color transition-colors font-medium group'
                 >
@@ -164,7 +214,7 @@ export default function ClientDetailPage() {
                                         fill
                                         sizes="96px"
                                         unoptimized={true}
-                                        
+
                                         className="object-cover"
                                     />
                                 ) : (
@@ -194,7 +244,7 @@ export default function ClientDetailPage() {
                                 {typeof clientData.client_status === 'string' ? clientData.client_status : (clientData.client_status?.name || clientData.client_status?.value || 'Desconocido')}
                             </Tag>
                         </div>
-                        
+
                         <div className="flex flex-col gap-1.5">
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo de Cliente</span>
                             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 capitalize">
@@ -214,7 +264,7 @@ export default function ClientDetailPage() {
                         </div>
                         <div className="min-w-0">
                             <span className="block text-[11px] text-gray-400 font-medium">Correo electrónico</span>
-                            <span className="text-gray-800 font-semibold truncate block">{clientData.email || clientData.contact?.email || "-"}</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.email || clientData.contact?.email || ""}</span>
                         </div>
                     </div>
 
@@ -224,7 +274,7 @@ export default function ClientDetailPage() {
                         </div>
                         <div className="min-w-0">
                             <span className="block text-[11px] text-gray-400 font-medium">Teléfono de contacto</span>
-                            <span className="text-gray-800 font-semibold truncate block">{clientData.phone || clientData.contact?.phone || "-"}</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.phone || clientData.contact?.phone || ""}</span>
                         </div>
                     </div>
 
@@ -234,7 +284,7 @@ export default function ClientDetailPage() {
                         </div>
                         <div className="min-w-0">
                             <span className="block text-[11px] text-gray-400 font-medium">Agente asignado</span>
-                            <span className="text-gray-800 font-semibold truncate block">{clientData.agent?.name || '-'}</span>
+                            <span className="text-gray-800 font-semibold truncate block">{clientData.agent?.name || ''}</span>
                         </div>
                     </div>
 
@@ -245,7 +295,7 @@ export default function ClientDetailPage() {
                         <div className="min-w-0">
                             <span className="block text-[11px] text-gray-400 font-medium">Registrado el</span>
                             <span className="text-gray-800 font-semibold truncate block">
-                                {new Date(clientData.created_at || Date.now()).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                {clientData.created_at ? new Date(clientData.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                             </span>
                         </div>
                     </div>
@@ -257,7 +307,7 @@ export default function ClientDetailPage() {
                         <div className="min-w-0">
                             <span className="block text-[11px] text-gray-400 font-medium">Última actualización</span>
                             <span className="text-gray-800 font-semibold truncate block">
-                                {clientData.updated_at ? new Date(clientData.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                {clientData.updated_at ? new Date(clientData.updated_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                             </span>
                         </div>
                     </div>
@@ -273,42 +323,17 @@ export default function ClientDetailPage() {
                         <InfoBlock label="Tipo de Persona" value={clientData.taxpayer_type} />
                         <InfoBlock label="Identificación Fiscal" value={clientData.tax_id} />
                         <InfoBlock label="Medio de contacto preferido" value={clientData.preferred_contact} />
-                        <InfoBlock label="Origen del Prospecto" value={clientData.lead_source_name || clientData.other_source || '-'} />
+                        <InfoBlock label="Origen del Prospecto" value={clientData.lead_source_name || clientData.other_source} />
                     </div>
                 </div>
 
 
                 {/* PREFERENCES */}
-                <div className='bg-white rounded-lg p-5 shadow-md border border-slate-200'>
-                    <SectionHeader title="Preferencias de operación" icon={Target} />
-                    <p className='text-sm text-gray-500 mb-6 -mt-2'>Configura que busca o que ofrece este cliente en el mercado inmobiliario.</p>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-                        {(() => {
-                            const rawInterest = clientData.preferences?.main_interest || clientData.main_interest;
-                            const currentInterest = normalizeInterest(rawInterest);
-                            const isRenta = currentInterest === 'renta' || currentInterest === 'quiero_rentar' || currentInterest === 'rent';
-                            const isVenta = currentInterest === 'venta' || currentInterest === 'quiero_vender' || currentInterest === 'sale';
-                            
-                            const timeLabel = isVenta ? 'Plazo estimado para vender' : (isRenta ? 'Plazo estimado para rentar' : 'Plazo estimado para comprar');
-                            const budgetMinLabel = isRenta ? 'Presupuesto mínimo mensual' : 'Presupuesto mínimo';
-                            const budgetMaxLabel = isRenta ? 'Presupuesto máximo mensual' : 'Presupuesto máximo';
-
-                            return (
-                                <>
-                                    <InfoBlock label="Interés principal" value={formatInterestLabel(rawInterest, interestCatalog)} />
-                                    <InfoBlock label="Tipo de propiedad objetivo" value={(propertyTypeCatalog.find(p => String(p.id) === String(clientData.preferences?.target_property_type || clientData.target_property_type) || String(p.value) === String(clientData.preferences?.target_property_type || clientData.target_property_type) || String(p.name) === String(clientData.preferences?.target_property_type || clientData.target_property_type))?.name) || clientData.preferences?.target_property_type || clientData.target_property_type} />
-                                    {(clientData.preferences?.budget_min ?? clientData.budget_min) != null ? <InfoBlock label={budgetMinLabel} value={`$${(clientData.preferences?.budget_min ?? clientData.budget_min).toLocaleString()}`} /> : null}
-                                    {(clientData.preferences?.budget_max ?? clientData.budget_max) != null ? <InfoBlock label={budgetMaxLabel} value={`$${(clientData.preferences?.budget_max ?? clientData.budget_max).toLocaleString()}`} /> : null}
-                                    {(clientData.preferences?.bedrooms ?? clientData.bedrooms) != null ? <InfoBlock label="Recámaras" value={clientData.preferences?.bedrooms ?? clientData.bedrooms} /> : null}
-                                    {(clientData.preferences?.bathrooms ?? clientData.bathrooms) != null ? <InfoBlock label="Baños" value={clientData.preferences?.bathrooms ?? clientData.bathrooms} /> : null}
-                                    {(clientData.preferences?.parking_spaces ?? clientData.parking_spaces) != null ? <InfoBlock label="Estacionamientos" value={clientData.preferences?.parking_spaces ?? clientData.parking_spaces} /> : null}
-                                    {(clientData.preferences?.payment_method ?? clientData.payment_method) != null ? <InfoBlock label="Forma de pago" value={clientData.preferences?.payment_method ?? clientData.payment_method} /> : null}
-                                    {(clientData.preferences?.estimated_time ?? clientData.estimated_time) != null ? <InfoBlock label={timeLabel} value={clientData.preferences?.estimated_time ?? clientData.estimated_time} /> : null}
-                                </>
-                            );
-                        })()}
-                    </div>
-                </div>
+                <ClientPreferencesSection
+                    clientData={clientData}
+                    interestCatalog={interestCatalog}
+                    propertyTypeCatalog={propertyTypeCatalog}
+                />
 
 
                 {/* LOCATION */}

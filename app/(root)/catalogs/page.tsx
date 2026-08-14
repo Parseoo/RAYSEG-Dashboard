@@ -135,7 +135,7 @@ export default function CatalogsPage() {
                     <p className='text-gray-500 text-sm'>Administra listas de opciones y elementos configurables del sistema.</p>
                 </div>
                 <div className="flex flex-col gap-1 w-full sm:w-[280px]">
-                    <label className="text-xs font-semibold text-gray-700">Seleccionar catálogo</label>
+                    <span className="text-xs font-semibold text-gray-700">Seleccionar catálogo</span>
                     <CatalogSearchSelect 
                         catalogs={catalogs}
                         selectedCatalog={selectedCatalog}
@@ -144,7 +144,7 @@ export default function CatalogsPage() {
                 </div>
             </div>
 
-            <button 
+            <button type='button'
                 onClick={() => {
                     if (selectedCatalog) {
                         const catId = selectedCatalog.catalogoID ?? (selectedCatalog as any).catalogID ?? (selectedCatalog as any).id ?? (selectedCatalog as any).catalog_id;

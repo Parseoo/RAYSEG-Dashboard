@@ -1,24 +1,15 @@
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useClient } from '../clientContext';
-import { useMemo } from 'react';
 
 export const AddNotesClient = () => {
     const { state, updateField, clientOriginTypes, leadSourceTypes } = useClient();
 
-    const catalog = (clientOriginTypes && clientOriginTypes.length > 0)
-        ? clientOriginTypes
-        : (leadSourceTypes && leadSourceTypes.length > 0)
-            ? leadSourceTypes
-            : [
-                { name: 'Facebook' },
-                { name: 'Instagram' },
-                { name: 'Sitio Web' },
-                { name: 'Recomendación' },
-                { name: 'Llamada' },
-                { name: 'WhatsApp' },
-                { name: 'Portal Inmobiliario' },
-                { name: 'Otro' }
-            ];
+    let catalog: any[] = [];
+    if (clientOriginTypes && clientOriginTypes.length > 0) {
+        catalog = clientOriginTypes;
+    } else if (leadSourceTypes && leadSourceTypes.length > 0) {
+        catalog = leadSourceTypes;
+    }
 
     const leadSourceOptions = catalog
         .map((item: any) => {

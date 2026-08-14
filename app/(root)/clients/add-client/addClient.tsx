@@ -11,12 +11,27 @@ import { useRouter } from 'next/navigation';
 import { ClientProvider, useClient } from '../clientContext';
 import { CreateClient } from '@/lib/api/client-api';
 import { showToast } from 'nextjs-toast-notify';
-import { ItemResponse } from '@/lib/@type';
 import { resolveCatalogApiValue, normalizeInterest } from '@/lib/utils/catalog';
+
+const validateClient = (state: any) => {
+  const errors: Record<string, string> = {};
+  if (!state.name?.trim()) errors.name = "El campo es requerido";
+  if (!state.client_type) errors.client_type = "El campo es requerido";
+  if (!state.phone?.trim()) errors.phone = "El campo es requerido";
+  
+  if (!state.email?.trim()) {
+    errors.email = "El campo es requerido";
+  } else if (!/^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/.test(state.email)) {
+    errors.email = "Por favor, ingrese un correo electrónico válido.";
+  }
+  return errors;
+};
+
+const getNumberOrNull = (val: any) => val && Number(val) > 0 ? Number(val) : null;
 
 const AddClientContent = ({ clientId }: { clientId?: string }) => {
   const router = useRouter();
-  const { state, fetchClient, resetState, loading, setErrors, statusTypes, taxpayerTypes, segmentTypes, contactPreferenceTypes, mainInterestTypes, targetPropertyTypes, paymentMethodTypes, leadSourceTypes, clientOriginTypes } = useClient();
+  const { state, fetchClient, resetState, loading, setErrors, statusTypes, taxpayerTypes, segmentTypes, contactPreferenceTypes, mainInterestTypes, targetPropertyTypes, paymentMethodTypes, clientOriginTypes } = useClient();
   const [isSaving, setIsSaving] = useState(false);
   const isEdit = !!clientId;
 
@@ -28,33 +43,9 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
     }
   }, [clientId, fetchClient, resetState]);
 
-  // Helper para convertir string de catálogo a objeto CatalogItem
-  const toCatalogItem = (value: string, catalog: ItemResponse[]): any => {
-    if (!value) return null;
-    const item = catalog.find(c => c.name?.toLowerCase() === value.toLowerCase() || String(c.value) === value);
-    return item || null;
-  };
 
   const handleSaveClient = async () => {
-    // Validar campos obligatorios
-    const tempErrors: Record<string, string> = {};
-    if (!state.name?.trim()) {
-      tempErrors.name = "El campo es requerido";
-    }
-    if (!state.client_type) {
-      tempErrors.client_type = "El campo es requerido";
-    }
-    if (!state.email?.trim()) {
-      tempErrors.email = "El campo es requerido";
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(state.email)) {
-        tempErrors.email = "Por favor, ingrese un correo electrónico válido.";
-      }
-    }
-    if (!state.phone?.trim()) {
-      tempErrors.phone = "El campo es requerido";
-    }
+    const tempErrors = validateClient(state);
 
     if (Object.keys(tempErrors).length > 0) {
       setErrors(tempErrors);
@@ -62,12 +53,9 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
       return;
     }
 
-    // Limpiar errores si pasa la validación
     setErrors({});
-
     setIsSaving(true);
     try {
-      // Construir el objeto address según el AddressSchema esperado
       const address = {
         state: state.address?.state || "",
         city: state.address?.city || "",
@@ -76,7 +64,8 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
         full_address: state.address?.full_address || "",
       };
 
-      // Construir el payload final con los tipos exactos requeridos por el backend
+      const mainInt = normalizeInterest(state.main_interest);
+
       const payload: any = {
         name: state.name || "",
         client_status: resolveCatalogApiValue(state.client_status, statusTypes) || "activo",
@@ -87,23 +76,23 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
         phone: state.phone || null,
         whatsapp: state.whatsapp || null,
         preferred_contact: resolveCatalogApiValue(state.preferred_contact, contactPreferenceTypes) || null,
-        address: address,
-        main_interest: (mainInterestTypes.length > 0 ? resolveCatalogApiValue(normalizeInterest(state.main_interest), mainInterestTypes) : normalizeInterest(state.main_interest)) || normalizeInterest(state.main_interest) || null,
+        address,
+        main_interest: (mainInterestTypes.length > 0 ? resolveCatalogApiValue(mainInt, mainInterestTypes) : mainInt) || mainInt || null,
         target_property_type: resolveCatalogApiValue(state.target_property_type, targetPropertyTypes) || null,
-        budget_min: state.budget_min && state.budget_min > 0 ? Number(state.budget_min) : null,
-        budget_max: state.budget_max && state.budget_max > 0 ? Number(state.budget_max) : null,
-        bedrooms: state.bedrooms && state.bedrooms > 0 ? Number(state.bedrooms) : null,
-        bathrooms: state.bathrooms && state.bathrooms > 0 ? Number(state.bathrooms) : null,
-        parking_spaces: state.parking_spaces && state.parking_spaces > 0 ? Number(state.parking_spaces) : null,
+        budget_min: getNumberOrNull(state.budget_min),
+        budget_max: getNumberOrNull(state.budget_max),
+        bedrooms: getNumberOrNull(state.bedrooms),
+        bathrooms: getNumberOrNull(state.bathrooms),
+        parking_spaces: getNumberOrNull(state.parking_spaces),
         payment_method: resolveCatalogApiValue(state.payment_method, paymentMethodTypes) || null,
         estimated_time: state.estimated_time || null,
         client_origin: resolveCatalogApiValue(state.lead_source, clientOriginTypes) || null,
         other_source: state.other_source || null,
-        agent_id: state.agent_id && state.agent_id > 0 ? Number(state.agent_id) : null,
+        agent_id: getNumberOrNull(state.agent_id),
         internal_notes: state.internal_notes || null,
       };
 
-      if (state.profile_photo && state.profile_photo.startsWith('data:image')) {
+      if (state.profile_photo?.startsWith('data:image')) {
         payload.profile_photo = state.profile_photo;
         payload.profile_picture = state.profile_photo;
       } else if (!state.profile_photo) {
@@ -128,7 +117,9 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
     } catch (error: any) {
       console.error("Error al guardar cliente:", error);
       const detail = error?.response?.data?.detail;
-      const errorMsg = typeof detail === 'string' ? detail : (detail ? JSON.stringify(detail) : `Error al ${isEdit ? 'actualizar' : 'crear'} el cliente`);
+      let errorMsg = `Error al ${isEdit ? 'actualizar' : 'crear'} el cliente`;
+      if (typeof detail === 'string') errorMsg = detail;
+      else if (detail) errorMsg = JSON.stringify(detail);
       showToast.error(errorMsg);
     } finally {
       setIsSaving(false);
@@ -145,7 +136,7 @@ const AddClientContent = ({ clientId }: { clientId?: string }) => {
         { label: isEdit ? 'Editar Cliente' : 'Agregar Cliente', href: isEdit ? `/clients/edit-client/${clientId}` : '/clients/add-client', active: true }
       ]} />
       <div className='mb-3'>
-        <button onClick={() => router.push('/clients')} className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'>
+        <button type='button' onClick={() => router.push('/clients')} className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'>
           <ArrowLeft size={18} /><span className='text-sm'>Volver</span>
         </button>
       </div>

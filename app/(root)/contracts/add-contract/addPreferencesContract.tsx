@@ -24,11 +24,7 @@ export const AddPreferencesClient = () => {
             label: 'Interés principal',
             placeholder: 'Seleccione una opción',
             group: 1,
-            options: [
-                { label: 'Compra', value: 'compra' },
-                { label: 'Venta', value: 'venta' },
-                { label: 'Renta', value: 'renta' },
-            ]
+            options: []
         }
     ];
 
@@ -131,14 +127,7 @@ export const AddPreferencesClient = () => {
                 label: 'Forma de pago',
                 placeholder: 'Seleccione una opción',
                 group: 6,
-                options: [
-                    { label: 'Contado', value: 'contado' },
-                    { label: 'Crédito bancario', value: 'credito_bancario' },
-                    { label: 'Infonavit', value: 'infonavit' },
-                    { label: 'Fovissste', value: 'fovissste' },
-                    { label: 'Cofinavit', value: 'cofinavit' },
-                    { label: 'Empresarial', value: 'empresarial' },
-                ]
+                options: []
             });
         }
 

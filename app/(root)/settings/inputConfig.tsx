@@ -115,13 +115,7 @@ export const inputsUserPermissions: InputFieldConfig[] = [
         label: 'Rol',
         placeholder: 'Seleccione una opción',
         group: 3,
-        options: [
-            { label: 'Agente Inmobiliario', value: 'compra' },
-            { label: 'Asesor de Ventas', value: 'venta' },
-            { label: 'Asesor de Renta', value: 'renta' },
-            { label: 'Administrador/a', value: 'admin' },
-            { label: 'Gerente / Dueño', value: 'editor' }
-        ]
+        options: []
     },
     {
         type: 'textarea',

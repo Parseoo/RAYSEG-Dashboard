@@ -1,11 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User, MoreVertical, X } from 'lucide-react';
-import { responsibleOptions } from '../../../components/selectClients.data';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,7 +16,6 @@ import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
 import { GetAllClients, DeleteClient, DesactiveClient } from '@/lib/api/client-api';
-import { GetEstados } from '@/lib/api/property/property-api';
 import { Pagination as PaginationType } from '@/lib/@type';
 import { Pagination } from '@/components/ui/Pagination';
 import { formatInterestLabel, normalizeInterest } from '@/lib/utils/catalog';
@@ -35,7 +33,7 @@ const headers = [
   'Acciones'
 ];
 
-function ClientsList({ data: initialData, isLoading: initialLoading }: { data: any[]; isLoading: boolean }) {
+function ClientsList({ data: initialData, isLoading: initialLoading }: { readonly data: any[]; readonly isLoading: boolean }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: any | null }>({
     isOpen: false,
@@ -84,11 +82,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
   };
 
   const [typeOptions, setTypeOptions] = useState<any[]>([]);
-  const [statusOptions, setStatusOptions] = useState<any[]>([
-    { value: 'activo', label: 'Activo' },
-    { value: 'potencial', label: 'Potencial' },
-    { value: 'inactivo', label: 'Inactivo' },
-  ]);
+  const [statusOptions, setStatusOptions] = useState<any[]>([]);
   const [sourceOptions, setSourceOptions] = useState<any[]>([]);
   const [interestOptions, setInterestOptions] = useState<any[]>([]);
   const [interestCatalog, setInterestCatalog] = useState<any[]>([]);
@@ -144,11 +138,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
             label: i.name || formatInterestLabel(i.value)
           })));
         } else {
-          setInterestOptions([
-            { value: 'compra', label: 'Compra' },
-            { value: 'renta', label: 'Renta' },
-            { value: 'venta', label: 'Venta' }
-          ]);
+          setInterestOptions([]);
         }
 
         // Extraer agentes del listado de usuarios
@@ -256,7 +246,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
                 fill
                 sizes="48px"
                 unoptimized={true}
-                
+
                 className='object-cover'
               />
             ) : (
@@ -294,20 +284,20 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
         <div className='flex items-center gap-2'>
           <Tooltip content="Ver detalle">
             <Link href={`/clients/${row.id}`}>
-              <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <button type='button' className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
                 <Eye size={16} className='text-gray-600' />
               </button>
             </Link>
           </Tooltip>
           <Tooltip content="Editar">
             <Link href={`/clients/edit-client/${row.id}`}>
-              <button className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+              <button type='button' className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
                 <Pencil size={16} className='text-gray-600' />
               </button>
             </Link>
           </Tooltip>
           <Tooltip content="Eliminar">
-            <button
+            <button type='button'
               onClick={() => handleDeleteClick(row)}
               className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
             >
@@ -336,7 +326,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
                 fill
                 sizes="48px"
                 unoptimized={true}
-                
+
                 className='object-cover'
               />
             ) : (
@@ -348,29 +338,29 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
             <p className='text-xs text-gray-500'>CLI-{row.id}</p>
           </div>
         </div>
-        
+
         {/* Actions Dropdown */}
         <div className="relative">
-          <button 
+          <button type='button'
             onClick={() => toggleActionMenu(row.id)}
             className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
           >
             <MoreVertical size={20} />
           </button>
-          
+
           {openActionMenu === row.id && (
             <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
               <Link href={`/clients/${row.id}`}>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                   <Eye size={16} /> Ver
                 </button>
               </Link>
               <Link href={`/clients/edit-client/${row.id}`}>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                   <Pencil size={16} /> Editar
                 </button>
               </Link>
-              <button 
+              <button type='button'
                 onClick={() => {
                   setOpenActionMenu(null);
                   handleDeleteClick(row);
@@ -421,25 +411,23 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { data: a
     <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
       <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
       <div className="flex flex-wrap items-center gap-1.5 py-1">
-        <button
+        <button type='button'
           onClick={() => onChange('all')}
-          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-            selectedValue === 'all'
+          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
               ? 'bg-primary_color text-white font-medium shadow-md'
               : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-          }`}
+            }`}
         >
           Todos
         </button>
         {options.map((opt: any) => (
-          <button
+          <button type='button'
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-              selectedValue === opt.value
+            className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
                 ? 'bg-primary_color text-white font-medium shadow-md'
                 : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-            }`}
+              }`}
           >
             {opt.label}
           </button>

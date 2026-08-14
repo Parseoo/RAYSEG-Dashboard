@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileDown, X, Loader2 } from 'lucide-react';
 import { GetReportsClients } from '@/lib/api/report-api';
 import { GetReportClients } from '@/lib/api/client-api';
 import { showToast } from 'nextjs-toast-notify';
 
-import { useEffect } from 'react';
 
 const initialCardClient = [
   {
@@ -61,8 +60,8 @@ export const ClientsCard = () => {
     e.preventDefault();
     setIsGenerating(true);
     try {
-      const yearNum = pdfParams.year ? parseInt(pdfParams.year) : undefined;
-      const monthNum = pdfParams.month ? parseInt(pdfParams.month) : undefined;
+      const yearNum = pdfParams.year ? Number.parseInt(pdfParams.year) : undefined;
+      const monthNum = pdfParams.month ? Number.parseInt(pdfParams.month) : undefined;
       
       const response = await GetReportsClients({
         year: yearNum,
@@ -118,8 +117,8 @@ export const ClientsCard = () => {
           </div>
 
           <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4'>
-            {cardsData.map((card, index) => (
-              <div key={index} className='bg-slate-100 rounded-lg p-4 flex flex-col justify-between'>
+            {cardsData.map((card) => (
+              <div key={card.key} className='bg-slate-100 rounded-lg p-4 flex flex-col justify-between'>
                 <h2 className='text-gray-600 text-sm font-semibold'>{card.title}</h2>
                 <p className='text-2xl font-bold text-black mt-2'>{card.number}</p>
               </div>
@@ -129,8 +128,18 @@ export const ClientsCard = () => {
       </div>
 
       {isPdfModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all" onClick={() => setIsPdfModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-all cursor-default border-none"
+            onClick={() => setIsPdfModalOpen(false)}
+          />
+          <dialog
+            open
+            aria-label="Generar Reporte PDF"
+            className="relative bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden p-0 m-0"
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-red-50/50">
               <div className="flex items-center gap-3">
@@ -142,7 +151,7 @@ export const ClientsCard = () => {
                   <p className="text-xs text-gray-500 font-medium">Filtrar clientes para el reporte</p>
                 </div>
               </div>
-              <button onClick={() => setIsPdfModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <button type='button' onClick={() => setIsPdfModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -152,8 +161,9 @@ export const ClientsCard = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Año */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Año (opcional)</label>
+                  <label htmlFor="pdf-year" className="text-xs font-semibold text-gray-700">Año (opcional)</label>
                   <input
+                    id="pdf-year"
                     type="number"
                     min="2000"
                     max="2100"
@@ -166,8 +176,9 @@ export const ClientsCard = () => {
 
                 {/* Mes */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Mes (opcional)</label>
+                  <label htmlFor="pdf-month" className="text-xs font-semibold text-gray-700">Mes (opcional)</label>
                   <select
+                    id="pdf-month"
                     value={pdfParams.month}
                     onChange={(e) => setPdfParams(prev => ({ ...prev, month: e.target.value }))}
                     className="w-full h-[40px] px-3 border border-gray-200 rounded-lg focus:outline-none focus:border-red-500 text-sm transition-all bg-white"
@@ -196,8 +207,9 @@ export const ClientsCard = () => {
                 <div className="grid grid-cols-2 gap-4">
                   {/* Desde */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-700">Desde</label>
+                    <label htmlFor="pdf-date-from" className="text-xs font-semibold text-gray-700">Desde</label>
                     <input
+                      id="pdf-date-from"
                       type="date"
                       value={pdfParams.date_from}
                       onChange={(e) => setPdfParams(prev => ({ ...prev, date_from: e.target.value }))}
@@ -207,8 +219,9 @@ export const ClientsCard = () => {
 
                   {/* Hasta */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-700">Hasta</label>
+                    <label htmlFor="pdf-date-to" className="text-xs font-semibold text-gray-700">Hasta</label>
                     <input
+                      id="pdf-date-to"
                       type="date"
                       value={pdfParams.date_to}
                       onChange={(e) => setPdfParams(prev => ({ ...prev, date_to: e.target.value }))}
@@ -237,7 +250,7 @@ export const ClientsCard = () => {
                 </button>
               </div>
             </form>
-          </div>
+          </dialog>
         </div>
       )}
     </>

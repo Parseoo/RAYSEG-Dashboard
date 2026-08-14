@@ -1,6 +1,5 @@
 import { InputFieldConfig } from "@/components/ui/Input";
 import { Facebook, Instagram, Linkedin } from "lucide-react";
-import { inputsAddContact } from '../agents/add-agent/inputs.data';
 
 export const WhatsappIcon = (props: any) => (
     <svg 

@@ -1,4 +1,3 @@
-import React from 'react';
 import AddClient from '../../add-client/addClient';
 
 const Page = async ({ params }: { params: Promise<{ id: string }> }) => {

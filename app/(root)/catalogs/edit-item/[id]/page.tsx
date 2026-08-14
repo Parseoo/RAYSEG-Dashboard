@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Loader2, Save, X, CirclePlus, Lock, Key, Hash, Calendar, ShieldAlert } from 'lucide-react';
-import * as LucideIcons from "lucide-react";
+import { ArrowLeft, Loader2, Save, X, Lock, ShieldAlert } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { showToast } from 'nextjs-toast-notify';
 import { GetCatalogItemByID, EditCatalogItem } from '@/lib/api/catalog-api';

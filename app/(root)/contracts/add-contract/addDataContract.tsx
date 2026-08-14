@@ -26,11 +26,7 @@ export const AddDataClient = () => {
         },
         { type: 'text', id: 'identificacion_fiscal', label: 'Identificación Fiscal', placeholder: 'RFC', group: 2 },
         {
-            type: 'select', id: 'operacion', label: 'Estatus del cliente', placeholder: 'Activo, Potencial, Inactivo', group: 3, options: [
-                { label: 'Activo', value: 'activo' },
-                { label: 'Potencial', value: 'potencial' },
-                { label: 'Inactivo', value: 'inactivo' },
-            ]
+            type: 'select', id: 'operacion', label: 'Estatus del cliente', placeholder: 'Activo, Potencial, Inactivo', group: 3, options: []
         },
         {
             type: 'select', id: 'tipo_cliente', label: 'Tipo de cliente', placeholder: 'Seleccione un tipo de cliente', group: 3, options: clientTypeOptions

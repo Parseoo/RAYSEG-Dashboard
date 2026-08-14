@@ -32,11 +32,7 @@ const inputs: InputFieldConfig[] = [
         label: 'Medio de contacto preferido',
         placeholder: 'Seleccione un medio',
         group: 2,
-        options: [
-            { value: 'correo', label: 'Correo electrónico' },
-            { value: 'telefono', label: 'Teléfono' },
-            { value: 'whatsapp', label: 'WhatsApp' },
-        ]
+        options: []
     },
     {
         type: 'select',
@@ -44,10 +40,7 @@ const inputs: InputFieldConfig[] = [
         label: 'Estado',
         placeholder: 'Seleccione un estado',
         group: 3,
-        options: [
-            { value: 'cdmx', label: 'Ciudad de México' },
-            { value: 'edomex', label: 'Estado de México' },
-        ]
+        options: []
     },
     {
         type: 'select',
@@ -55,10 +48,7 @@ const inputs: InputFieldConfig[] = [
         label: 'Ciudad',
         placeholder: 'Seleccione una ciudad',
         group: 3,
-        options: [
-            { value: 'cdmx', label: 'Ciudad de México' },
-            { value: 'guadalajara', label: 'Guadalajara' },
-        ]
+        options: []
     },
     { 
         type: 'text',

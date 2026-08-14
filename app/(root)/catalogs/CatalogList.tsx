@@ -5,9 +5,9 @@ import { CatalogResponse } from '@/lib/types/catalogs';
 import { cn } from '@/lib/utils';
 
 interface CatalogListProps {
-  catalogs: CatalogResponse[];
-  selectedCatalog: CatalogResponse | null;
-  onSelectCatalog: (catalog: CatalogResponse) => void;
+  readonly catalogs: CatalogResponse[];
+  readonly selectedCatalog: CatalogResponse | null;
+  readonly onSelectCatalog: (catalog: CatalogResponse) => void;
 }
 
 export default function CatalogList({ catalogs, selectedCatalog, onSelectCatalog }: CatalogListProps) {
@@ -30,11 +30,12 @@ export default function CatalogList({ catalogs, selectedCatalog, onSelectCatalog
         const status = isSelected ? "Activo" : "Listo";
 
         return (
-          <div
+          <button
+            type="button"
             key={catalog.catalogoID}
             onClick={() => onSelectCatalog(catalog)}
             className={cn(
-              "cursor-pointer rounded-[20px] p-4 transition-all border",
+              "block w-full text-left cursor-pointer rounded-[20px] p-4 transition-all border",
               isSelected 
                 ? "bg-property_purple text-white border-property_purple shadow-md" 
                 : "bg-white text-gray-800 border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm"
@@ -62,7 +63,7 @@ export default function CatalogList({ catalogs, selectedCatalog, onSelectCatalog
               <span>•</span>
               <span>{moduleName}</span>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
