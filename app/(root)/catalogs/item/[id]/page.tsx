@@ -2,61 +2,67 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Loader2, Pencil, Trash2, Lock, ShieldCheck, Key, Hash, Calendar, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, Lock, Key, Calendar } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
-import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
 import { GetCatalogItemByID, DeleteCatalogItem } from '@/lib/api/catalog-api';
 import { ItemResponse } from '@/lib/types/catalogs';
 import { showToast } from 'nextjs-toast-notify';
-import Link from 'next/link';
+
+const getIconByName = (iconStr: string): any => {
+  const raw = iconStr.trim();
+  if ((LucideIcons as any)[raw]) return (LucideIcons as any)[raw];
+
+  const pascal = raw
+    .split(/[-_\s]+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('');
+  if ((LucideIcons as any)[pascal]) return (LucideIcons as any)[pascal];
+
+  const lower = raw.toLowerCase().replace(/[-_\s]+/g, '');
+  const foundKey = Object.keys(LucideIcons).find(k => k.toLowerCase() === lower);
+  return foundKey ? (LucideIcons as any)[foundKey] : null;
+};
+
+const KEYWORD_MAP = [
+  { keys: ['alberca', 'piscina', 'pool'], icon: LucideIcons.Waves },
+  { keys: ['wifi', 'internet'], icon: LucideIcons.Wifi },
+  { keys: ['estacion', 'cochera', 'garage', 'park'], icon: LucideIcons.Car },
+  { keys: ['gimnasio', 'gym'], icon: LucideIcons.Dumbbell },
+  { keys: ['jardin', 'jardín', 'patio'], icon: LucideIcons.Trees },
+  { keys: ['elevador', 'ascensor'], icon: LucideIcons.ArrowUpSquare },
+  { keys: ['seguridad', 'vigilanc', 'guardia'], icon: LucideIcons.ShieldCheck },
+  { keys: ['aire', 'clima', 'ac'], icon: LucideIcons.Fan },
+  { keys: ['terraza', 'balcon', 'balcón'], icon: LucideIcons.Sun },
+  { keys: ['mascota', 'pet'], icon: LucideIcons.Dog },
+  { keys: ['cocina', 'comedor'], icon: LucideIcons.Utensils },
+  { keys: ['asador', 'grill', 'barbacoa'], icon: LucideIcons.Flame },
+  { keys: ['jacuzzi', 'tina', 'baño'], icon: LucideIcons.Bath },
+  { keys: ['tv', 'cable', 'television'], icon: LucideIcons.Tv },
+  { keys: ['camara', 'cctv'], icon: LucideIcons.Camera }
+];
+
+const findIconByKeyword = (searchStr: string) => {
+  const match = KEYWORD_MAP.find(item => item.keys.some(k => searchStr.includes(k)));
+  return match ? match.icon : LucideIcons.Sparkles;
+};
 
 const getLucideIcon = (iconStr?: string, nameStr?: string, keyStr?: string): any => {
   if (iconStr && typeof iconStr === 'string' && iconStr.trim() !== '') {
-    const raw = iconStr.trim();
-    if ((LucideIcons as any)[raw]) {
-      return (LucideIcons as any)[raw];
-    }
-    const pascal = raw
-      .split(/[-_\s]+/)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join('');
-    if ((LucideIcons as any)[pascal]) {
-      return (LucideIcons as any)[pascal];
-    }
-    const lower = raw.toLowerCase().replace(/[-_\s]+/g, '');
-    const foundKey = Object.keys(LucideIcons).find(k => k.toLowerCase() === lower);
-    if (foundKey && (LucideIcons as any)[foundKey]) {
-      return (LucideIcons as any)[foundKey];
-    }
+    const icon = getIconByName(iconStr);
+    if (icon) return icon;
   }
 
   const searchStr = `${nameStr || ''} ${keyStr || ''}`.toLowerCase();
-  if (searchStr.includes('alberca') || searchStr.includes('piscina') || searchStr.includes('pool')) return LucideIcons.Waves;
-  if (searchStr.includes('wifi') || searchStr.includes('internet')) return LucideIcons.Wifi;
-  if (searchStr.includes('estacion') || searchStr.includes('cochera') || searchStr.includes('garage') || searchStr.includes('park')) return LucideIcons.Car;
-  if (searchStr.includes('gimnasio') || searchStr.includes('gym')) return LucideIcons.Dumbbell;
-  if (searchStr.includes('jardin') || searchStr.includes('jardín') || searchStr.includes('patio')) return LucideIcons.Trees;
-  if (searchStr.includes('elevador') || searchStr.includes('ascensor')) return LucideIcons.ArrowUpSquare;
-  if (searchStr.includes('seguridad') || searchStr.includes('vigilanc') || searchStr.includes('guardia')) return LucideIcons.ShieldCheck;
-  if (searchStr.includes('aire') || searchStr.includes('clima') || searchStr.includes('ac')) return LucideIcons.Fan;
-  if (searchStr.includes('terraza') || searchStr.includes('balcon') || searchStr.includes('balcón')) return LucideIcons.Sun;
-  if (searchStr.includes('mascota') || searchStr.includes('pet')) return LucideIcons.Dog;
-  if (searchStr.includes('cocina') || searchStr.includes('comedor')) return LucideIcons.Utensils;
-  if (searchStr.includes('asador') || searchStr.includes('grill') || searchStr.includes('barbacoa')) return LucideIcons.Flame;
-  if (searchStr.includes('jacuzzi') || searchStr.includes('tina') || searchStr.includes('baño')) return LucideIcons.Bath;
-  if (searchStr.includes('tv') || searchStr.includes('cable') || searchStr.includes('television')) return LucideIcons.Tv;
-  if (searchStr.includes('camara') || searchStr.includes('cctv')) return LucideIcons.Camera;
-
-  return LucideIcons.Sparkles;
+  return findIconByKeyword(searchStr);
 };
 
 export default function CatalogItemDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const itemId = params?.id as string;
   const catalogName = searchParams.get('catalog') || 'Catálogo';
 
@@ -126,7 +132,7 @@ export default function CatalogItemDetailPage() {
         <div className="bg-red-50 p-6 rounded-xl border border-red-200 text-center max-w-md">
           <p className="text-red-700 font-semibold mb-2 text-lg">Ítem no encontrado</p>
           <p className="text-sm text-red-600 mb-6">No se encontró el ítem #{itemId} en la base de datos.</p>
-          <button 
+          <button type='button'
             onClick={() => router.push('/catalogs')}
             className="bg-red-600 text-white px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium shadow-sm"
           >
@@ -157,7 +163,7 @@ export default function CatalogItemDetailPage() {
       ]} />
 
       <div className='mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2'>
-        <button
+        <button type='button'
           onClick={() => router.back()}
           className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors w-fit'
         >

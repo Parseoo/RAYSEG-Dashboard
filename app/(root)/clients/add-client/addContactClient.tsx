@@ -146,16 +146,16 @@ export const AddContactClient = () => {
         },
     ], [estados, contactOptions]);
 
-    const addressFields = ['state', 'city', 'neighborhood', 'postal_code', 'full_address'];
+    const addressFields = new Set(['state', 'city', 'neighborhood', 'postal_code', 'full_address']);
 
     const mappedInputs = inputs.map(input => ({
         ...input,
-        value: addressFields.includes(input.id)
+        value: addressFields.has(input.id)
             ? (state.address as any)[input.id] || ''
             : (state as any)[input.id] || '',
         onChange: (e: any) => {
             const val = typeof e === 'string' ? e : e.target.value;
-            if (addressFields.includes(input.id)) {
+            if (addressFields.has(input.id)) {
                 updateAddressField(input.id as any, val);
                 if (input.id === 'state') {
                     updateAddressField('city', ''); // Limpiar ciudad al cambiar estado

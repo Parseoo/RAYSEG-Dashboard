@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Loader2, Save, X, CirclePlus, Sparkles, Key, Hash, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, X, CirclePlus, Sparkles, Key, Hash } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { showToast } from 'nextjs-toast-notify';
 import IconSelector from "@/components/ui/IconSelector";
 import { GetAllCatalogs, CreateCatalogItems, PreviewCatalogItem } from '@/lib/api/catalog-api';
-import { CatalogResponse, PreviewCatalogItemResponse } from '@/lib/types/catalogs';
+import { PreviewCatalogItemResponse } from '@/lib/types/catalogs';
 
 export default function AddCatalogItemPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function AddCatalogItemPage() {
   const initialCatalogName = searchParams.get('catalog') || '';
   const initialCatalogId = searchParams.get('catalogId') || '';
 
-  const [catalogs, setCatalogs] = useState<CatalogResponse[]>([]);
+
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>(initialCatalogId);
   const [selectedCatalogName, setSelectedCatalogName] = useState<string>(initialCatalogName);
 
@@ -40,7 +40,7 @@ export default function AddCatalogItemPage() {
         setLoading(true);
         const res = await GetAllCatalogs();
         const cats = res?.data?.catalogs || (Array.isArray(res?.data) ? res.data : []);
-        setCatalogs(cats);
+
 
         if (initialCatalogId) {
           const found = cats.find(c => String(c.catalogoID) === initialCatalogId);
@@ -62,14 +62,6 @@ export default function AddCatalogItemPage() {
     fetchCatalogs();
   }, [initialCatalogId]);
 
-  // Manejar cambio de catálogo en el selector
-  const handleCatalogChange = (catId: string) => {
-    setSelectedCatalogId(catId);
-    const cat = catalogs.find(c => String(c.catalogoID) === catId);
-    if (cat) {
-      setSelectedCatalogName(cat.name);
-    }
-  };
 
   // Debounce de llamada a PreviewCatalogItem
   useEffect(() => {
@@ -153,7 +145,7 @@ export default function AddCatalogItemPage() {
       ]} />
 
       <div className='mb-4 flex items-center justify-between mt-2'>
-        <button
+        <button type='button'
           onClick={() => router.back()}
           className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors w-fit'
         >
@@ -177,10 +169,11 @@ export default function AddCatalogItemPage() {
 
             {/* Nombre del Ítem */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">
+              <label htmlFor="name" className="text-sm font-semibold text-gray-700">
                 Nombre del ítem <span className="text-red-500">*</span>
               </label>
               <input
+                id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -207,13 +200,14 @@ export default function AddCatalogItemPage() {
             {/* Icono (solo visible para Amenidades) */}
             {isAmenities && (
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+              <label htmlFor="icon-selector" className="text-sm font-semibold text-gray-700 flex items-center justify-between">
                 <span>Icono (Opcional)</span>
                 <span className="text-xs text-primary_color font-normal">Recomendado para amenidades</span>
               </label>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <button
+                    id="icon-selector"
                     type="button"
                     onClick={() => setShowIconSelector(!showIconSelector)}
                     className="h-[40px] px-3 bg-slate-50 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-slate-100 transition-colors text-sm"
@@ -246,10 +240,11 @@ export default function AddCatalogItemPage() {
 
             {/* Descripción */}
             <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-sm font-semibold text-gray-700">
+              <label htmlFor="description" className="text-sm font-semibold text-gray-700">
                 Descripción (Opcional)
               </label>
               <textarea
+                id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}

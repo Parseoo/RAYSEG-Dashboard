@@ -5,10 +5,7 @@ import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 
 // Configuración de los inputs
 const inputs: InputFieldConfig[] = [
-    { type: 'select', id: 'origen_prospecto', label: 'Origen del prospecto', placeholder: 'Seleccione una opción', group: 1, options: [
-        { label: 'Referencia', value: 'referencia' },
-        { label: 'Publicidad', value: 'publicidad' },
-    ]},
+    { type: 'select', id: 'origen_prospecto', label: 'Origen del prospecto', placeholder: 'Seleccione una opción', group: 1, options: [] },
     /* { type: 'select', id: 'responsable_asignado', label: 'Responsable', placeholder: 'Seleccionar agente', group: 1, options: [
         { label: 'Agente 1', value: 'agente_1' },
         { label: 'Agente 2', value: 'agente_2' },

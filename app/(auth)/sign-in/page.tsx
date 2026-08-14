@@ -6,7 +6,31 @@ import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { LoginApi, setAuthHeader } from '@/lib/api/auth/auth-api';
-import { LoginForm } from '@/lib/@type';
+
+const getErrorMessage = (err: any): string => {
+  if (err.response) {
+    const status = err.response.status;
+    const rawDetail = err.response.data?.message || err.response.data?.error || err.response.data?.detail;
+    const serverMessage = typeof rawDetail === 'string' ? rawDetail : JSON.stringify(rawDetail);
+
+    switch (status) {
+      case 401: return serverMessage || 'Credenciales incorrectas. Verifica tu email y contraseña.';
+      case 400: return serverMessage || 'Datos inválidos. Verifica que el email y contraseña sean correctos.';
+      case 404: return 'Endpoint no encontrado. Verifica que el backend esté correctamente configurado.';
+      default: return serverMessage || `Error del servidor (${status})`;
+    }
+  }
+  
+  if (err.isNetworkError || err.name === 'NetworkError' || err.message?.includes('Failed to fetch') || err.message?.includes('Error de conexión')) {
+    return 'No se pudo conectar con el servidor backend en http://localhost:8001. Verifica que el backend esté en ejecución.';
+  }
+  
+  if (err.request) {
+    return 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
+  }
+  
+  return err.message || 'Error al procesar la solicitud';
+};
 
 function LoginFormComponent() {
   const [email, setEmail] = useState('');
@@ -27,83 +51,61 @@ function LoginFormComponent() {
     }
   }, [searchParams, router]);
 
+  const handleLoginSuccess = (data: any) => {
+    if (!data || (!data.tokens?.access && !data.tokens)) {
+      setError('Respuesta del servidor inválida: No se encontró token');
+      return false;
+    }
+
+    const { user, tokens } = data;
+    const accessToken = tokens?.access;
+    const refreshToken = tokens?.refresh;
+
+    if (!accessToken) {
+      setError('Error: No se recibió token de autenticación');
+      return false;
+    }
+
+    setAuthHeader(accessToken);
+
+    // Mapear el usuario de la respuesta al formato de nuestro store
+    login({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      paternal_last_name: user.paternal_last_name,
+      maternal_last_name: user.maternal_last_name,
+      is_active: user.is_active,
+      is_staff: user.is_staff,
+      is_superuser: user.is_superuser,
+      role: user.role,
+      phone: user.phone,
+      state: user.state,
+      city: user.city,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    }, accessToken);
+
+    if (typeof window !== 'undefined' && refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const loginData: LoginForm = {
-        email: email,
-        password: password
-      };
-
-      const response = await LoginApi(loginData);
-
-      if (response.data && (response.data.tokens.access || response.data.tokens)) {
-        const user = response.data.user;
-        const accessToken = response.data.tokens?.access;
-        const refreshToken = response.data.tokens?.refresh;
-
-        if (!accessToken) {
-          setError('Error: No se recibió token de autenticación');
-          return;
-        }
-
-        setAuthHeader(accessToken);
-
-        // Mapear el usuario de la respuesta al formato de nuestro store
-        login({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          paternal_last_name: user.paternal_last_name,
-          maternal_last_name: user.maternal_last_name,
-          is_active: user.is_active,
-          is_staff: user.is_staff,
-          is_superuser: user.is_superuser,
-          role: user.role,
-          phone: user.phone,
-          state: user.state,
-          city: user.city,
-          created_at: user.created_at,
-          updated_at: user.updated_at
-        }, accessToken);
-
-        // Persist refresh token (access token is stored by Zustand persist)
-        if (typeof window !== 'undefined') {
-          if (refreshToken) {
-            localStorage.setItem('refresh_token', refreshToken);
-          }
-        }
-
+      const response = await LoginApi({ email, password });
+      
+      if (handleLoginSuccess(response.data)) {
         router.push('/');
-      } else {
-        setError('Respuesta del servidor inválida: No se encontró token');
       }
     } catch (err: any) {
-      if (err.response) {
-        const status = err.response.status;
-        const rawDetail = err.response.data?.message || err.response.data?.error || err.response.data?.detail;
-        // Asegurar que serverMessage sea string (puede ser objeto si el backend retorna detail como JSON)
-        const serverMessage = typeof rawDetail === 'string' ? rawDetail : JSON.stringify(rawDetail);
-
-        if (status === 401) {
-          setError(serverMessage || 'Credenciales incorrectas. Verifica tu email y contraseña.');
-        } else if (status === 400) {
-          setError(serverMessage || 'Datos inválidos. Verifica que el email y contraseña sean correctos.');
-        } else if (status === 404) {
-          setError('Endpoint no encontrado. Verifica que el backend esté correctamente configurado.');
-        } else {
-          setError(serverMessage || `Error del servidor (${status})`);
-        }
-      } else if (err.isNetworkError || err.name === 'NetworkError' || err.message?.includes('Failed to fetch') || err.message?.includes('Error de conexión')) {
-        setError('No se pudo conectar con el servidor backend en http://localhost:8001. Verifica que el backend esté en ejecución.');
-      } else if (err.request) {
-        setError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
-      } else {
-        setError(err.message || 'Error al procesar la solicitud');
-      }
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +123,7 @@ function LoginFormComponent() {
               width={150}
               height={150}
               className="object-contain"
+              style={{ width: "auto", height: "auto" }}
             />
           </div>
 

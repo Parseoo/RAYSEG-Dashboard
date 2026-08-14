@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import { ItemResponse } from '@/lib/@type';
 import { GetAllUsers } from '@/lib/api/user-api';
@@ -103,6 +103,35 @@ const initialState: ClientState = {
 
 const ClientContext = createContext<ClientContextType | undefined>(undefined);
 
+const ITEM_KEYS = ['catalogItems', 'items', 'datos'] as const;
+
+const findArray = (obj: any): any[] => {
+  if (!obj) return [];
+  if (Array.isArray(obj)) return obj;
+  for (const key of ITEM_KEYS) {
+    if (Array.isArray(obj[key])) return obj[key];
+  }
+  return [];
+};
+
+const extractItems = (res: any): any[] => {
+  if (!res) return [];
+  return findArray(res) || findArray(res?.data) || [];
+};
+
+const isAgente = (role: any): boolean =>
+  role === 'Agente' || role?.name === 'Agente' || String(role).toLowerCase().includes('agente');
+
+const extractAgents = (value: any): { label: string; value: string }[] => {
+  const usersData = value?.data?.users || value?.data || [];
+  return usersData
+    .filter((u: any) => isAgente(u.role))
+    .map((u: any) => ({
+      label: `${u.name || ''} ${u.paternal_last_name || ''} ${u.maternal_last_name || ''}`.trim().replace(/\s+/g, ' '),
+      value: String(u.user_id || u.id)
+    }));
+};
+
 export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<ClientState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -113,13 +142,12 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
   const [contactPreferenceTypes, setContactPreferenceTypes] = useState<ItemResponse[]>([]);
   const [mainInterestTypes, setMainInterestTypes] = useState<ItemResponse[]>([]);
   const [targetPropertyTypes, setTargetPropertyTypes] = useState<ItemResponse[]>([]);
-  const [paymentMethodTypes, setPaymentMethodTypes] = useState<ItemResponse[]>([]);
+  const [paymentMethodTypes] = useState<ItemResponse[]>([]);
   const [leadSourceTypes, setLeadSourceTypes] = useState<ItemResponse[]>([]);
   const [clientOriginTypes, setClientOriginTypes] = useState<ItemResponse[]>([]);
   const [agents, setAgents] = useState<{ label: string, value: string }[]>([]);
 
   const fetchCatalogs = useCallback(async () => {
-    // Helper que retorna null en caso de 404 (catálogos opcionales)
     const safeCatalog = async (name: string) => {
       try {
         return await GetCatalogByName(name);
@@ -134,7 +162,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
       safeCatalog('client-status'),
       safeCatalog('client-type'),
       safeCatalog('preferred-contact-method'),
-      safeCatalog('operation-type') || safeCatalog('primary_interest'),
+      safeCatalog('operation-type').then(res => res ?? safeCatalog('primary_interest')),
       safeCatalog('property-types'),
       safeCatalog('client-origin'),
       GetAllUsers({ perPage: 100 })
@@ -142,44 +170,19 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
 
     const [taxpayerRes, statusRes, segmentRes, contactRes, interestRes, propertyRes, originRes, usersRes] = results;
 
-    const extractItems = (res: any) => {
-      if (!res) return [];
-      if (Array.isArray(res)) return res;
-      if (res.catalogItems && Array.isArray(res.catalogItems)) return res.catalogItems;
-      if (res.items && Array.isArray(res.items)) return res.items;
-      if (res.datos && Array.isArray(res.datos)) return res.datos;
+    const catalogSetters: [PromiseSettledResult<any>, (items: ItemResponse[]) => void][] = [
+      [taxpayerRes, setTaxpayerTypes],
+      [statusRes, setStatusTypes],
+      [segmentRes, setSegmentTypes],
+      [contactRes, setContactPreferenceTypes],
+      [interestRes, setMainInterestTypes],
+      [propertyRes, setTargetPropertyTypes],
+    ];
 
-      if (res.data) {
-        if (Array.isArray(res.data)) return res.data;
-        if (res.data.catalogItems && Array.isArray(res.data.catalogItems)) return res.data.catalogItems;
-        if (res.data.items && Array.isArray(res.data.items)) return res.data.items;
-        if (res.data.datos && Array.isArray(res.data.datos)) return res.data.datos;
+    for (const [res, setter] of catalogSetters) {
+      if (res.status === 'fulfilled') {
+        setter(extractItems(res.value));
       }
-      return [];
-    };
-
-    if (taxpayerRes.status === 'fulfilled') {
-      setTaxpayerTypes(extractItems(taxpayerRes.value));
-    }
-
-    if (statusRes.status === 'fulfilled') {
-      setStatusTypes(extractItems(statusRes.value));
-    }
-
-    if (segmentRes.status === 'fulfilled') {
-      setSegmentTypes(extractItems(segmentRes.value));
-    }
-
-    if (contactRes.status === 'fulfilled') {
-      setContactPreferenceTypes(extractItems(contactRes.value));
-    }
-
-    if (interestRes.status === 'fulfilled') {
-      setMainInterestTypes(extractItems(interestRes.value));
-    }
-
-    if (propertyRes.status === 'fulfilled') {
-      setTargetPropertyTypes(extractItems(propertyRes.value));
     }
 
     if (originRes.status === 'fulfilled') {
@@ -189,14 +192,7 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (usersRes.status === 'fulfilled') {
-      const usersData = (usersRes.value as any)?.data?.users || (usersRes.value as any)?.data || [];
-      const agentsList = usersData
-        .filter((u: any) => u.role === 'Agente' || u.role?.name === 'Agente' || String(u.role).toLowerCase().includes('agente'))
-        .map((u: any) => ({ 
-          label: `${u.name || ''} ${u.paternal_last_name || ''} ${u.maternal_last_name || ''}`.trim().replace(/\s+/g, ' '), 
-          value: String(u.user_id || u.id) 
-        }));
-      setAgents(agentsList);
+      setAgents(extractAgents(usersRes.value));
     }
   }, []);
 
@@ -286,27 +282,48 @@ export const ClientProvider = ({ children }: { children: ReactNode }) => {
     setErrors({});
   }, []);
 
+  const contextValue = useMemo(() => ({
+    state,
+    loading,
+    taxpayerTypes,
+    statusTypes,
+    segmentTypes,
+    contactPreferenceTypes,
+    mainInterestTypes,
+    targetPropertyTypes,
+    paymentMethodTypes,
+    leadSourceTypes,
+    clientOriginTypes,
+    agents,
+    updateField,
+    updateAddressField,
+    fetchClient,
+    resetState,
+    errors,
+    setErrors
+  }), [
+    state,
+    loading,
+    taxpayerTypes,
+    statusTypes,
+    segmentTypes,
+    contactPreferenceTypes,
+    mainInterestTypes,
+    targetPropertyTypes,
+    paymentMethodTypes,
+    leadSourceTypes,
+    clientOriginTypes,
+    agents,
+    updateField,
+    updateAddressField,
+    fetchClient,
+    resetState,
+    errors,
+    setErrors
+  ]);
+
   return (
-    <ClientContext.Provider value={{
-      state,
-      loading,
-      taxpayerTypes,
-      statusTypes,
-      segmentTypes,
-      contactPreferenceTypes,
-      mainInterestTypes,
-      targetPropertyTypes,
-      paymentMethodTypes,
-      leadSourceTypes,
-      clientOriginTypes,
-      agents,
-      updateField,
-      updateAddressField,
-      fetchClient,
-      resetState,
-      errors,
-      setErrors
-    }}>
+    <ClientContext.Provider value={contextValue}>
       {children}
     </ClientContext.Provider>
   );

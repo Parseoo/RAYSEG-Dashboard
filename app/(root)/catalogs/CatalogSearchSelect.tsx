@@ -6,11 +6,10 @@ import { GetAllCatalogs } from '@/lib/api/catalog-api';
 import { Search, ChevronDown, Check, X, Loader2, BookOpen } from 'lucide-react';
 
 interface CatalogSearchSelectProps {
-  catalogs: CatalogResponse[];
-  selectedCatalog: CatalogResponse | null;
-  onSelectCatalog: (catalog: CatalogResponse) => void;
-  onSearchResults?: (catalogs: CatalogResponse[]) => void;
-  className?: string;
+  readonly catalogs: CatalogResponse[];
+  readonly selectedCatalog: CatalogResponse | null;
+  readonly onSelectCatalog: (catalog: CatalogResponse) => void;
+  readonly className?: string;
 }
 
 export default function CatalogSearchSelect({
@@ -72,7 +71,7 @@ export default function CatalogSearchSelect({
     // Filtrado inmediato en memoria para respuesta instantánea
     const queryLower = searchQuery.toLowerCase().trim();
     const localFiltered = catalogs.filter(
-      cat => cat.name.toLowerCase().includes(queryLower) || (cat.key && cat.key.toLowerCase().includes(queryLower))
+      cat => cat.name.toLowerCase().includes(queryLower) || cat.key?.toLowerCase().includes(queryLower)
     );
     setFilteredCatalogs(localFiltered);
 
@@ -104,6 +103,52 @@ export default function CatalogSearchSelect({
     setSearchQuery('');
     setFilteredCatalogs(catalogs);
     inputRef.current?.focus();
+  };
+
+  const renderList = () => {
+    if (isSearching) {
+      return (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-xs">
+          <Loader2 className="w-4 h-4 animate-spin text-primary_color" />
+          <span>Buscando catálogos...</span>
+        </div>
+      );
+    }
+
+    if (filteredCatalogs.length === 0) {
+      return (
+        <div className="py-6 text-center text-xs text-gray-400 px-3">
+          No se encontraron catálogos{searchQuery ? ` para "${searchQuery}"` : ''}.
+        </div>
+      );
+    }
+
+    return filteredCatalogs.map((catalog, index) => {
+      const catId = catalog.catalogoID ?? (catalog as any).catalogID ?? (catalog as any).id ?? (catalog as any).catalog_id;
+      const selId = selectedCatalog?.catalogoID ?? (selectedCatalog as any)?.catalogID ?? (selectedCatalog as any)?.id ?? (selectedCatalog as any)?.catalog_id;
+      const isSelected = (selId !== undefined && catId !== undefined && String(selId) === String(catId)) ||
+        (selectedCatalog?.key && catalog.key && selectedCatalog.key === catalog.key) ||
+        (selectedCatalog?.name && catalog.name && selectedCatalog.name === catalog.name);
+      
+      return (
+        <button type="button"
+          key={catId || catalog.key || catalog.name || index}
+          onClick={() => handleSelect(catalog)}
+          className={`w-full text-left px-3 py-2 rounded-md text-xs flex items-center justify-between transition-colors ${
+            isSelected 
+              ? 'bg-primary_color/10 text-primary_color font-semibold' 
+              : 'text-gray-700 hover:bg-slate-100'
+          }`}
+        >
+          <div className="flex flex-col truncate pr-2">
+            <span className="truncate">{catalog.name}</span>
+          </div>
+          {isSelected && (
+            <Check className="w-4 h-4 text-primary_color shrink-0 ml-1" />
+          )}
+        </button>
+      );
+    });
   };
 
   return (
@@ -159,44 +204,7 @@ export default function CatalogSearchSelect({
 
           {/* Lista de Catálogos */}
           <div className="max-h-56 overflow-y-auto p-1 divide-y divide-gray-50">
-            {isSearching ? (
-              <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-xs">
-                <Loader2 className="w-4 h-4 animate-spin text-primary_color" />
-                <span>Buscando catálogos...</span>
-              </div>
-            ) : filteredCatalogs.length > 0 ? (
-              filteredCatalogs.map((catalog, index) => {
-                const catId = catalog.catalogoID ?? (catalog as any).catalogID ?? (catalog as any).id ?? (catalog as any).catalog_id;
-                const selId = selectedCatalog?.catalogoID ?? (selectedCatalog as any)?.catalogID ?? (selectedCatalog as any)?.id ?? (selectedCatalog as any)?.catalog_id;
-                const isSelected = (selId !== undefined && catId !== undefined && String(selId) === String(catId)) ||
-                  (selectedCatalog?.key && catalog.key && selectedCatalog.key === catalog.key) ||
-                  (selectedCatalog?.name && catalog.name && selectedCatalog.name === catalog.name);
-                
-                return (
-                  <button
-                    key={catId || catalog.key || catalog.name || index}
-                    type="button"
-                    onClick={() => handleSelect(catalog)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-xs flex items-center justify-between transition-colors ${
-                      isSelected 
-                        ? 'bg-primary_color/10 text-primary_color font-semibold' 
-                        : 'text-gray-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex flex-col truncate pr-2">
-                      <span className="truncate">{catalog.name}</span>
-                    </div>
-                    {isSelected && (
-                      <Check className="w-4 h-4 text-primary_color shrink-0 ml-1" />
-                    )}
-                  </button>
-                );
-              })
-            ) : (
-              <div className="py-6 text-center text-xs text-gray-400 px-3">
-                No se encontraron catálogos{searchQuery ? ` para "${searchQuery}"` : ''}.
-              </div>
-            )}
+            {renderList()}
           </div>
 
           {/* Pie del desplegable con cantidad */}

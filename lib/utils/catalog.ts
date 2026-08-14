@@ -69,7 +69,7 @@ export function normalizeInterest(interest?: string | number | null): string {
 
 /** Formatea el interés principal para mostrar en la interfaz (Compra, Renta, Venta) */
 export function formatInterestLabel(interest?: string | number | null, catalog: ItemResponse[] = []): string {
-  if (!interest) return '-';
+  if (!interest) return '';
   if (catalog.length > 0) {
     const display = resolveCatalogDisplayValue(interest, catalog);
     if (display && display.toLowerCase() !== String(interest).toLowerCase()) return display;
