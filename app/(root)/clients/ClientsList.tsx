@@ -16,7 +16,7 @@ import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
 import { GetAllClients, DeleteClient, DesactiveClient } from '@/lib/api/client-api';
-import { Pagination as PaginationType } from '@/lib/@type';
+import { Pagination as PaginationType, Client, FilterOption, ItemResponse } from '@/lib/@type';
 import { Pagination } from '@/components/ui/Pagination';
 import { formatInterestLabel, normalizeInterest } from '@/lib/utils/catalog';
 import { getUserImageUrl } from '@/lib/utils';
@@ -33,14 +33,43 @@ const headers = [
   'Acciones'
 ];
 
-function ClientsList({ data: initialData, isLoading: initialLoading }: { readonly data: any[]; readonly isLoading: boolean }) {
+const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: FilterOption[], selectedValue: string, onChange: (val: string) => void }) => (
+  <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
+    <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
+    <div className="flex flex-wrap items-center gap-1.5 py-1">
+      <button type='button'
+        onClick={() => onChange('all')}
+        className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
+            ? 'bg-primary_color text-white font-medium shadow-md'
+            : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+          }`}
+      >
+        Todos
+      </button>
+      {options.map((opt) => (
+        <button type='button'
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
+              ? 'bg-primary_color text-white font-medium shadow-md'
+              : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+            }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+function ClientsList({ data: initialData, isLoading: initialLoading }: { readonly data: Client[]; readonly isLoading: boolean }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: any | null }>({
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: Client | null }>({
     isOpen: false,
     item: null
   });
   const [isDeleting, setIsDeleting] = useState(false);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,12 +110,12 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
     setIsFilterOpen(false);
   };
 
-  const [typeOptions, setTypeOptions] = useState<any[]>([]);
-  const [statusOptions, setStatusOptions] = useState<any[]>([]);
-  const [sourceOptions, setSourceOptions] = useState<any[]>([]);
-  const [interestOptions, setInterestOptions] = useState<any[]>([]);
-  const [interestCatalog, setInterestCatalog] = useState<any[]>([]);
-  const [agentOptions, setAgentOptions] = useState<any[]>([]);
+  const [typeOptions, setTypeOptions] = useState<FilterOption[]>([]);
+  const [statusOptions, setStatusOptions] = useState<FilterOption[]>([]);
+  const [sourceOptions, setSourceOptions] = useState<FilterOption[]>([]);
+  const [interestOptions, setInterestOptions] = useState<FilterOption[]>([]);
+  const [interestCatalog, setInterestCatalog] = useState<ItemResponse[]>([]);
+  const [agentOptions, setAgentOptions] = useState<FilterOption[]>([]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -97,8 +126,9 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
         const safeCatalog = async (name: string) => {
           try {
             return await GetCatalogByName(name);
-          } catch (e: any) {
-            if (e?.response?.status === 404) return null;
+          } catch (e: unknown) {
+            const err = e as { response?: { status?: number } };
+            if (err?.response?.status === 404) return null;
             throw e;
           }
         };
@@ -107,11 +137,13 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
           safeCatalog('client-type'),
           safeCatalog('client-status'),
           safeCatalog('client-origin'),
-          safeCatalog('operation-type') || safeCatalog('primary_interest'),
+          safeCatalog('operation-type'),
+          safeCatalog('primary_interest'),
           GetAllUsers({ perPage: 100 })
         ]);
 
-        const extractItems = (res: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const extractItems = (res: any): ItemResponse[] => {
           if (!res?.data) return [];
           if (res.data.items) return res.data.items;
           if (res.data.catalogItems) return res.data.catalogItems;
@@ -119,7 +151,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
           return [];
         };
 
-        const mapOptions = (items: any[]) => items.map((i: any) => ({ value: i.name, label: i.name }));
+        const mapOptions = (items: ItemResponse[]): FilterOption[] => items.map((i) => ({ value: i.name, label: i.name }));
 
         const types = extractItems(segmentRes);
         if (types.length > 0) setTypeOptions(mapOptions(types));
@@ -133,7 +165,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
         const interests = extractItems(interestRes);
         if (interests.length > 0) {
           setInterestCatalog(interests);
-          setInterestOptions(interests.map((i: any) => ({
+          setInterestOptions(interests.map((i) => ({
             value: normalizeInterest(i.value || i.name) || i.name,
             label: i.name || formatInterestLabel(i.value)
           })));
@@ -142,10 +174,11 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
         }
 
         // Extraer agentes del listado de usuarios
-        const users = usersRes?.data?.users || [];
-        const agents = users
-          .filter((u: any) => u.role === 'Agente' || u.role?.name === 'Agente' || String(u.role).toLowerCase().includes('agente'))
-          .map((u: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const users: any[] = usersRes?.data?.users || [];
+        const agents: FilterOption[] = users
+          .filter((u) => u.role === 'Agente' || u.role?.name === 'Agente' || String(u.role).toLowerCase().includes('agente'))
+          .map((u) => ({
             label: `${u.name || ''} ${u.paternal_last_name || ''} ${u.maternal_last_name || ''}`.trim().replace(/\s+/g, ' '),
             value: String(u.user_id || u.id)
           }));
@@ -169,8 +202,9 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
           setPagination(response.data.paginador);
         }
       }
-    } catch (error: any) {
-      showToast.error(error?.response?.data?.detail || "Error al obtener los clientes", {
+    } catch (error: unknown) {
+      const axiosErr = error as { response?: { data?: { detail?: string } } };
+      showToast.error(axiosErr?.response?.data?.detail || "Error al obtener los clientes", {
         duration: 5000,
         position: "top-right",
         transition: "topBounce",
@@ -205,7 +239,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
     });
   }, [clients, searchTerm, selectedStatus, selectedType, selectedAgent, selectedSource, selectedInterest]);
 
-  const handleDeleteClick = (item: any) => {
+  const handleDeleteClick = (item: Client) => {
     setDeleteModal({ isOpen: true, item });
   };
 
@@ -217,24 +251,25 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
 
       if (hasLinkedProperty) {
         // Si tiene propiedad vinculada, solo lo desactivamos (soft delete)
-        await DesactiveClient(deleteModal.item.id, { client_status: "inactivo" });
-        setClients(prev => prev.filter(c => c.id !== deleteModal.item.id));
+        await DesactiveClient(String(deleteModal.item.id), { client_status: "inactivo" });
+        setClients(prev => prev.filter(c => c.id !== deleteModal.item!.id));
         showToast.success("El cliente tiene propiedades vinculadas, ha sido desactivado correctamente.");
       } else {
         // Si no tiene propiedades vinculadas, lo eliminamos completamente
-        await DeleteClient(deleteModal.item.id);
-        setClients(prev => prev.filter(c => c.id !== deleteModal.item.id));
+        await DeleteClient(String(deleteModal.item.id));
+        setClients(prev => prev.filter(c => c.id !== deleteModal.item!.id));
         showToast.success("El cliente ha sido eliminado correctamente.");
       }
-    } catch (error: any) {
-      showToast.error(error?.response?.data?.detail || "Error al procesar la solicitud");
+    } catch (error: unknown) {
+      const axiosErr = error as { response?: { data?: { detail?: string } } };
+      showToast.error(axiosErr?.response?.data?.detail || "Error al procesar la solicitud");
     } finally {
       setIsDeleting(false);
       setDeleteModal({ isOpen: false, item: null });
     }
   };
 
-  const renderRow = (row: any, index: number) => (
+  const renderRow = (row: Client, index: number) => (
     <tr key={row.id || index} className='border-b border-slate-100 hover:bg-gray-50 transition-colors'>
       <td className='py-4 px-4'>
         <div className='flex items-center gap-3'>
@@ -313,7 +348,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
     setOpenActionMenu(prev => prev === id ? null : id);
   };
 
-  const renderMobileCard = (row: any, index: number) => (
+  const renderMobileCard = (row: Client, index: number) => (
     <div key={row.id || index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
       {/* Header: Image, Info and Actions */}
       <div className="flex justify-between items-start mb-4">
@@ -401,40 +436,13 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
         </div>
         <div>
           <p className="text-xs text-gray-500 font-semibold mb-0.5">Agente</p>
-          <p className="truncate" title={row.agent?.name || row.agent_id}>{row.agent?.name || row.agent_id}</p>
+          <p className="truncate" title={row.agent?.name || (row.agent_id !== undefined ? String(row.agent_id) : undefined)}>{row.agent?.name || row.agent_id}</p>
         </div>
       </div>
     </div>
   );
 
-  const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-    <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
-      <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
-      <div className="flex flex-wrap items-center gap-1.5 py-1">
-        <button type='button'
-          onClick={() => onChange('all')}
-          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
-              ? 'bg-primary_color text-white font-medium shadow-md'
-              : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-            }`}
-        >
-          Todos
-        </button>
-        {options.map((opt: any) => (
-          <button type='button'
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
-                ? 'bg-primary_color text-white font-medium shadow-md'
-                : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-              }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+
 
   return (
     <>
@@ -616,7 +624,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Tipo de cliente</label>
+            <label htmlFor='client-type' className="text-sm font-semibold text-gray-700">Tipo de cliente</label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar tipo" />
@@ -630,7 +638,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Origen</label>
+            <label htmlFor='origin' className="text-sm font-semibold text-gray-700">Origen</label>
             <Select value={selectedSource} onValueChange={setSelectedSource}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar origen" />
@@ -644,7 +652,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Interés</label>
+            <label htmlFor='interest' className="text-sm font-semibold text-gray-700">Interés</label>
             <Select value={selectedInterest} onValueChange={setSelectedInterest}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar interés" />

@@ -1,5 +1,5 @@
 import { ItemResponse, PropertyListItemResponse } from '@/lib/@type';
-import { resolveCatalogDisplayValue, resolveCatalogApiValue } from '@/lib/utils/catalog';
+import { resolveCatalogDisplayValue} from '@/lib/utils/catalog';
 import type { PropertyState } from './propertyContext';
 
 export interface PropertyCatalogs {
@@ -57,7 +57,7 @@ export function mapPropertyApiToFormState(
     title: data.title || '',
     property_type: resolveCatalogDisplayValue(data.property_type?.name, catalogs.propertyTypes),
     operation_type: resolveCatalogDisplayValue((data.operation_type as any)?.name ?? data.operation_type, catalogs.operationCatalog),
-    price: data.price ? parseFloat(data.price) : null,
+    price: data.price ? Number.parseFloat(data.price) : null,
     property_status: resolveCatalogDisplayValue((data.property_status as any)?.name ?? data.property_status, catalogs.propertyStateCatalog),
     description: data.description || '',
     terrain_size: data.terrain_size ? Number(data.terrain_size) : null,
@@ -86,9 +86,16 @@ export function mapPropertyApiToFormState(
     is_featured: (data.is_featured as any) === true || (data.is_featured as any) === 1 || String(data.is_featured).toLowerCase() === 'true' || String(data.is_featured) === '1',
     amenities: data.amenities?.map((a) => String(a.catalogItemID)) || [],
     images: (() => {
+      let fallbackImages: any[] = [];
+      if ((data as any).main_image) {
+        fallbackImages = [{ image: (data as any).main_image, is_main: true }];
+      } else if ((data as any).main_image_url) {
+        fallbackImages = [{ image: (data as any).main_image_url, is_main: true }];
+      }
+
       const rawImages: any[] = Array.isArray(data.images) && data.images.length > 0
         ? data.images
-        : (data as any).property_images || (data as any).photos || ((data as any).main_image ? [{ image: (data as any).main_image, is_main: true }] : ((data as any).main_image_url ? [{ image: (data as any).main_image_url, is_main: true }] : []));
+        : (data as any).property_images || (data as any).photos || fallbackImages;
 
       if (!Array.isArray(rawImages)) return [];
 
@@ -107,9 +114,10 @@ export function mapPropertyApiToFormState(
       }).filter((item) => Boolean(item.file));
     })(),
     plans: (() => {
+      const fallbackPlans = (data as any).plan ? [{ plan: (data as any).plan }] : [];
       const rawPlans: any[] = Array.isArray(data.plans) && data.plans.length > 0
         ? data.plans
-        : (data as any).property_plans || ((data as any).plan ? [{ plan: (data as any).plan }] : []);
+        : (data as any).property_plans || fallbackPlans;
 
       if (!Array.isArray(rawPlans)) return [];
 

@@ -135,7 +135,7 @@ export const AddMultimediaProperty = () => {
                     alt="imagen de propiedad"
                     fill
                     unoptimized={true}
-                    
+
                     className="object-cover"
                   />
 
@@ -232,7 +232,7 @@ export const AddMultimediaProperty = () => {
                       alt="plano de propiedad"
                       fill
                       unoptimized={true}
-                      
+
                       className="object-contain"
                     />
                   )}
@@ -284,7 +284,7 @@ export const AddMultimediaProperty = () => {
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-700">Vista previa PDF</span>
-                      <button
+                      <button type='button'
                         onClick={() => setOpenModal(false)}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-1.5 transition-colors"
                       >
@@ -300,7 +300,7 @@ export const AddMultimediaProperty = () => {
 
               return (
                 <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <button
+                  <button type='button'
                     onClick={() => setOpenModal(false)}
                     className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
                   >
@@ -310,7 +310,7 @@ export const AddMultimediaProperty = () => {
                   <img
                     src={modalUrl}
                     alt="Vista completa"
-                    
+
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>

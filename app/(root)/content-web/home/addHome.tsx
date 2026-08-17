@@ -15,7 +15,6 @@ interface AddHomeProps {
 
 export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
     const [openModal, setOpenModal] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [mainImage, setMainImage] = useState<string | null>(null);
     const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
@@ -80,7 +79,6 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
     // Handle save home content
     const handleSaveHome = async () => {
         try {
-            setIsSaving(true);
             await UpdateHome({
                 main_title: bannerData.titlePrinciple || "",
                 main_subtitle: bannerData.subtitlePrinciple || "",
@@ -91,8 +89,6 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
         } catch (error) {
             console.error("Error al guardar home:", error);
             showToast.error("Error al guardar la configuración de home");
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -193,7 +189,8 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
                     )}
                 </div>
                 
-                <div
+                <button
+                    type="button"
                     className='bg-white flex items-center justify-center w-full mt-5 rounded-md'
                     onClick={() => document.getElementById('dropzone-file-2')?.click()}
                 >
@@ -209,17 +206,17 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
 
                         </div>
                     </div>
+                </button>
 
-                    {/* Hidden File Input */}
-                    <input
-                        id='dropzone-file-2'
-                        type='file'
-                        className='hidden'
-                        onChange={handleMainImageChange}
-                        accept="image/*"
-                        disabled={isUploadingImage}
-                    />
-                </div>
+                {/* Hidden File Input */}
+                <input
+                    id='dropzone-file-2'
+                    type='file'
+                    className='hidden'
+                    onChange={handleMainImageChange}
+                    accept="image/*"
+                    disabled={isUploadingImage}
+                />
 
                 {mainImagePreview && (
                     <div className="grid grid-cols-1 gap-6 mt-6">
@@ -262,32 +259,47 @@ export const AddHome = ({ onSaveRef, onClearRef }: AddHomeProps) => {
                 )}
 
                 {openModal && mainImagePreview && (
-                    <div
-                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-                        onClick={() => setOpenModal(false)}
+                    <dialog
+                        open
+                        className="fixed inset-0 z-[999] flex items-center justify-center bg-transparent border-none w-full h-full p-0 m-0"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                setOpenModal(false);
+                            }
+                        }}
                     >
-                        <div
-                            className="relative w-full max-w-5xl h-full flex items-center justify-center"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Botón cerrar */}
-                            <button
-                                type="button"
-                                onClick={() => setOpenModal(false)}
-                                className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
+                        {/* Backdrop button */}
+                        <button
+                            type="button"
+                            className="absolute inset-0 w-full h-full bg-black/80 backdrop-blur-sm cursor-default border-none outline-none"
+                            onClick={() => setOpenModal(false)}
+                            aria-label="Cerrar modal"
+                            tabIndex={-1}
+                        />
 
-                            {/* Imagen grande */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                        {/* Modal content */}
+                        <div className="relative z-10 p-4 pointer-events-none w-full max-w-5xl h-full flex items-center justify-center">
+                            <div className="pointer-events-auto relative flex items-center justify-center w-full h-full">
+                                {/* Botón cerrar */}
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenModal(false)}
+                                    className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+
+                                {/* Imagen grande */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
                                 src={mainImagePreview}
                                 alt="Vista completa"
                                 className="max-w-full max-h-full object-contain"
                             />
+                            </div>
                         </div>
-                    </div>
+                    </dialog>
                 )}
 
 

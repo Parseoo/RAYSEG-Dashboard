@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import * as LucideIcons from 'lucide-react';
@@ -30,7 +30,6 @@ import { Gallery } from '@/components/ui/Gallery';
 import { GetPropertyById } from '@/lib/api/property/property-api';
 import { PropertyDetailResponse } from '@/lib/@type';
 import { showToast } from 'nextjs-toast-notify';
-import { getFieldLabel } from '../inputConfig';
 import { getImageUrl } from '@/lib/utils';
 
 import dynamic from 'next/dynamic';
@@ -68,10 +67,18 @@ export default function PropertyDetailPage() {
     fetchProperty();
   }, [propertyId]);
 
-  // Usar imágenes del API si existen, de lo contrario usar mocks como placeholder
-  const rawImagesList: any[] = property && Array.isArray(property.images) && property.images.length > 0
-    ? property.images
-    : (property ? ((property as any).property_images || (property as any).photos || ((property as any).main_image ? [{ image: (property as any).main_image, is_main: true }] : [])) : []);
+  const getRawImagesList = (prop: any): any[] => {
+    if (!prop) return [];
+    if (Array.isArray(prop.images) && prop.images.length > 0) {
+      return prop.images;
+    }
+    if (prop.property_images) return prop.property_images;
+    if (prop.photos) return prop.photos;
+    if (prop.main_image) return [{ image: prop.main_image, is_main: true }];
+    return [];
+  };
+
+  const rawImagesList: any[] = getRawImagesList(property);
 
   const propertyMedia = (Array.isArray(rawImagesList) && rawImagesList.length > 0)
     ? [...rawImagesList]
@@ -88,12 +95,11 @@ export default function PropertyDetailPage() {
 
   const plansMedia = property && (property as any).plans && Array.isArray((property as any).plans)
     ? (property as any).plans.map((p: any) => ({
-        url: getImageUrl(p.plan || p.file || p.url || p),
-        isMain: false,
-        isPlan: true
-      }))
+      url: getImageUrl(p.plan || p.file || p.url || p),
+      isMain: false,
+      isPlan: true
+    }))
     : [];
-  const allMedia = [...propertyMedia, ...plansMedia];
 
   const Calendar = (LucideIcons as any).Calendar || (LucideIcons as any).CalendarDays;
   const MapIcon = (LucideIcons as any).Map || (LucideIcons as any).MapPin;
@@ -126,15 +132,16 @@ export default function PropertyDetailPage() {
   const locationObj = (property as any).location || addressObj;
   const rawLat = locationObj?.latitude || addressObj?.latitude || (property as any).latitude;
   const rawLng = locationObj?.longitude || addressObj?.longitude || (property as any).longitude;
-  const hasCoords = rawLat && rawLng && !isNaN(parseFloat(rawLat)) && !isNaN(parseFloat(rawLng)) && parseFloat(rawLat) !== 0;
+  const hasCoords = rawLat && rawLng && !Number.isNaN(Number.parseFloat(rawLat)) && !Number.isNaN(Number.parseFloat(rawLng)) && Number.parseFloat(rawLat) !== 0;
 
   const mlsClean = property.number_mls ? String(property.number_mls).trim() : '';
-  const mlsDisplay = mlsClean
-    ? (mlsClean.toUpperCase().startsWith('MLS') ? mlsClean : `MLS-${mlsClean}`)
-    : null;
+  let mlsDisplay: string | null = null;
+  if (mlsClean) {
+    mlsDisplay = mlsClean.toUpperCase().startsWith('MLS') ? mlsClean : `MLS-${mlsClean}`;
+  }
 
   const operationTypeDisplay = typeof property.operation_type === 'object' && property.operation_type !== null
-    ? (property.operation_type as any).name 
+    ? (property.operation_type as any).name
     : property.operation_type;
 
   const propertyStatusDisplay = typeof property.property_status === 'object' && property.property_status !== null
@@ -186,7 +193,7 @@ export default function PropertyDetailPage() {
       ]} />
 
       <div className='mb-4'>
-        <button
+        <button type='button'
           onClick={() => router.back()}
           className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'
         >
@@ -291,12 +298,11 @@ export default function PropertyDetailPage() {
                   {propertyMedia.map((media, idx) => {
                     const isActive = activeMedia ? activeMedia.url === media.url : idx === 0;
                     return (
-                      <button
-                        key={idx}
+                      <button type='button'
+                        key={media.url || `property-media-${idx}`}
                         onClick={() => setActiveMedia(media)}
-                        className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
-                          isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                        className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                          }`}
                       >
                         <Image
                           src={media.url}
@@ -362,7 +368,7 @@ export default function PropertyDetailPage() {
                     const iconName = typeof item === 'object' ? item.icon : null;
                     return (
                       <span
-                        key={idx}
+                        key={typeof item === 'object' && item.id ? item.id : `amenity-${name}-${idx}`}
                         className='inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 text-xs sm:text-sm font-semibold px-3.5 py-1.5 rounded-full shadow-2xs transition-all hover:bg-blue-100'
                       >
                         {iconName ? (
@@ -451,7 +457,7 @@ export default function PropertyDetailPage() {
                     <p className='text-sm font-bold text-gray-800'>{property.floors || '0'}</p>
                   </div>
                 </div>
-                {property.construction_year && Number(property.construction_year) > 0 && (
+                {Boolean(property.construction_year) && Number(property.construction_year) > 0 && (
                   <div className='flex items-start gap-2'>
                     <div className='p-1.5 bg-blue-50 text-blue-600 rounded-md shrink-0'>
                       {Calendar && <Calendar size={16} />}
@@ -510,7 +516,7 @@ export default function PropertyDetailPage() {
                           const iconName = typeof item === 'object' ? item.icon : null;
                           return (
                             <span
-                              key={idx}
+                              key={typeof item === 'object' && item.id ? item.id : `amenity-sm-${name}-${idx}`}
                               className='inline-flex items-center gap-1 bg-blue-50 text-blue-800 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-blue-200'
                             >
                               {iconName && <DynamicIcon name={iconName} size={12} className="text-blue-600" />}
@@ -543,12 +549,11 @@ export default function PropertyDetailPage() {
                     {plansMedia.map((media: any, idx: number) => {
                       const isActive = activePlan ? activePlan.url === media.url : idx === 0;
                       return (
-                        <button
-                          key={idx}
+                        <button type='button'
+                          key={media.url || `plan-${idx}`}
                           onClick={() => setActivePlan(media)}
-                          className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${
-                            isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                          className={`relative h-20 aspect-video rounded-lg overflow-hidden border-2 bg-slate-50 shrink-0 transition-all ${isActive ? 'border-[#2563eb] scale-95 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                           <Image
                             src={media.url}
@@ -571,7 +576,7 @@ export default function PropertyDetailPage() {
                 <MapWithMarker
                   markerPosition={
                     hasCoords
-                      ? { lat: parseFloat(rawLat), lng: parseFloat(rawLng) }
+                      ? { lat: Number.parseFloat(rawLat), lng: Number.parseFloat(rawLng) }
                       : null
                   }
                   address={fullAddress}

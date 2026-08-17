@@ -1,6 +1,6 @@
 "use client"
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { ArrowUpToLine, Save, X, Loader2, Info } from 'lucide-react';
+import { ArrowUpToLine, X, Loader2, Info } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { AddAboutUs } from './addAboutUs';
 

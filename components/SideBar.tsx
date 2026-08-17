@@ -54,7 +54,6 @@ export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
   { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
   { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
-  //{ href: '/contracts', path: '/contracts', icon: FileText, label: 'Contratos' },
 
   {
     icon: LayoutTemplate,

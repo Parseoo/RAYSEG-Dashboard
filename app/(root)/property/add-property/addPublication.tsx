@@ -1,12 +1,10 @@
 "use client"
 
-import React, { useState } from 'react';
 import { DynamicInputs } from '@/components/ui/Input';
 import { Star } from 'lucide-react';
 import { inputsPublicationProperty } from '../inputConfig';
 
 import { useProperty } from '../propertyContext';
-import { statusProperty } from '../../../../components/SelectProperties.data';
 
 export const AddPublicationProperty = ({ isEdit = false }: { isEdit?: boolean }) => {
     const { state, updateField, publicationStatusCatalog } = useProperty();
@@ -41,7 +39,7 @@ export const AddPublicationProperty = ({ isEdit = false }: { isEdit?: boolean })
             <h1 className='font-[500] text-lg'>Configuración de la publicación</h1>
             <p className='text-md text-gray-500'>Estatus de la publicación y descripción</p>
             <div className='mt-4'><DynamicInputs inputs={statusPubliProperty} withBgWhite={true} /></div>
-            <button onClick={() => updateField('is_featured', !state.is_featured)} className='p-1.5 bg-white rounded-md transition-colors mt-3'>
+            <button type='button' onClick={() => updateField('is_featured', !state.is_featured)} className='p-1.5 bg-white rounded-md transition-colors mt-3'>
                 <Star size={16} className='text-amber-400' fill={state.is_featured ? '#fbbf24' : 'none'} />
             </button> <span className='text-sm'>Propiedad destacada</span>
             <p className='text-xs text-gray-500 ml-8'>Destaca esta propiedad para mostrarla en la página principal del sitio web.</p>

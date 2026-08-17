@@ -10,21 +10,6 @@ export const typeOptions = [
     { value: 'Terrenos', label: 'Terrenos' },
 ];
 
-// Filtros contratos
-export const typeContracts = [
-    { value: 'todos', label: 'Todos' },
-    { value: 'arrendamiento', label: 'Arrendamiento' },
-    { value: 'compraventa', label: 'Compraventa' },
-];
-
-export const statusContracts = [
-    { value: 'todos', label: 'Todos' },
-    { value: 'activo', label: 'Activo' },
-    { value: 'pendienteFirma', label: 'Pendiente Firma' },
-    { value: 'vencido', label: 'Vencido' },
-    { value: 'cancelado', label: 'Cancelado' },
-];
-
 export const rangeDates = [
     { value: '7dias', label: 'Últimos mes' },
     { value: '30dias', label: 'Últimos 2 meses' },
