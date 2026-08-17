@@ -1,4 +1,3 @@
-import React from 'react';
 import ClientsList from '@/app/(root)/clients/ClientsList';
 
 const ClientsPage = () => {

@@ -1,14 +1,12 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { CirclePlus, CloudUpload, Eye, Image as ImageIcon, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
+import { CloudUpload, Eye, Image as ImageIcon, Loader2, Save, Trash2, X } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
 import { DynamicInputs, InputFieldConfig } from "@/components/ui/Input";
 import { inputsServicesSection } from "../inputConfig";
 import DragAndDrop, { Item } from '@/components/ui/DragAndDrop';
-import IconSelector from "@/components/ui/IconSelector";
 import DeleteModal from "@/components/ui/DeleteModal";
-import { CreateCatalogItems, GetAllCatalogs } from "@/lib/api/catalog-api";
 import { CreateServiceItem, GetServices, DeleteServiceItem, UpdateServiceItem, UploadHeaderImage, DeleteHeaderImage, UpdateServices } from "@/lib/api/web-content-api";
 import { ServiceItem, ServicesRequest, HeaderImage } from "@/lib/@type-web";
 import { showToast } from "nextjs-toast-notify";
@@ -31,8 +29,7 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
 
     const [openImageModal, setOpenImageModal] = useState(false);
     const [selectedHeaderImage, setSelectedHeaderImage] = useState<{ id?: number; image_url: string } | null>(null);
-    const [showIconSelector, setShowIconSelector] = useState(false);
-    const [selectedIcon, setSelectedIcon] = useState<keyof typeof LucideIcons>("CirclePlus");
+
 
     // Estado del formulario para nuevo servicio
     const [serviceTitle, setServiceTitle] = useState("");
@@ -61,8 +58,6 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
 
     // Estado para edición de servicio
     const [editingService, setEditingService] = useState<Item | null>(null);
-
-    const SelectedIconComponent = LucideIcons[selectedIcon] as LucideIcons.LucideIcon;
 
     useEffect(() => {
         if (onClearRef) {
@@ -136,8 +131,8 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
         setIsUploadingImage(true);
         try {
             const base64Images: string[] = [];
-            for (let i = 0; i < files.length; i++) {
-                const base64 = await fileToBase64(files[i]);
+            for (const file of Array.from(files)) {
+                const base64 = await fileToBase64(file);
                 base64Images.push(base64);
             }
 
@@ -262,7 +257,7 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 setEditingService(null);
                 setServiceTitle("");
                 setServiceDescription("");
-                setSelectedIcon("CirclePlus");
+
             } else {
                 const payload: ServiceItem = {
                     icon: "",
@@ -284,7 +279,7 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 // Limpiar formulario
                 setServiceTitle("");
                 setServiceDescription("");
-                setSelectedIcon("CirclePlus");
+
             }
 
             // Recargar la lista
@@ -319,13 +314,6 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
         setEditingService(item);
         setServiceTitle(item.title);
         setServiceDescription(item.description || "");
-        // Find and set the icon
-        const iconName = Object.keys(LucideIcons).find(key =>
-            LucideIcons[key as keyof typeof LucideIcons] === item.icon
-        ) as keyof typeof LucideIcons;
-        if (iconName) {
-            setSelectedIcon(iconName);
-        }
     };
 
     // Cancelar edición
@@ -333,7 +321,7 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
         setEditingService(null);
         setServiceTitle("");
         setServiceDescription("");
-        setSelectedIcon("CirclePlus");
+
     };
 
     const handleDeleteConfirm = async () => {
@@ -383,6 +371,57 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
         }
     }));
 
+    const renderServiceButtonContent = () => {
+        if (isSaving) {
+            return (
+                <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Guardando...
+                </>
+            );
+        }
+        if (editingService) {
+            return (
+                <>
+                    <Save size={20} />
+                    Actualizar Servicio
+                </>
+            );
+        }
+        return (
+            <>
+                <Save size={20} />
+                Agregar Servicio
+            </>
+        );
+    };
+
+    const renderServiceListContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex items-center justify-center py-8 text-gray-400">
+                    <Loader2 size={24} className="animate-spin mr-2" />
+                    Cargando servicios...
+                </div>
+            );
+        }
+        if (serviceItems.length > 0) {
+            return (
+                <DragAndDrop
+                    items={serviceItems}
+                    onChange={(items) => setServiceItems(items)}
+                    onDelete={handleDeleteService}
+                    onEdit={handleEditService}
+                />
+            );
+        }
+        return (
+            <div className="text-center py-8 text-gray-400 text-sm">
+                No hay servicios registrados. Agrega uno arriba.
+            </div>
+        );
+    };
+
     return (
         <>
             <div className='w-full max-h-max rounded-lg p-5 border'>
@@ -399,7 +438,8 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                     <DynamicInputs inputs={inputsServicesHeaderControlled} withBgWhite={true} />
                 </div>
 
-                <div
+                <button
+                    type='button'
                     className='bg-white flex items-center justify-center w-full mt-5 rounded-md'
                     onClick={() => fileInputRef.current?.click()}>
                     <div className='flex flex-col items-center justify-center w-full h-64 bg-neutral-secondary-medium border border-dashed border-default-strong rounded-md hover:bg-blue-50  hover:border-blue-500 transition-colors cursor-pointer'>
@@ -431,9 +471,9 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                         multiple
                         disabled={isUploadingImage}
                     />
-                </div>
+                </button>
 
-                {headerImages.length > 0 ? (
+                {headerImages.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
                         {headerImages.map((image) => (
                             <div key={image.id} className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
@@ -470,7 +510,9 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                             </div>
                         ))}
                     </div>
-                ) : headerImage ? (
+                )}
+
+                {headerImages.length === 0 && headerImage && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
                         <div className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -499,31 +541,49 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                             </button>
                         </div>
                     </div>
-                ) : null}
+                )}
 
                 {/* Modal para visualizar imagen en tamaño completo */}
                 {openImageModal && selectedHeaderImage && (
-                    <div
-                        className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-                        onClick={() => setOpenImageModal(false)}>
-                        <div
-                            className="relative w-full max-w-5xl h-full flex items-center justify-center"
-                            onClick={(e) => e.stopPropagation()}>
-                            <button
-                                type="button"
-                                onClick={() => setOpenImageModal(false)}
-                                className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors">
-                                <X size={24} />
-                            </button>
+                    <dialog
+                        open
+                        className="fixed inset-0 z-[999] flex items-center justify-center bg-transparent border-none w-full h-full p-0 m-0"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                setOpenImageModal(false);
+                            }
+                        }}
+                    >
+                        {/* Backdrop button */}
+                        <button
+                            type="button"
+                            className="absolute inset-0 w-full h-full bg-black/80 backdrop-blur-sm cursor-default border-none outline-none"
+                            onClick={() => setOpenImageModal(false)}
+                            aria-label="Cerrar modal"
+                            tabIndex={-1}
+                        />
 
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={getImageUrl(selectedHeaderImage.image_url)}
-                                alt="Vista completa"
-                                className="max-w-full max-h-full object-contain"
-                            />
+                        {/* Modal content */}
+                        <div className="relative z-10 p-4 pointer-events-none w-full max-w-5xl h-full flex items-center justify-center">
+                            <div className="pointer-events-auto relative flex items-center justify-center w-full h-full">
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenImageModal(false)}
+                                    className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={getImageUrl(selectedHeaderImage.image_url)}
+                                    alt="Vista completa"
+                                    className="max-w-full max-h-full object-contain"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    </dialog>
                 )}
 
                 {/* Modal de confirmación para eliminar imagen */}
@@ -556,22 +616,7 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                             onClick={handleAddService}
                             className="bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md shrink-0 disabled:opacity-60"
                         >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 size={20} className="animate-spin" />
-                                    Guardando...
-                                </>
-                            ) : editingService ? (
-                                <>
-                                    <Save size={20} />
-                                    Actualizar Servicio
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={20} />
-                                    Agregar Servicio
-                                </>
-                            )}
+                            {renderServiceButtonContent()}
                         </button>
 
                         {editingService && (
@@ -587,18 +632,8 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                 </div>
 
                 <div className="mt-4 w-full">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-8 text-gray-400">
-                            <Loader2 size={24} className="animate-spin mr-2" />
-                            Cargando servicios...
-                        </div>
-                    ) : serviceItems.length > 0 ? (
-                        <DragAndDrop items={serviceItems} onChange={(items) => setServiceItems(items)} onDelete={handleDeleteService} onEdit={handleEditService} />
-                    ) : (
-                        <div className="text-center py-8 text-gray-400 text-sm">
-                            No hay servicios registrados. Agrega uno arriba.
-                        </div>
-                    )}
+                    {renderServiceListContent()}
+                </div>
 
                 <DeleteModal
                     isOpen={deleteModal.isOpen}
@@ -606,8 +641,8 @@ export const AddServices = ({ onSaveHeaderRef, onClearRef }: AddServicesProps) =
                     onConfirm={handleDeleteConfirm}
                     title="Eliminar servicio"
                     itemName={deleteModal.item?.title || ""}
-                    isDeleting={isDeleting}                />
-                </div>
+                    isDeleting={isDeleting}
+                />
             </div>
         </>
     )

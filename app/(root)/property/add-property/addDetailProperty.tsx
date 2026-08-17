@@ -1,15 +1,13 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { CirclePlus, Plus, Loader2, Pencil, Trash2, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Loader2, Pencil, Trash2, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import * as LucideIcons from "lucide-react";
-import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
+import { DynamicInputs } from '@/components/ui/Input';
 import { ItemResponse } from '@/lib/@type';
-import { CreateCatalogItems } from '@/lib/api/catalog-api';
 import { showToast } from 'nextjs-toast-notify';
 
-import DragAndDrop, { Item } from '@/components/ui/DragAndDrop';
-import IconSelector from "@/components/ui/IconSelector";
+import { Item } from '@/components/ui/DragAndDrop';
 import DeleteModal from "@/components/ui/DeleteModal";
 
 import { useProperty } from '../propertyContext';
@@ -29,10 +27,9 @@ const AmenitiesManager = ({
     const [isSaving, setIsSaving] = useState(false);
     const [editingService, setEditingService] = useState<Item | null>(null);
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: Item | null }>({ isOpen: false, item: null });
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeleting] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { fetchCatalogs } = useProperty();
     const [localAddedAmenities, setLocalAddedAmenities] = useState<Record<string, { title: string; description: string; icon: string }>>({});
     const [sortField, setSortField] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -197,6 +194,33 @@ const AmenitiesManager = ({
         });
     }, [serviceItems, sortField, sortDirection]);
 
+    const renderButtonContent = () => {
+        if (isSaving) {
+            return (
+                <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Guardando...
+                </>
+            );
+        }
+
+        if (editingService) {
+            return (
+                <>
+                    <Plus size={18} />
+                    Actualizar Amenidad
+                </>
+            );
+        }
+
+        return (
+            <>
+                <Plus size={18} />
+                Agregar Amenidad
+            </>
+        );
+    };
+
     return (
         <div className="bg-white w-full rounded-lg p-4 sm:p-5 border border-gray-200">
             <h1 className="font-[500] text-lg mb-1">
@@ -237,25 +261,26 @@ const AmenitiesManager = ({
 
                         {isOpen && (
                             <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto z-50 p-1">
-                                {catalog.filter(item =>
+                                {catalog.some(item =>
                                     (item.label || item.name || '').toLowerCase().includes(serviceTitle.toLowerCase())
-                                ).length > 0 ? (
+                                  ) ? (
                                     catalog
                                         .filter(item =>
                                             (item.label || item.name || '').toLowerCase().includes(serviceTitle.toLowerCase())
                                         )
                                         .map((item) => (
-                                            <div
+                                            <button
                                                 key={item.value}
+                                                type="button"
                                                 onClick={() => {
                                                     setServiceTitle(item.label || item.name || '');
                                                     setServiceDescription(item.description || '');
                                                     setIsOpen(false);
                                                 }}
-                                                className="px-3 py-2 text-sm text-gray-900 rounded-sm cursor-pointer hover:bg-slate-100 transition-colors"
+                                                className="w-full text-left px-3 py-2 text-sm text-gray-900 rounded-sm cursor-pointer hover:bg-slate-100 transition-colors"
                                             >
                                                 {item.label || item.name}
-                                            </div>
+                                            </button>
                                         ))
                                 ) : (
                                     <div className="px-3 py-2 text-sm text-gray-500 italic">
@@ -273,22 +298,7 @@ const AmenitiesManager = ({
                             onClick={handleAddService}
                             className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[180px] h-[42px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium text-sm shadow-md shrink-0 disabled:opacity-60"
                         >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Guardando...
-                                </>
-                            ) : editingService ? (
-                                <>
-                                    <Plus size={18} />
-                                    Actualizar Amenidad
-                                </>
-                            ) : (
-                                <>
-                                    <Plus size={18} />
-                                    Agregar Amenidad
-                                </>
-                            )}
+                            {renderButtonContent()}
                         </button>
                         {editingService && (
                             <button
@@ -435,9 +445,10 @@ export const AddDetailProperty = () => {
                     value: state[input.id as keyof typeof state] as any,
                     onChange: (e: any) => {
                         const val = typeof e === 'string' ? e : e.target.value;
-                        const finalVal = (input.type === 'number' || input.type === 'currency')
-                            ? (val === '' ? null : Number(val))
-                            : val;
+                        let finalVal = val;
+                        if (input.type === 'number' || input.type === 'currency') {
+                            finalVal = val === '' ? null : Number(val);
+                        }
                         updateField(input.id as any, finalVal);
                     },
                     error: errors[input.id]
@@ -453,9 +464,10 @@ export const AddDetailProperty = () => {
                     value: state[input.id as keyof typeof state] as any,
                     onChange: (e: any) => {
                         const val = typeof e === 'string' ? e : e.target.value;
-                        const finalVal = (input.type === 'number' || input.type === 'currency')
-                            ? (val === '' ? null : Number(val))
-                            : val;
+                        let finalVal = val;
+                        if (input.type === 'number' || input.type === 'currency') {
+                            finalVal = val === '' ? null : Number(val);
+                        }
                         updateField(input.id as any, finalVal);
                     },
                     error: errors[input.id]
@@ -466,9 +478,10 @@ export const AddDetailProperty = () => {
                 value: state[input.id as keyof typeof state] as any,
                 onChange: (e: any) => {
                     const val = typeof e === 'string' ? e : e.target.value;
-                    const finalVal = (input.type === 'number' || input.type === 'currency')
-                        ? (val === '' ? null : Number(val))
-                        : val;
+                    let finalVal = val;
+                    if (input.type === 'number' || input.type === 'currency') {
+                        finalVal = val === '' ? null : Number(val);
+                    }
                     updateField(input.id as any, finalVal);
                 },
                 error: errors[input.id]

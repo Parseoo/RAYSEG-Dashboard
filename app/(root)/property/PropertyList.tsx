@@ -897,7 +897,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   <p className="text-xs text-gray-500 font-medium">Filtrar propiedades para el reporte</p>
                 </div>
               </div>
-              <button onClick={() => setIsPdfModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+              <button type='button' onClick={() => setIsPdfModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>

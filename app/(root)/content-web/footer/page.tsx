@@ -1,12 +1,11 @@
 "use client"
 
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { Save, Loader2, X, ArrowUpToLine, Info } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Loader2, X, ArrowUpToLine, Info } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { AddFooter } from './addFooter';
 import { GetFooter, UpdateFooter } from '@/lib/api/web-content-api';
 import { showToast } from 'nextjs-toast-notify';
-import { FooterResponse } from '@/lib/@type-web';
 
 const ContentWebFooterPage = () => {
     const [settings, setSettings] = useState<any>({});

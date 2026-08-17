@@ -37,14 +37,7 @@ const ContentWebPrivacyNoticePage = () => {
         fetchLegalPages();
     }, []);
 
-    const handlePrivacyChange = (id: string, value: string) => {
-        setLegalData(prev => ({
-            ...prev,
-            [id]: value
-        }));
-    };
-
-    const handleTermsChange = (id: string, value: string) => {
+    const handleChange = (id: string, value: string) => {
         setLegalData(prev => ({
             ...prev,
             [id]: value
@@ -95,7 +88,7 @@ const ContentWebPrivacyNoticePage = () => {
                     <div className="border-b border-default">
                         <ul className="flex flex-col sm:flex-row -mb-px text-sm font-medium text-center text-body">
                             <li className="w-full sm:w-auto sm:me-2">
-                                <button
+                                <button type="button"
                                     onClick={() => setActiveTab('privacy')}
                                     className={`w-full sm:inline-flex items-center justify-center p-3 sm:p-4 border-b-2 sm:rounded-t-lg group transition-colors duration-200 ${activeTab === 'privacy'
                                         ? 'text-primary_color border-primary_color bg-blue-50/50'
@@ -106,7 +99,7 @@ const ContentWebPrivacyNoticePage = () => {
                                 </button>
                             </li>
                             <li className="w-full sm:w-auto sm:me-2">
-                                <button
+                                <button type="button"
                                     onClick={() => setActiveTab('terms')}
                                     className={`w-full sm:inline-flex items-center justify-center p-3 sm:p-4 border-b-2 sm:rounded-t-lg group transition-colors duration-200 ${activeTab === 'terms'
                                         ? 'text-primary_color border-primary_color bg-blue-50/50'
@@ -124,14 +117,14 @@ const ContentWebPrivacyNoticePage = () => {
                             <AddPrivacyNotice
                                 data={{ privacy_title: legalData.privacy_title, privacy_content: legalData.privacy_content, updated_at: legalData.updated_at }}
                                 updatedAt={legalData.updated_at}
-                                onChange={handlePrivacyChange}
+                                onChange={handleChange}
                             />
                         )}
                         {activeTab === 'terms' && (
                             <AddTermsConditions
                                 data={{ terms_title: legalData.terms_title, terms_content: legalData.terms_content, updated_at: legalData.updated_at }}
                                 updatedAt={legalData.updated_at}
-                                onChange={handleTermsChange}
+                                onChange={handleChange}
                             />
                         )}
                     </div>

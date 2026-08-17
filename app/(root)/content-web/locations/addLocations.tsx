@@ -3,13 +3,10 @@
 import React, { useState, useEffect, useMemo } from "react"
 import dynamic from "next/dynamic"
 
-import { DynamicInputs } from "@/components/ui/Input"
-import { inputsLocation } from "../inputConfig"
 import { Info, Loader2, MapPinned, Pencil, Trash2, MoreVertical } from "lucide-react"
 import { Table } from "@/components/ui/table"
 import { GetPropertiesLocations, GetAllProperties, DeleteLocation, AddLocation, GetPropertyById, GetPropertyLocationById } from "@/lib/api/property/property-api"
-import { GetCatalogPropertyTypes } from "@/lib/api/catalog-api"
-import Link from "next/link"
+
 import DeleteModal from "@/components/ui/DeleteModal"
 import { showToast } from 'nextjs-toast-notify'
 import Search from "@/components/ui/Search"
@@ -62,8 +59,8 @@ const mapLocationsToRows = (locations: any[], properties: any[] = []) => {
             city: addr.city || "-",
             state: addr.state || "-",
             postal_code: addr.zip_code || addr.postal_code || "-",
-            latitude: location.latitude != null ? parseFloat(location.latitude) : NaN,
-            longitude: location.longitude != null ? parseFloat(location.longitude) : NaN,
+            latitude: location.latitude != null ? Number.parseFloat(location.latitude) : null,
+            longitude: location.longitude != null ? Number.parseFloat(location.longitude) : null
         };
     });
 };
@@ -83,11 +80,9 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
     const [properties, setProperties] = useState<any[]>([])
     const [rawLocations, setRawLocations] = useState<any[]>([])
 
-    const [filters, setFilters] = useState({
-        typeProperty: "",
-    })
 
-    const [propertyTypes, setPropertyTypes] = useState<{ label: string, value: string }[]>([])
+
+
     const [tableSearchTerm, setTableSearchTerm] = useState("")
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; propertyId: string | null; addressId: string | null }>({
         isOpen: false,
@@ -140,13 +135,12 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             try {
                 const res = await GetPropertyById(selectedPropertyId)
                 const prop = res.data
-                if (prop && prop.address) {
+                if (prop?.address) {
                     const addr = Array.isArray(prop.address) ? prop.address[0] : prop.address
                     if (addr) {
                         if (addr.full_address) {
                             setAddress(addr.full_address);
                         } else {
-                            const street = addr.street || ""
                             const exterior = addr.exterior_number || addr.street_number || ""
                             const streetNumber = `${exterior}`.trim()
 
@@ -170,25 +164,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         fetchPropertyDetails()
     }, [selectedPropertyId])
 
-    // Fetch catalog property types
-    useEffect(() => {
-        const fetchPropertyTypes = async () => {
-            try {
-                const res = await GetCatalogPropertyTypes()
-                if (res?.data?.items) {
-                    setPropertyTypes(
-                        res.data.items.map((item) => ({
-                            label: item.name,
-                            value: item.name,
-                        }))
-                    )
-                }
-            } catch (err) {
-                console.error("Error fetching property types:", err)
-            }
-        }
-        fetchPropertyTypes()
-    }, [])
+
 
     // Fetch de datos desde el API
     useEffect(() => {
@@ -267,7 +243,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             const propRes = await GetPropertyById(selectedPropertyId);
             const prop = propRes.data;
             let addrData: any = {};
-            if (prop && prop.address) {
+            if (prop?.address) {
                 addrData = Array.isArray(prop.address) ? prop.address[0] : prop.address;
             }
 
@@ -337,10 +313,10 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             setSelectedPropertyId(String(row.property_id));
 
             // Colocar el marcador en el mapa usando la respuesta
-            if (locationData && locationData.latitude && locationData.longitude) {
+            if (locationData?.latitude && locationData.longitude) {
                 setManualPosition({
-                    lat: parseFloat(locationData.latitude),
-                    lng: parseFloat(locationData.longitude)
+                    lat: Number.parseFloat(locationData.latitude),
+                    lng: Number.parseFloat(locationData.longitude)
                 });
             } else if (Number.isFinite(row.latitude) && Number.isFinite(row.longitude)) {
                 // Fallback a los datos de la fila de la tabla si la API no los trae completos
@@ -382,10 +358,10 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                 <td className="py-4 px-4 text-sm text-gray-500 font-mono">{Number.isFinite(row.longitude) ? (row.longitude as number).toFixed(6) : '-'}</td>
                 <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => handleEditLocation(row)} className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors">
+                        <button type="button" onClick={() => handleEditLocation(row)} className="p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors">
                             <Pencil size={16} className="text-gray-600" />
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => row.address_id && setDeleteModal({ isOpen: true, propertyId: row.property_id, addressId: row.address_id })}
                             disabled={!row.address_id}
                             className={`p-1.5 rounded-md ${row.address_id ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-300 cursor-not-allowed'}`}
@@ -412,7 +388,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                 
                 {/* Actions Dropdown */}
                 <div className="relative">
-                    <button 
+                    <button type="button"
                         onClick={() => toggleActionMenu(`${row.id}-${index}`)}
                         className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
                     >
@@ -421,7 +397,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                     
                     {openActionMenu === `${row.id}-${index}` && (
                         <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
-                            <button 
+                            <button type="button"
                                 onClick={() => {
                                     setOpenActionMenu(null);
                                     handleEditLocation(row);
@@ -430,7 +406,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                             >
                                 <Pencil size={16} /> Editar
                             </button>
-                            <button 
+                            <button type="button"
                                 onClick={() => {
                                     setOpenActionMenu(null);
                                     row.address_id && setDeleteModal({ isOpen: true, propertyId: row.property_id, addressId: row.address_id });
@@ -517,8 +493,8 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             const data = await response.json()
             if (data && data.length > 0) {
                 const result = data[0]
-                const lat = parseFloat(result.lat)
-                const lng = parseFloat(result.lon)
+                const lat = Number.parseFloat(result.lat)
+                const lng = Number.parseFloat(result.lon)
                 setManualPosition({ lat, lng })
             } else {
                 setError("No se encontró la dirección. Intenta con más detalles.")
@@ -532,23 +508,27 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
         }
     }
 
-    const dynamicInputsLocation = inputsLocation
-        .filter(i => i.id !== "direccion")
-        .map(input => {
-            let options = input.options;
-            if (input.id === "typeProperty" && propertyTypes.length > 0) {
-                options = propertyTypes;
-            }
-            return {
-                ...input,
-                options,
-                value: filters[input.id as keyof typeof filters] || "",
-                onChange: (val: any) => {
-                    const value = val?.target ? val.target.value : val;
-                    setFilters(prev => ({ ...prev, [input.id]: value }));
-                }
-            }
-        })
+
+    let mobileListContent;
+    if (isLoading) {
+        mobileListContent = (
+            <div className="flex justify-center items-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+            </div>
+        );
+    } else if (filteredTableData.length > 0) {
+        mobileListContent = (
+            <div className="flex flex-col gap-4">
+                {filteredTableData.map((row, idx) => renderMobileCard(row, idx))}
+            </div>
+        );
+    } else {
+        mobileListContent = (
+            <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                No hay localizaciones registradas
+            </div>
+        );
+    }
 
     return (
         <div className="w-full rounded-lg p-4 sm:p-5 border">
@@ -563,10 +543,11 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
             <div className="mt-4 space-y-4">
                 {/* Select de Propiedad */}
                 <div className="w-full">
-                    <label className="text-sm font-medium text-gray-700 block mb-2">
+                    <label htmlFor="propertySelect" className="text-sm font-medium text-gray-700 block mb-2">
                         Selecciona una propiedad
                     </label>
                     <select
+                        id="propertySelect"
                         value={selectedPropertyId}
                         onChange={(e) => {
                             setSelectedPropertyId(e.target.value)
@@ -682,8 +663,8 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                 <Info size={16} className="mt-0.5 shrink-0 text-slate-600" />
                 <div className="space-y-1.5">
                     <p>
-                        El mapa muestra automáticamente las propiedades con estatus
-                        <strong> &quot;Disponible&quot;</strong> que tienen una dirección válida registrada.
+                        El mapa muestra automáticamente las propiedades con estatus{' '}
+                        <strong>Disponible</strong> que tienen una dirección válida registrada.
                     </p>
                     <p>Los marcadores se actualizan en tiempo real.</p>
                     <p>Puedes ajustar manualmente la dirección para mejorar la precisión del pin en el mapa público.</p>
@@ -709,19 +690,7 @@ export const AddLocations = ({ onClearRef }: AddLocationsProps) => {
                 </div>
 
                 <div className="md:hidden mt-4">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-10">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
-                        </div>
-                    ) : filteredTableData.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {filteredTableData.map((row, idx) => renderMobileCard(row, idx))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
-                            No hay localizaciones registradas
-                        </div>
-                    )}
+                    {mobileListContent}
                 </div>
             </div>
             

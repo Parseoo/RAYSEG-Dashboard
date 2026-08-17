@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DynamicInputs, InputFieldConfig } from '@/components/ui/Input';
 import { useProperty } from '../propertyContext';
 import { GetEstados, GetCiudades } from '@/lib/api/property/property-api';

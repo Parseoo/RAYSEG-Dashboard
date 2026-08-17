@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DynamicInputs } from "@/components/ui/Input"
 import { inputsAboutUsSection } from "../inputConfig"
 import { CloudUpload, Eye, Image as ImageIcon, Loader2, Trash2, X } from 'lucide-react';
-import Image from 'next/image';
 import { GetAboutUs, UpdateAboutUs, DeleteCorporateImage, UploadCorporateImage } from '@/lib/api/web-content-api';
 import { showToast } from 'nextjs-toast-notify';
 import { CorporateImage } from '@/lib/@type-web';
@@ -87,8 +86,9 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                 vision: currentData.vision || ""
             });
             showToast.success('Información actualizada correctamente');
-        } catch (error) {
-            showToast.error('Error al guardar la información');
+        } catch (error: any) {
+            console.error("Error al guardar la información:", error);
+            showToast.error(error?.response?.data?.detail || error?.response?.data?.message || 'Error al guardar la información');
         } finally {
             setIsSaving(false);
         }
@@ -106,8 +106,8 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
 
         setIsUploading(true);
         try {
-            for (let i = 0; i < files.length; i++) {
-                const base64 = await fileToBase64(files[i]);
+            for (const file of files) {
+                const base64 = await fileToBase64(file);
                 await UploadCorporateImage({ file: base64 });
             }
             // Recargar las imágenes
@@ -139,8 +139,9 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
             await DeleteCorporateImage(imageId);
             setCorporateImages(prev => prev.filter(img => img.id !== imageId));
             showToast.success('Imagen eliminada correctamente');
-        } catch (error) {
-            showToast.error('Error al eliminar la imagen');
+        } catch (error: any) {
+            console.error("Error al eliminar la imagen:", error);
+            showToast.error(error?.response?.data?.detail || error?.response?.data?.message || 'Error al eliminar la imagen');
         } finally {
             setIsDeleting(false);
             setDeleteModal({ isOpen: false, item: null });
@@ -225,19 +226,19 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                             {corporateImages.map((image) => (
                                 <div key={image.id} className="group w-full relative aspect-video rounded-lg overflow-hidden border shadow-sm bg-gray-50">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img 
-                                        src={getImageUrl(image.image_url)} 
-                                        alt="Imagen corporativa" 
-                                        className="object-contain w-full h-full" 
+                                    <img
+                                        src={getImageUrl(image.image_url)}
+                                        alt="Imagen corporativa"
+                                        className="object-contain w-full h-full"
                                     />
 
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 z-10" />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleViewImage(image);
-                                        }} 
+                                        }}
                                         className="absolute top-2 left-2 p-1.5 bg-white/90 hover:bg-white text-blue-600 rounded-full shadow z-20 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
                                         title="Ver imagen"
                                     >
@@ -261,27 +262,39 @@ export const AddAboutUs = ({ onSaveRef, onClearRef }: AddAboutUsProps = {}) => {
                     )}
                     <p className="text-sm text-gray-500 mt-5">Estas imágenes se mostrarán en la sección de &quot;Sobre Nosotros&quot; con el diseño de la página web pública.</p>
                     {openModal && selectedImage && (
-                        <div
-                            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-                            onClick={() => setOpenModal(false)}
-                        >
-                            <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                                {/* Botón cerrar */}
-                                <button 
-                                    onClick={() => setOpenModal(false)} 
-                                    className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+                        <>
+                            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+                            <dialog
+                                open
+                                className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 m-0 w-full h-full max-w-none max-h-none border-none"
+                                onClick={() => setOpenModal(false)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') setOpenModal(false);
+                                }}
+                            >
+                                {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                                <div 
+                                    className="relative w-full max-w-5xl h-full flex items-center justify-center" 
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
                                 >
-                                    <X size={24} />
-                                </button>
+                                    {/* Botón cerrar */}
+                                    <button type='button'
+                                        onClick={() => setOpenModal(false)}
+                                        className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
+                                    >
+                                        <X size={24} />
+                                    </button>
 
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img 
-                                    src={getImageUrl(selectedImage.image_url)} 
-                                    alt="Vista completa" 
-                                    className="max-w-full max-h-full object-contain" 
-                                />
-                            </div>
-                        </div>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={getImageUrl(selectedImage.image_url)}
+                                        alt="Vista completa"
+                                        className="max-w-full max-h-full object-contain"
+                                    />
+                                </div>
+                            </dialog>
+                        </>
                     )}
 
                     <DeleteModal

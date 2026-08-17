@@ -5,9 +5,6 @@ import { inputsPrivacyNotice } from "../inputConfig"
 import { Info } from "lucide-react"
 import { RichTextEditor } from "@/components/ui/RichTextEditor"
 import { formatDate } from "@/lib/utils"
-
-import React from "react"
-
 interface AddPrivacyNoticeProps {
     data: {
         privacy_title: string;

@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef } from 'react';
+import  { useRef } from 'react';
 import Breadcrumb from "@/components/ui/breadcrumb"
 
 import { AddLocations } from './addLocations';
