@@ -1,4 +1,3 @@
-import React from 'react';
 import AddUser from './addUser';
 
 function Page() {

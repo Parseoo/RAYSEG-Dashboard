@@ -1,4 +1,3 @@
-import React from 'react';
 import PropertyReferralsChart from '../ui/PropertyReferralsChart';
 
 const PropertyReferrals = () => {

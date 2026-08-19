@@ -2,7 +2,6 @@
 import { SideBar, MobileSidebar } from '@/components/SideBar';
 import SideBarTop from '@/components/SideBarTop';
 import { useUserStore } from '@/lib/store/userStore';
-import { setAuthHeader, clearAuthHeader } from '@/lib/api/auth/auth-api';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAutoLogout } from '@/lib/hooks/useAutoLogout';
@@ -10,7 +9,7 @@ import { isTokenExpired } from '@/lib/utils/checkTokenExpiration';
 
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { isLogin, token, logout, _hasHydrated, isSessionExpired, setSessionExpired } = useUserStore()
+  const { isLogin, token, logout, _hasHydrated, isSessionExpired } = useUserStore()
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 

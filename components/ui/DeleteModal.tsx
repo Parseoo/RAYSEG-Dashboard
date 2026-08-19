@@ -34,7 +34,7 @@ export default function DeleteModal({
     message,
     warningText,
     customDeletePhrase,
-}: DeleteModalProps) {
+}: Readonly<DeleteModalProps>) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -52,15 +52,21 @@ export default function DeleteModal({
 
     return (
         <>
-            <div
-                className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+            <dialog
+                open
+                className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 m-0 max-w-none max-h-none h-full w-full"
                 style={{ animation: 'fadeIn 0.2s ease-out' }}
-                onClick={onClose}
+                onClick={(e) => {
+                    if (e.target === e.currentTarget) onClose();
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape') onClose();
+                }}
             >
                 <div
                     className="bg-white rounded-[5px] shadow-2xl max-w-lg w-full"
                     style={{ animation: 'scaleIn 0.2s ease-out' }}
-                    onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-5 border-b border-gray-200">
@@ -73,7 +79,7 @@ export default function DeleteModal({
                             </div>
                             <h2 className="text-lg font-bold text-gray-900">{title}</h2>
                         </div>
-                        <button
+                        <button type='button'
                             onClick={onClose}
                             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                         >
@@ -99,8 +105,8 @@ export default function DeleteModal({
                                 </p>
                                 {itemDetails.length > 0 && (
                                     <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 border border-gray-200">
-                                        {itemDetails.map((detail, idx) => (
-                                            <div key={idx} className="flex justify-between text-sm gap-2">
+                                        {itemDetails.map((detail) => (
+                                            <div key={detail.label} className="flex justify-between text-sm gap-2">
                                                 <span className="text-gray-500 shrink-0">{detail.label}:</span>
                                                 <span className="font-medium text-gray-800 text-right break-words">{detail.value}</span>
                                             </div>
@@ -114,7 +120,7 @@ export default function DeleteModal({
                     {/* Footer */}
                     <div className="border-t border-gray-200 p-4 flex gap-3">
                         {onConfirm && !isWarning && (
-                            <button
+                            <button type='button'
                                 onClick={onConfirm}
                                 disabled={isDeleting}
                                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-[5px] hover:bg-red-600 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-60 text-sm"
@@ -126,14 +132,14 @@ export default function DeleteModal({
                             </button>
                         )}
                         {isWarning && (
-                            <button
+                            <button type='button'
                                 onClick={onClose}
                                 className="flex-1 px-4 py-2 bg-primary_color text-white rounded-[5px] hover:opacity-90 transition-all font-medium text-sm shadow-md"
                             >
                                 Entendido
                             </button>
                         )}
-                        <button
+                        <button type='button'
                             onClick={onClose}
                             disabled={isDeleting}
                             className="flex-1 px-4 py-2 bg-slate-100 text-gray-700 rounded-[5px] hover:bg-slate-200 transition-all font-medium disabled:opacity-50 text-sm"
@@ -142,7 +148,7 @@ export default function DeleteModal({
                         </button>
                     </div>
                 </div>
-            </div>
+            </dialog>
 
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -73,8 +73,8 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
       const data = await response.json();
       if (data && data.length > 0) {
         return {
-          latitude: parseFloat(data[0].lat),
-          longitude: parseFloat(data[0].lon)
+          latitude: Number.parseFloat(data[0].lat),
+          longitude: Number.parseFloat(data[0].lon)
         };
       }
     } catch (err) {
@@ -273,7 +273,7 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         number_mls: state.number_mls || '',
         title: state.title,
         description: state.description,
-        price: parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || 0,
+        price: Number.parseFloat(state.price?.toString().replace(/[^0-9.]/g, '') || '0') || 0,
         property_type: resolveId(state.property_type, propertyTypes, 1),
         operation_type: resolveId(state.operation_type, operationCatalog, 1),
         terrain_type: resolveId(state.terrain_type, terrainTypeCatalog, 1),
@@ -281,13 +281,13 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         property_post_status: resolveId(state.status_publication, publicationStatusCatalog, 1),
         terrain_size: state.terrain_size !== null && state.terrain_size !== undefined && String(state.terrain_size).trim() !== '' ? String(state.terrain_size) : "0",
         construction_size: state.construction_size !== null && state.construction_size !== undefined && String(state.construction_size).trim() !== '' ? String(state.construction_size) : "0",
-        rooms: state.rooms ? parseInt(String(state.rooms)) : 0,
-        bathrooms: state.bathrooms ? parseInt(String(state.bathrooms)) : 0,
-        parking_spaces: state.parking_spaces ? parseInt(String(state.parking_spaces)) : 0,
-        floors: state.floors ? parseInt(String(state.floors)) : 1,
-        construction_year: state.construction_year ? parseInt(String(state.construction_year)) : new Date().getFullYear(),
+        rooms: state.rooms ? Number.parseInt(String(state.rooms)) : 0,
+        bathrooms: state.bathrooms ? Number.parseInt(String(state.bathrooms)) : 0,
+        parking_spaces: state.parking_spaces ? Number.parseInt(String(state.parking_spaces)) : 0,
+        floors: state.floors ? Number.parseInt(String(state.floors)) : 1,
+        construction_year: state.construction_year ? Number.parseInt(String(state.construction_year)) : new Date().getFullYear(),
         conservation_status: resolveCatalogDisplayValue(state.conservation_status, conservationStatusCatalog)?.toString() || state.conservation_status || "Bueno",
-        outdoor_spaces: state.outdoor_spaces ? parseInt(String(state.outdoor_spaces)) : 0,
+        outdoor_spaces: state.outdoor_spaces ? Number.parseInt(String(state.outdoor_spaces)) : 0,
         note: state.note || "",
         is_featured: Boolean(state.is_featured),
         address: {
@@ -354,7 +354,7 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
         { label: isEdit ? 'Editar Propiedad' : 'Agregar Propiedad', href: isEdit ? `/property/edit-property/${propertyId}` : '/property/add-property', active: true }
       ]} />
       <div className='mb-3'>
-        <button onClick={() => router.push('/property')} className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'>
+        <button type='button' onClick={() => router.push('/property')} className='flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors'>
           <ArrowLeft size={18} /><span className='text-sm'>Volver</span>
         </button>
       </div>
@@ -418,10 +418,10 @@ const AddPropertyContent = ({ propertyId }: { propertyId?: string }) => {
               <p className="text-gray-600 leading-relaxed">¿Estás seguro/a de que deseas guardar los cambios realizados en esta propiedad? Esta acción actualizará la información públicamente.</p>
             </div>
             <div className="p-4 bg-gray-50 flex gap-3">
-              <button onClick={handleUpdateProperty} disabled={isSaving} className="flex-1 px-4 py-2 bg-primary_color text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-60">
+              <button type='button' onClick={handleUpdateProperty} disabled={isSaving} className="flex-1 px-4 py-2 bg-primary_color text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-60">
                 <Save size={16} /> {isSaving ? 'Guardando...' : 'Sí, guardar cambios'}
               </button>
-              <button onClick={() => setShowConfirmModal(false)} className="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-sm">Cancelar</button>
+              <button type='button' onClick={() => setShowConfirmModal(false)} className="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-sm">Cancelar</button>
             </div>
           </div>
         </div>

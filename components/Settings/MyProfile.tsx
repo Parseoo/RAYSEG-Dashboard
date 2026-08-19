@@ -13,7 +13,7 @@ import { User } from '@/lib/@type';
 const MyProfile = () => {
     const { user: storeUser } = useUserStore();
     const [user, setUser] = useState<User | null>(storeUser || null);
-    const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -30,8 +30,6 @@ const MyProfile = () => {
                 }
             } catch (error) {
                 console.error("Error fetching profile", error);
-            } finally {
-                setLoading(false);
             }
         };
 

@@ -36,9 +36,9 @@ const EditUserPage = () => {
                     role: typeof apiData.role === 'object' && apiData.role !== null
                         ? String((apiData.role as any).id)
                         : (apiData.role || ""),
-                    is_active: apiData.is_active ? true : false,
-                    is_superuser: apiData.is_superuser ? true : false,
-                    es_agente: apiData.es_agente ? true : false,
+                    is_active: !!apiData.is_active,
+                    is_superuser: !!apiData.is_superuser,
+                    es_agente: !!apiData.es_agente,
                     phone: apiData.phone || "",
                     // Mapear address del API a campos separados del formulario
                     street: apiData.address?.street || "",

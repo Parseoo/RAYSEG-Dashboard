@@ -33,6 +33,7 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Escribe aquí..
             }),
         ],
         content: value,
+        immediatelyRender: false,
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML())
         },

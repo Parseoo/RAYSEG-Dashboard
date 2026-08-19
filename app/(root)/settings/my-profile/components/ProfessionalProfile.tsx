@@ -13,7 +13,7 @@ export const ProfessionalProfile = ({ user }: ProfessionalProfileProps) => {
         if (!dateString) return "-";
         try {
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
+            if (Number.isNaN(date.getTime())) return dateString;
             return date.toLocaleDateString("es-MX", {
                 day: "numeric",
                 month: "short",

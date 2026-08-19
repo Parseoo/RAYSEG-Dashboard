@@ -38,13 +38,21 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[999] flex flex-col items-center justify-between bg-black/95 backdrop-blur-md p-4"
-      onClick={onClose}
+    <dialog
+      open
+      onClose={onClose}
+      className="fixed inset-0 z-[999] w-full h-full max-w-none max-h-none m-0 border-none flex flex-col items-center justify-between bg-black/95 backdrop-blur-md p-4"
     >
+      {/* Backdrop interactivo para cerrar */}
+      <button
+        type="button"
+        className="absolute inset-0 -z-10 w-full h-full cursor-default bg-transparent border-none p-0 m-0"
+        onClick={onClose}
+        aria-label="Cerrar galería"
+      />
       {/* Botón Cerrar */}
       <div className="w-full flex justify-end">
-        <button
+        <button type='button'
           onClick={onClose}
           className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 shadow transition-colors"
           title="Cerrar"
@@ -54,17 +62,17 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
       </div>
 
       {/* Visor Principal con Flechas */}
-      <div className="relative flex-1 w-full max-w-5xl flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+      <div className="relative flex-1 w-full max-w-5xl flex items-center justify-center">
         {images.length > 1 && (
           <>
-            <button
+            <button type='button'
               onClick={prevImage}
               className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 z-10 transition-colors"
               title="Anterior"
             >
               <ChevronLeft size={48} strokeWidth={2.5} />
             </button>
-            <button
+            <button type='button'
               onClick={nextImage}
               className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400 p-2 z-10 transition-colors"
               title="Siguiente"
@@ -84,13 +92,13 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
       </div>
 
       {/* Carrusel de Miniaturas en la parte inferior */}
-      <div className="w-full max-w-5xl py-4" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-5xl py-4">
         <div className="flex gap-2 overflow-x-auto justify-center py-2 px-4 bg-black/40 rounded-xl scrollbar-thin">
           {images.map((img: string, idx: number) => {
             const isActive = idx === currentIndex;
             return (
-              <button
-                key={idx}
+              <button type='button'
+                key={img}
                 onClick={() => setCurrentIndex(idx)}
                 className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                   isActive ? 'border-orange-500 scale-95 shadow-md shadow-orange-500/20' : 'border-white/20 hover:border-white/50'
@@ -111,7 +119,7 @@ export const Gallery = ({ isOpen, onClose, images }: any) => {
           {currentIndex + 1} de {images.length}
         </p>
       </div>
-    </div>
+    </dialog>
   );
 };
 

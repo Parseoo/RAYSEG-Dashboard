@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon, Users, DollarSign, Calendar, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon, Users, DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tag } from './badges';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { NotificationCategory, NotificationItem } from '@/lib/types/notifications';
 
-type FilterType = 'all' | 'unread' | string;
+type FilterType = 'all' | 'unread' | (string & {});
 
 const getCategoryLabel = (category: string): string => {
     const upper = (category || '').toUpperCase();
@@ -98,7 +98,7 @@ const getNotificationTags = (notification: NotificationItem): string[] => {
 const formatTimestamp = (dateStr?: string): string => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
+    if (Number.isNaN(date.getTime())) return dateStr;
 
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -125,7 +125,7 @@ interface NotificationsModalProps {
     onClose: () => void;
 }
 
-export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
+export function NotificationsModal({ isOpen, onClose }: Readonly<NotificationsModalProps>) {
     const [filter, setFilter] = useState<FilterType>('all');
     const [showAllFilters, setShowAllFilters] = useState(false);
     const [availableCategories, setAvailableCategories] = useState<string[]>([]);
@@ -222,22 +222,132 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         return initial;
     }, [showAllFilters, filter, filters]);
 
+    const renderNotificationsContent = () => {
+        if (isLoading && notifications.length === 0) {
+            return (
+                <div className="space-y-4">
+                    {[1, 2, 3].map((n) => (
+                        <div key={n} className="p-4 rounded-lg border border-gray-200 animate-pulse bg-gray-50">
+                            <div className="flex gap-4">
+                                <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 bg-gray-300 rounded w-3/4" />
+                                    <div className="h-3 bg-gray-200 rounded w-full" />
+                                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        if (error && notifications.length === 0) {
+            return (
+                <div className="text-center py-12">
+                    <Bell className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-3">{error}</p>
+                    <button
+                        type="button"
+                        onClick={() => loadFilteredNotifications(filter)}
+                        className="px-4 py-2 bg-primary_color text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            );
+        }
+
+        if (notifications.length === 0) {
+            return (
+                <div className="text-center py-12">
+                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No hay notificaciones</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-4">
+                {notifications.map((notification) => {
+                    const tags = getNotificationTags(notification);
+                    return (
+                        <button
+                            key={notification.id}
+                            type="button"
+                            onClick={() => {
+                                if (!notification.isRead) {
+                                    markAsRead(notification.id);
+                                }
+                            }}
+                            className={`w-full text-left p-4 rounded-lg border transition-all cursor-pointer ${notification.isRead
+                                ? 'bg-white border-gray-200 hover:border-gray-300'
+                                : 'bg-blue-50/70 border-blue-200 hover:border-blue-300 shadow-sm'
+                                }`}
+                        >
+                            <div className="flex gap-4">
+                                {/* Icon */}
+                                <div className="flex-shrink-0 mt-0.5">
+                                    {getNotificationIcon(notification.category, notification.type)}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+                                            {notification.title}
+                                        </h3>
+                                        {!notification.isRead && (
+                                            <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
+                                        )}
+                                    </div>
+                                    {notification.message && (
+                                        <p className="text-sm text-gray-600 mb-3">
+                                            {notification.message}
+                                        </p>
+                                    )}
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <span className="text-xs text-gray-500">
+                                            {formatTimestamp(notification.createdAt)}
+                                        </span>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {tags.map((tag) => (
+                                                <Tag
+                                                    key={tag}
+                                                    variant="gray"
+                                                    className="text-xs px-2 py-0.5"
+                                                >
+                                                    {tag}
+                                                </Tag>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
     return (
         <>
             {/* Overlay */}
-            <div
-                className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            <button
+                type="button"
+                className={`fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity border-none p-0 cursor-default ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
                     }`}
                 onClick={onClose}
+                aria-label="Cerrar modal"
             />
 
             {/* Sidebar */}
             <div
                 className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
                     }`}
-                onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -247,7 +357,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                             Resumen de actividad reciente en tu inmobiliaria
                         </p>
                     </div>
-                    <button
+                    <button type='button'
                         onClick={onClose}
                         className="p-2 hover:bg-slate-100 rounded-lg transition-all"
                         aria-label="Cerrar"
@@ -260,7 +370,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 <div className="px-6 pt-4 pb-3 border-b border-gray-200">
                     <div className="flex flex-wrap gap-2 items-center">
                         {displayedFilters.map((f) => (
-                            <button
+                            <button type='button'
                                 key={f.id}
                                 onClick={() => handleFilterClick(f.id)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === f.id
@@ -278,7 +388,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                         ))}
 
                         {filters.length > 3 && (
-                            <button
+                            <button type='button'
                                 onClick={() => setShowAllFilters(!showAllFilters)}
                                 className="px-3.5 py-2 rounded-full text-sm font-medium transition-all bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-slate-200 flex items-center gap-1"
                             >
@@ -295,103 +405,12 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
 
                 {/* Notifications List */}
                 <div className="flex-1 overflow-y-auto p-6">
-                    {isLoading && notifications.length === 0 ? (
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((n) => (
-                                <div key={n} className="p-4 rounded-lg border border-gray-200 animate-pulse bg-gray-50">
-                                    <div className="flex gap-4">
-                                        <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-4 bg-gray-300 rounded w-3/4" />
-                                            <div className="h-3 bg-gray-200 rounded w-full" />
-                                            <div className="h-3 bg-gray-200 rounded w-1/2" />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : error && notifications.length === 0 ? (
-                        <div className="text-center py-12">
-                            <Bell className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                            <p className="text-gray-600 mb-3">{error}</p>
-                            <button
-                                onClick={() => loadFilteredNotifications(filter)}
-                                className="px-4 py-2 bg-primary_color text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all"
-                            >
-                                Reintentar
-                            </button>
-                        </div>
-                    ) : notifications.length === 0 ? (
-                        <div className="text-center py-12">
-                            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">No hay notificaciones</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {notifications.map((notification) => {
-                                const tags = getNotificationTags(notification);
-                                return (
-                                    <div
-                                        key={notification.id}
-                                        onClick={() => {
-                                            if (!notification.isRead) {
-                                                markAsRead(notification.id);
-                                            }
-                                        }}
-                                        className={`p-4 rounded-lg border transition-all cursor-pointer ${notification.isRead
-                                            ? 'bg-white border-gray-200 hover:border-gray-300'
-                                            : 'bg-blue-50/70 border-blue-200 hover:border-blue-300 shadow-sm'
-                                            }`}
-                                    >
-                                        <div className="flex gap-4">
-                                            {/* Icon */}
-                                            <div className="flex-shrink-0 mt-0.5">
-                                                {getNotificationIcon(notification.category, notification.type)}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between gap-2 mb-1">
-                                                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
-                                                        {notification.title}
-                                                    </h3>
-                                                    {!notification.isRead && (
-                                                        <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
-                                                    )}
-                                                </div>
-                                                {notification.message && (
-                                                    <p className="text-sm text-gray-600 mb-3">
-                                                        {notification.message}
-                                                    </p>
-                                                )}
-                                                <div className="flex items-center gap-3 flex-wrap">
-                                                    <span className="text-xs text-gray-500">
-                                                        {formatTimestamp(notification.createdAt)}
-                                                    </span>
-                                                    <div className="flex gap-2 flex-wrap">
-                                                        {tags.map((tag, idx) => (
-                                                            <Tag
-                                                                key={idx}
-                                                                variant="gray"
-                                                                className="text-xs px-2 py-0.5"
-                                                            >
-                                                                {tag}
-                                                            </Tag>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                    {renderNotificationsContent()}
                 </div>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200">
-                    <button
+                    <button type='button'
                         onClick={markAllAsRead}
                         disabled={unreadCount === 0}
                         className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"

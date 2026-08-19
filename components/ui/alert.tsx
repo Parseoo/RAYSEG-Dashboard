@@ -71,7 +71,7 @@ export const Alert = ({
                 </div>
             </div>
             {onClose && (
-                <button
+                <button type="button"
                     onClick={onClose}
                     className={`h-8 w-8 rounded-md flex items-center justify-center transition-colors ${config.closeButton}`}
                 >

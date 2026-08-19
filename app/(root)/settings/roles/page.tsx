@@ -1,4 +1,3 @@
-import React from 'react';
 import RolesList from './RolesList';
 
 const RolesPage = () => {

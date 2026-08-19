@@ -16,15 +16,15 @@ export function Pagination({
   totalPages,
   onPageChange,
   disabled
-}: PaginationProps) {
+}: Readonly<PaginationProps>) {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
 
   // Limit shown pages if many
   const getVisiblePages = () => {
     if (totalPages <= 5) return pages
-    if (currentPage <= 3) return [...pages.slice(0, 5)]
-    if (currentPage >= totalPages - 2) return [...pages.slice(totalPages - 5)]
-    return [...pages.slice(currentPage - 3, currentPage + 2)]
+    if (currentPage <= 3) return pages.slice(0, 5)
+    if (currentPage >= totalPages - 2) return pages.slice(totalPages - 5)
+    return pages.slice(currentPage - 3, currentPage + 2)
   }
 
   const visiblePages = getVisiblePages()
@@ -75,9 +75,9 @@ export function Pagination({
           </Button>
         ))}
 
-        {visiblePages[visiblePages.length - 1] < totalPages && (
+        {visiblePages.at(-1)! < totalPages && (
           <>
-            {visiblePages[visiblePages.length - 1] < totalPages - 1 && <span className="px-1 text-gray-400">...</span>}
+            {visiblePages.at(-1)! < totalPages - 1 && <span className="px-1 text-gray-400">...</span>}
             <Button
               variant="outline"
               size="sm"

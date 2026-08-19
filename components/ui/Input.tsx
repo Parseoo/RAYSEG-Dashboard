@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from './select';
 import { Switch } from './Switch';
 import { Eye, EyeOff } from 'lucide-react';
@@ -45,6 +45,7 @@ interface DynamicInputsProps {
 // Componente para renderizar un input individual
 export const InputField = React.memo(({ input, withBgWhite = false }: InputFieldProps) => {
     const bgClass = withBgWhite ? 'bg-white' : '';
+    const [showPassword, setShowPassword] = useState(false);
     const Icon = input.icon;
     const isInlineIcon = input.iconLayout === 'inline';
     const errorClass = input.error ? 'border-red-500 border-2 focus:ring-2 focus:ring-red-200 focus:border-red-500 bg-red-50/20' : 'border-gray-300 focus:ring-2 focus:ring-blue-500';
@@ -57,7 +58,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
             if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
                 return;
             }
-            if (!/^[0-9]$/.test(e.key)) {
+            if (!/^\d$/.test(e.key)) {
                 e.preventDefault();
             }
         } else if (input.type === 'currency') {
@@ -81,7 +82,7 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
         let val = e.target.value;
 
         if (input.type === 'number') {
-            val = val.replace(/[^0-9]/g, '');
+            val = val.replace(/\D/g, '');
             e.target.value = val;
         } else if (input.type === 'currency') {
             val = val.replace(/[^0-9.]/g, '');
@@ -98,53 +99,77 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
         input.onChange(e as any);
     };
 
-    const renderInput = () => (
-        <div className="relative">
-            {input.type === 'select' ? (
-                <Select
-                    value={input.value !== undefined && input.value !== null && input.value !== '' ? String(input.value) : undefined}
-                    onValueChange={(val) => input.onChange && input.onChange(val)}
-                >
-                    <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>
-                        <SelectValue placeholder={input.placeholder || 'Seleccionar...'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {input.options?.map(opt => (
-                            <SelectItem key={String(opt.value)} value={String(opt.value)} className={bgClass}>
-                                {opt.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            ) : input.type === 'textarea' ? (
-                <textarea
-                    id={input.id}
-                    placeholder={input.placeholder}
-                    rows={input.rows}
-                    value={(input.value as string | number | readonly string[]) ?? ''}
-                    onChange={input.onChange as any}
-                    className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all min-h-[100px] resize-y ${bgClass} ${errorClass} ${input.className || ''}`}
-                />
-            ) : input.type === 'switch' ? (
-                <div className="flex items-center gap-3 h-[42px]">
-                    <Switch
-                        checked={input.value === 'true' || input.value === true}
-                        onLabel="Activo"
-                        offLabel="Inactivo"
-                        onChange={(e: any) => {
-                            const checked = typeof e === 'boolean' ? e : e.target.checked;
-                            input.onChange?.(checked ? 'true' : 'false');
-                        }}
+    const renderInput = () => {
+        let inputType = input.type;
+        if (isPasswordType) {
+            inputType = showPassword ? 'text' : 'password';
+        } else if (isCurrency || input.type === 'number') {
+            inputType = 'text';
+        }
+
+        let inputModeValue = undefined;
+        if (input.type === 'number' || isCurrency) {
+            inputModeValue = 'numeric';
+        } else if (input.type === 'tel') {
+            inputModeValue = 'tel';
+        }
+
+        const renderInput = () => {
+            if (input.type === 'select') {
+                return (
+                    <Select
+                        value={input.value !== undefined && input.value !== null && input.value !== '' ? String(input.value) : undefined}
+                        onValueChange={(val) => input.onChange?.(val)}
+                    >
+                        <SelectTrigger className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all ${bgClass} ${errorClass} ${input.className || ''}`} id={input.id}>
+                            <SelectValue placeholder={input.placeholder || 'Seleccionar...'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {input.options?.map(opt => (
+                                <SelectItem key={String(opt.value)} value={String(opt.value)} className={bgClass}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                );
+            }
+            if (input.type === 'textarea') {
+                return (
+                    <textarea
+                        id={input.id}
+                        placeholder={input.placeholder}
+                        rows={input.rows}
+                        value={(input.value as string | number | readonly string[]) ?? ''}
+                        onChange={input.onChange as any}
+                        className={`w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 transition-all min-h-[100px] resize-y ${bgClass} ${errorClass} ${input.className || ''}`}
                     />
-                </div>
-            ) : (
+                );
+            }
+            if (input.type === 'switch') {
+                return (
+                    <div className="flex items-center gap-3 h-[42px]">
+                        <Switch
+                            checked={input.value === 'true' || input.value === true}
+                            onLabel="Activo"
+                            offLabel="Inactivo"
+                            onChange={(e: any) => {
+                                const checked = typeof e === 'boolean' ? e : e.target.checked;
+                                input.onChange?.(checked ? 'true' : 'false');
+                            }}
+                        />
+                    </div>
+                );
+            }
+            
+            return (
                 <div className="relative flex items-center">
                     {isCurrency && (
                         <span className="absolute left-3 text-sm text-gray-600">{input.currency || 'MXN'}</span>
                     )}
                     <input
-                        type={isPasswordType ? (showPassword ? 'text' : 'password') : (isCurrency ? 'text' : input.type === 'number' ? 'text' : input.type)}
-                        inputMode={input.type === 'number' || isCurrency ? 'numeric' : input.type === 'tel' ? 'tel' : undefined}
+                        type={inputType}
+                        inputMode={inputModeValue as any}
                         id={input.id}
                         placeholder={input.placeholder}
                         value={(input.value as string | number | readonly string[]) ?? ''}
@@ -162,10 +187,16 @@ export const InputField = React.memo(({ input, withBgWhite = false }: InputField
                         </button>
                     )}
                 </div>
-            )}
-            {input.error && <p className="text-xs text-red-600 font-medium mt-1">{input.error}</p>}
-        </div>
-    );
+            );
+        };
+
+        return (
+            <div className="relative">
+                {renderInput()}
+                {input.error && <p className="text-xs text-red-600 font-medium mt-1">{input.error}</p>}
+            </div>
+        );
+    };
 
     return (
         <div className='flex flex-col gap-2 flex-1 w-full min-w-0'>
@@ -252,13 +283,13 @@ export const Input: React.FC<SearchItem> = ({ title, width, type, id, required, 
         if (type === 'number') {
             const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
             if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
-            if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+            if (!/^\d$/.test(e.key)) e.preventDefault();
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (type === 'number') {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            e.target.value = e.target.value.replace(/\D/g, '');
         }
         onChange?.(e);
     };

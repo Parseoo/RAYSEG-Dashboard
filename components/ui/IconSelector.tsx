@@ -43,7 +43,7 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, selectedIcon, onC
         <div className="absolute top-full left-0 mt-2 z-[100] bg-white border border-gray-200 shadow-xl rounded-lg p-4 w-[280px]">
             <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-semibold text-gray-700">Seleccionar Icono</span>
-                <button
+                <button type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                 >

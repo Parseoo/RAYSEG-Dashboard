@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react';
 import Info from './Info';
 import { PropertyList } from './PropertyFrame';
 import { TotalRevenue } from './TotalRevenue';
@@ -10,7 +9,6 @@ import PropertyReferrals from './PropertyReferrals';
 
 export const Dashboard = () => {
   return (
-    <>
     <div className='px-1 sm:px-0'>
         <h1 className='text-black font-[700] text-2xl sm:text-3xl mb-4 sm:mb-6'>Dashboard</h1>
         <Info />
@@ -20,6 +18,5 @@ export const Dashboard = () => {
         </div> 
         <PropertyList />
     </div>
-    </>
   )
 }

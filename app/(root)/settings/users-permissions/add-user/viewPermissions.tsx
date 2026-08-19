@@ -52,7 +52,7 @@ interface ViewPermissionsProps {
     roleName?: string;
 }
 
-export function ViewPermissions({ userPermissions = {}, isReadOnly = true, roleName }: ViewPermissionsProps) {
+export function ViewPermissions({ userPermissions = {}, isReadOnly = true, roleName }: Readonly<ViewPermissionsProps>) {
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
         'gestion-inmobiliaria': true,
@@ -116,28 +116,18 @@ export function ViewPermissions({ userPermissions = {}, isReadOnly = true, roleN
     // Construcción de los grupos y módulos según la referencia
     const groups: PermissionGroupItem[] = useMemo(() => {
         const hasPerm = (key: string, action?: string) => {
-            if (!userPermissions || Object.keys(userPermissions).length === 0) {
-                if (key === 'clientes') return true;
-                if (key === 'propiedades') return true;
-                if (key === 'contratos') return action === 'ver' || action === 'editar';
-                if (key === 'reportes') return false;
-                if (key === 'leads') return true;
-                if (key === 'imagenes') return true;
-                if (key === 'perfil') return true;
-                if (key === 'contenido-web') return action === 'ver' || action === 'editar';
-                return false;
-            }
-
             const val = userPermissions[key];
             if (val === true || val === 'true') return true;
+            
             if (Array.isArray(val)) {
-                if (!action) return val.length > 0;
-                return val.includes(action);
+                return !action ? val.length > 0 : val.includes(action);
             }
-            if (typeof userPermissions[`${key}_actions`] === 'object' && Array.isArray(userPermissions[`${key}_actions`])) {
-                if (!action) return userPermissions[`${key}_actions`].length > 0;
-                return userPermissions[`${key}_actions`].includes(action);
+            
+            const actionsArray = userPermissions[`${key}_actions`];
+            if (Array.isArray(actionsArray)) {
+                return !action ? actionsArray.length > 0 : actionsArray.includes(action);
             }
+            
             return false;
         };
 

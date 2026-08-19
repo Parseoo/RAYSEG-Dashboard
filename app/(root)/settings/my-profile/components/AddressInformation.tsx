@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { MapPin, Navigation, Home, Building, Mailbox } from 'lucide-react';
 import { User } from '@/lib/@type';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { PropertyFrame } from '../ui/PropertyFrame';
 
 export const PropertyList = () => {
