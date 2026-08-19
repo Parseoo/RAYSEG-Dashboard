@@ -32,7 +32,7 @@ export function RevenueChart() {
           <h2 className='text-xl font-semibold text-gray-800'>Visitas totales</h2>
           <p className='text-sm text-gray-500'>Mes pasado</p>
         </div>
-        <button className='text-gray-400 hover:text-gray-600'>
+        <button type='button' className='text-gray-400 hover:text-gray-600'>
           <MoreVertical className='h-5 w-5' />
         </button>
       </div>

@@ -30,7 +30,7 @@ export const AddTermsConditions = ({ data, updatedAt, onChange }: AddTermsCondit
     }
 
     return (
-        <>
+
             <div className='w-full max-h-max rounded-lg p-5 border flex flex-col'>
                 <div className='mb-4'>
                     <h1 className='font-[500] text-lg mb-1'>Datos de los Términos y Condiciones</h1>
@@ -62,6 +62,6 @@ export const AddTermsConditions = ({ data, updatedAt, onChange }: AddTermsCondit
                     Se recomienda consultar con un asesor legal para validar este contenido.
                 </p>
             </div>
-        </>
+
     )
 }

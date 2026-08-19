@@ -1,15 +1,15 @@
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { Pencil, Trash2, Plus, Loader2, MoreVertical } from 'lucide-react';
+import { Pencil, Trash2, Plus, Loader2, MoreVertical, Save } from 'lucide-react';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Table } from '@/components/ui/table';
 import DeleteModal from '@/components/ui/DeleteModal';
+import { Card, CardContent } from '@/components/ui/card';
 import Tooltip from '@/components/ui/Tooltip';
 import { GetListRoles, DeleteRoleById, CreateRole, UpdateRoleById } from '@/lib/api/permission-api';
 import { showToast } from 'nextjs-toast-notify';
 import { InputField } from '@/components/ui/Input';
-import { Save } from 'lucide-react';
 
 const headers = ['ID', 'Nombre del Rol', 'Descripción', 'Sistema', 'Fecha de Creación', 'Fecha de Modificación', 'Acciones'];
 
@@ -60,6 +60,7 @@ function RolesList() {
             setDeleteModal({ isOpen: false, item: null });
             showToast.success("Rol eliminado correctamente");
         } catch (error: any) {
+            console.error(error);
             showToast.error("Error al eliminar el rol");
         } finally {
             setIsDeleting(false);
@@ -87,6 +88,7 @@ function RolesList() {
             setEditingRole(null);
             fetchRoles();
         } catch (error: any) {
+            console.error(error);
             showToast.error(editingRole ? "Error al actualizar el rol" : "Error al crear el rol");
         } finally {
             setIsCreating(false);
@@ -126,7 +128,7 @@ function RolesList() {
                 <td className='py-4 px-4'>
                     <div className='flex items-center gap-2'>
                         <Tooltip content="Editar Info">
-                            <button
+                            <button type='button'  
                                 onClick={() => {
                                     setEditingRole(role);
                                     setNewRole({ name: role.name, description: role.description || '' });
@@ -138,7 +140,7 @@ function RolesList() {
                             </button>
                         </Tooltip>
                         <Tooltip content="Eliminar">
-                            <button
+                            <button type='button'
                                 onClick={() => handleDeleteClick(role)}
                                 disabled={role.is_system_role}
                                 className={`p-1.5 rounded-md text-white transition-colors ${role.is_system_role ? 'bg-slate-200 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`}
@@ -154,7 +156,8 @@ function RolesList() {
 
     const renderMobileCard = (role: any) => {
         return (
-            <div key={role.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+            <Card key={role.id} className="relative">
+                <CardContent className="p-4">
                 {/* Header: Nombre y Acciones */}
                 <div className="flex justify-between items-start mb-4">
                     <div>
@@ -164,7 +167,7 @@ function RolesList() {
 
                     {/* Actions Dropdown */}
                     <div className="relative">
-                        <button
+                        <button type='button'
                             onClick={() => toggleActionMenu(role.id)}
                             className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
                         >
@@ -173,7 +176,7 @@ function RolesList() {
 
                         {openActionMenu === role.id && (
                             <div className="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
-                                <button
+                                <button type='button'
                                     onClick={() => {
                                         setOpenActionMenu(null);
                                         setEditingRole(role);
@@ -184,7 +187,7 @@ function RolesList() {
                                 >
                                     <Pencil size={16} /> Editar
                                 </button>
-                                <button
+                                <button type='button'
                                     onClick={() => {
                                         setOpenActionMenu(null);
                                         handleDeleteClick(role);
@@ -220,7 +223,8 @@ function RolesList() {
                         <p>{role.updated_at ? new Date(role.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                 </div>
-            </div>
+                </CardContent>
+            </Card>
         );
     };
 
@@ -231,7 +235,8 @@ function RolesList() {
                 { label: 'Configuración', href: '/settings/users-permissions' },
                 { label: 'Roles', href: '/settings/roles', active: true }
             ]} />
-            <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
+            <Card className='w-full max-h-max mb-9'>
+                <CardContent className="p-4 sm:p-5">
                 <div className='w-full h-full'>
                     <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
                         <div>
@@ -239,7 +244,7 @@ function RolesList() {
                             <p className='text-sm sm:text-md text-gray-500'>Administra los niveles de acceso y perfiles del sistema.</p>
                         </div>
                         <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
-                            <button
+                            <button type='button'
                                 onClick={() => {
                                     setEditingRole(null);
                                     setNewRole({ name: '', description: '' });
@@ -260,15 +265,17 @@ function RolesList() {
 
                     {/* Mobile: Cards */}
                     <div className="md:hidden mt-4">
-                        {loading ? (
+                        {loading && (
                             <div className="flex justify-center items-center py-10">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
                             </div>
-                        ) : roles.length > 0 ? (
+                        )}
+                        {!loading && roles.length > 0 && (
                             <div className="flex flex-col gap-4">
                                 {roles.map((role) => renderMobileCard(role))}
                             </div>
-                        ) : (
+                        )}
+                        {!loading && roles.length === 0 && (
                             <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
                                 No se encontraron roles configurados.
                             </div>
@@ -281,15 +288,16 @@ function RolesList() {
                         </div>
                     )}
                 </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            {/* Create Role Modal */}
+            {/* Modal para Crear / Editar Rol */}
             {isCreateModalOpen && (
                 <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200'>
                     <div className='bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200'>
                         <div className='bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between'>
                             <h2 className='font-bold text-lg text-slate-800'>{editingRole ? 'Editar Rol' : 'Nuevo Rol'}</h2>
-                            <button onClick={() => setIsCreateModalOpen(false)} className='text-slate-400 hover:text-slate-600'>
+                            <button type='button' onClick={() => setIsCreateModalOpen(false)} className='text-slate-400 hover:text-slate-600'>
                                 <Plus size={20} className='rotate-45' />
                             </button>
                         </div>

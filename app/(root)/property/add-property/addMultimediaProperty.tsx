@@ -104,7 +104,8 @@ export const AddMultimediaProperty = () => {
         </div>
         <p className='text-sm sm:text-md text-gray-500 mb-4'>Sube las fotografías que se mostrarán en la publicación de la propiedad.</p>
 
-        <div
+        <button
+          type="button"
           className='bg-white flex items-center justify-center w-full rounded-md'
           onClick={() => document.getElementById('dropzone-file-2')?.click()}
         >
@@ -119,9 +120,8 @@ export const AddMultimediaProperty = () => {
               <p className='text-xs mt-2 text-gray-400'>JPG, PNG · Máx. 30 MB por imagen</p>
             </div>
           </div>
-
-          <input id='dropzone-file-2' type='file' className='hidden' multiple onChange={handleFileChange} accept="image/*" />
-        </div>
+        </button>
+        <input id='dropzone-file-2' type='file' className='hidden' multiple onChange={handleFileChange} accept="image/*" />
 
         {images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 mt-5">
@@ -138,8 +138,7 @@ export const AddMultimediaProperty = () => {
 
                     className="object-cover"
                   />
-
-                  <a className="absolute inset-0 bg-black/40 transition-opacity duration-200 z-10 opacity-0 group-hover:opacity-100" />
+                  <div className="absolute inset-0 bg-black/40 transition-opacity duration-200 z-10 opacity-0 group-hover:opacity-100" aria-hidden="true" />
 
                   {image.is_main && (
                     <div className="absolute top-2 left-2 bg-[#1B2533] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full z-20 shadow">
@@ -196,7 +195,8 @@ export const AddMultimediaProperty = () => {
         </div>
         <p className='text-sm sm:text-md text-gray-500 mb-4'>Sube los planos o croquis de la propiedad.</p>
 
-        <div
+        <button
+          type="button"
           className='bg-white flex items-center justify-center w-full rounded-md'
           onClick={() => document.getElementById('dropzone-file-plans')?.click()}
         >
@@ -211,9 +211,8 @@ export const AddMultimediaProperty = () => {
               <p className='text-xs mt-2 text-gray-400'>JPG, PNG o PDF · Máx. 30 MB por archivo</p>
             </div>
           </div>
-
-          <input id='dropzone-file-plans' type='file' className='hidden' multiple onChange={handlePlanFileChange} accept="image/*,application/pdf" />
-        </div>
+        </button>
+        <input id='dropzone-file-plans' type='file' className='hidden' multiple onChange={handlePlanFileChange} accept="image/*,application/pdf" />
 
         {plans.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 mt-5">
@@ -237,7 +236,7 @@ export const AddMultimediaProperty = () => {
                     />
                   )}
 
-                  <a className="absolute inset-0 bg-black/40 transition-opacity duration-200 z-10 opacity-0 group-hover:opacity-100" />
+                  <div className="absolute inset-0 bg-black/40 transition-opacity duration-200 z-10 opacity-0 group-hover:opacity-100" aria-hidden="true" />
 
                   {/* Hover Action - Eye (Top Left) */}
                   <button
@@ -266,9 +265,16 @@ export const AddMultimediaProperty = () => {
       </div>
 
       {openModal && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setOpenModal(false)}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <dialog
+          open
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm m-0 max-w-none max-h-none w-full h-full border-none"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOpenModal(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpenModal(false);
+          }}
         >
           {selectedImage && (
             (() => {
@@ -280,7 +286,6 @@ export const AddMultimediaProperty = () => {
                 return (
                   <div
                     className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between p-3 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-700">Vista previa PDF</span>
@@ -299,7 +304,7 @@ export const AddMultimediaProperty = () => {
               }
 
               return (
-                <div className="relative w-full max-w-5xl h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                <div className="relative w-full max-w-5xl h-full flex items-center justify-center">
                   <button type='button'
                     onClick={() => setOpenModal(false)}
                     className="absolute top-2 right-2 md:top-4 md:right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 shadow z-10 transition-colors"
@@ -317,7 +322,7 @@ export const AddMultimediaProperty = () => {
               );
             })()
           )}
-        </div>
+        </dialog>
       )}
 
       <DeleteModal

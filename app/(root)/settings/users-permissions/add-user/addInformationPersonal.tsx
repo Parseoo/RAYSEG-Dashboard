@@ -4,10 +4,7 @@ import { useState, useEffect } from "react"
 import { DynamicInputs, InputFieldConfig } from "@/components/ui/Input"
 import { ProfileImageUpload } from "@/components/ui/ProfileImageUpload"
 import { UserForm } from "@/lib/@type"
-import { GetCatalogByName } from "@/lib/api/catalog-api"
 import { GetEstados, GetCiudades } from '@/lib/api/property/property-api'
-import { GetListRoles } from "@/lib/api/permission-api"
-import { ItemResponse } from "@/lib/@type"
 
 interface AddInformationPersonalProps {
     user: UserForm;
@@ -216,22 +213,28 @@ export const AddInformationPersonal = ({ user, setUser, errors, onImageChange, r
         }
     ];
 
-    const inputsWithState = inputs.map(input => ({
-        ...input,
-        options: input.id === 'estado' ? estadosOptions : (input.id === 'ciudad' ? ciudadesOptions : (input as any).options),
-        value: user[input.id as keyof UserForm] as string | boolean,
-        onChange: (e: any) => {
-            const value = e.target ? e.target.value : e;
-            setUser(prev => {
-                const updated = { ...prev, [input.id]: value };
-                if (input.id === 'estado') {
-                    updated.ciudad = ''; // Limpiar ciudad al cambiar estado
-                }
-                return updated;
-            });
-        },
-        error: errors[input.id as keyof UserForm] as string | undefined
-    }));
+    const inputsWithState = inputs.map(input => {
+        let options = (input as any).options;
+        if (input.id === 'estado') options = estadosOptions;
+        if (input.id === 'ciudad') options = ciudadesOptions;
+
+        return {
+            ...input,
+            options,
+            value: user[input.id as keyof UserForm] as string | boolean,
+            onChange: (e: any) => {
+                const value = e.target ? e.target.value : e;
+                setUser(prev => {
+                    const updated = { ...prev, [input.id]: value };
+                    if (input.id === 'estado') {
+                        updated.ciudad = ''; // Limpiar ciudad al cambiar estado
+                    }
+                    return updated;
+                });
+            },
+            error: errors[input.id as keyof UserForm] as string | undefined
+        };
+    });
 
     return (
         <div className='w-full max-h-max rounded-xl p-4 sm:p-6 mb-5 border border-slate-200 bg-white shadow-sm'>

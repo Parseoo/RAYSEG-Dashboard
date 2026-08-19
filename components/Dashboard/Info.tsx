@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import InfoCard from '../ui/InfoCard';
 import { GetPropertyClients } from '@/lib/api/client-api';
 

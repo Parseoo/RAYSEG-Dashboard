@@ -1,4 +1,3 @@
-import React from 'react';
 import RevenueChart from '../ui/chart/RevenueChart';
 
 export const TotalRevenue = () => {

@@ -13,10 +13,12 @@ const createFaviconIcon = () => L.icon({
 });
 
 export interface MapMarker {
+    id?: string | number;
     lat: number;
     lng: number;
     title: string;
     address: string;
+    image?: string;
 }
 
 interface MapWithMarkerProps {
@@ -26,7 +28,7 @@ interface MapWithMarkerProps {
     onMarkerDragEnd?: (lat: number, lng: number) => void;
 }
 
-export default function MapWithMarker({ markers, markerPosition, address, onMarkerDragEnd }: MapWithMarkerProps) {
+export default function MapWithMarker({ markers, markerPosition, address, onMarkerDragEnd }: Readonly<MapWithMarkerProps>) {
     const mapRef          = useRef<L.Map | null>(null);
     const layerRef        = useRef<L.LayerGroup | null>(null);
     const singleMarkerRef = useRef<L.Marker | null>(null);
@@ -43,12 +45,14 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
         valid.forEach((m) => {
             L.marker([m.lat, m.lng], { icon: createFaviconIcon() })
                 .bindPopup(`
-                    <div style="padding:8px;min-width:180px">
-                        <strong style="font-size:0.9rem;color:#1a1a2e">${m.title}</strong>
-                        <p style="margin:4px 0;color:#555;font-size:0.8rem">📍 ${m.address}</p>
-                        <p style="margin:0;font-size:0.7rem;color:#999">
-                            Lat: ${m.lat.toFixed(6)} | Lng: ${m.lng.toFixed(6)}
-                        </p>
+                    <div style="min-width:180px;text-align:center;">
+                        <div style="display:flex;align-items:center;margin-bottom:8px;">
+                            <span style="font-size:1.5rem;margin-right:8px;">📍</span>
+                            <strong style="font-size:1rem;color:#1a303d;text-align:left;">${m.title}</strong>
+                        </div>
+                        <p style="margin:4px 0 12px 0;color:#555;font-size:0.8rem;text-align:left;">${m.address}</p>
+                        ${m.image ? `<img src="${m.image}" alt="${m.title}" style="width:100%;height:auto;margin-bottom:8px;border-radius:4px;" />` : ''}
+                        ${m.id ? `<a href="/property/${m.id}" style="display:inline-block;padding:8px 12px;color:white;background-color:#1a303d;border-radius:8px;text-decoration:none;font-size:0.9rem;width:100%;">Ver propiedad</a>` : `<button style="display:inline-block;padding:8px 12px;color:white;background-color:#1a303d;border-radius:8px;border:none;font-size:0.9rem;width:100%;cursor:pointer;">Ver propiedad</button>`}
                     </div>
                 `)
                 .addTo(layer);
@@ -109,34 +113,27 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
         if (!mapRef.current) return;
         let isCancelled = false;
 
-        const hasValidMarkerPos = markerPosition && 
-            Number.isFinite(markerPosition.lat) && 
-            Number.isFinite(markerPosition.lng) && 
-            (markerPosition.lat !== 0 || markerPosition.lng !== 0);
-
-        if (hasValidMarkerPos) {
-            if (layerRef.current) layerRef.current.clearLayers();
+        const clearSingleMarker = () => {
             if (singleMarkerRef.current) {
                 singleMarkerRef.current.remove();
                 singleMarkerRef.current = null;
             }
+        };
 
-            const marker = L.marker(
-                [markerPosition!.lat, markerPosition!.lng],
-                { 
-                    icon: createFaviconIcon(),
-                    draggable: !!onMarkerDragEnd 
-                }
-            )
-                .addTo(mapRef.current)
+        const setSingleMarker = (lat: number, lng: number, label: string, draggable: boolean) => {
+            if (layerRef.current) layerRef.current.clearLayers();
+            clearSingleMarker();
+
+            const marker = L.marker([lat, lng], { icon: createFaviconIcon(), draggable })
+                .addTo(mapRef.current!)
                 .bindPopup(`
                     <div style="padding:8px">
                         <strong>📍 Ubicación de la propiedad</strong>
-                        <p style="margin:4px 0;color:#666">${address ?? ''}</p>
+                        <p style="margin:4px 0;color:#666">${label}</p>
                     </div>
                 `);
 
-            if (onMarkerDragEnd) {
+            if (draggable && onMarkerDragEnd) {
                 marker.on('dragend', (e) => {
                     const pos = e.target.getLatLng();
                     onMarkerDragEnd(pos.lat, pos.lng);
@@ -144,55 +141,40 @@ export default function MapWithMarker({ markers, markerPosition, address, onMark
             }
 
             singleMarkerRef.current = marker;
-            mapRef.current.flyTo([markerPosition!.lat, markerPosition!.lng], 16, { duration: 1.5 });
-        } else if (address && address.trim().length > 3) {
-            // Geocodificación automática por dirección sin requerir estar en la lista de localizaciones
-            const cleanAddress = address.trim();
+            mapRef.current!.flyTo([lat, lng], 15, { duration: 1.5 });
+        };
+
+        const handleGeocode = (cleanAddress: string) => {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanAddress)}`)
                 .then(res => res.json())
                 .then(data => {
                     if (isCancelled || !mapRef.current) return;
                     if (Array.isArray(data) && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lng = parseFloat(data[0].lon);
+                        const lat = Number.parseFloat(data[0].lat);
+                        const lng = Number.parseFloat(data[0].lon);
                         if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                            if (layerRef.current) layerRef.current.clearLayers();
-                            if (singleMarkerRef.current) {
-                                singleMarkerRef.current.remove();
-                                singleMarkerRef.current = null;
-                            }
-
-                            const marker = L.marker([lat, lng], { icon: createFaviconIcon() })
-                                .addTo(mapRef.current)
-                                .bindPopup(`
-                                    <div style="padding:8px">
-                                        <strong>📍 Ubicación de la propiedad</strong>
-                                        <p style="margin:4px 0;color:#666">${cleanAddress}</p>
-                                    </div>
-                                `);
-
-                            singleMarkerRef.current = marker;
-                            mapRef.current.flyTo([lat, lng], 15, { duration: 1.2 });
+                            setSingleMarker(lat, lng, cleanAddress, false);
                         }
                     }
                 })
                 .catch(err => console.warn('Geocoding failed:', err));
+        };
+
+        const hasValidMarkerPos = markerPosition && 
+            Number.isFinite(markerPosition.lat) && 
+            Number.isFinite(markerPosition.lng) && 
+            (markerPosition.lat !== 0 || markerPosition.lng !== 0);
+
+        if (hasValidMarkerPos) {
+            setSingleMarker(markerPosition!.lat, markerPosition!.lng, address ?? '', !!onMarkerDragEnd);
+        } else if (address && address.trim().length > 3) {
+            handleGeocode(address.trim());
         } else if (markers && markers.length > 0) {
-            if (singleMarkerRef.current) {
-                singleMarkerRef.current.remove();
-                singleMarkerRef.current = null;
-            }
-            if (layerRef.current) {
-                renderMarkers(mapRef.current, layerRef.current, markers);
-            }
+            clearSingleMarker();
+            if (layerRef.current) renderMarkers(mapRef.current, layerRef.current, markers);
         } else {
-            if (singleMarkerRef.current) {
-                singleMarkerRef.current.remove();
-                singleMarkerRef.current = null;
-            }
-            if (layerRef.current) {
-                layerRef.current.clearLayers();
-            }
+            clearSingleMarker();
+            if (layerRef.current) layerRef.current.clearLayers();
         }
 
         return () => {

@@ -6,19 +6,19 @@ import { Plus, SlidersHorizontal, Eye, Pencil, Trash2, Star, FileDown, X, Loader
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag } from '@/components/ui/badges';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
 import Search from '@/components/ui/Search';
 import { Table } from '@/components/ui/table';
 import { operationProperty, statusProperty } from '@/components/SelectProperties.data';
 import { GetCatalogPropertyTypes, GetPropertyOperationTypes, GetCatalogByName } from '@/lib/api/catalog-api';
 import { resolveCatalogDisplayValue } from '@/lib/utils/catalog';
-import { ItemResponse } from '@/lib/@type';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { GetAllProperties, DeleteProperty, GetEstados, GetCiudades } from '@/lib/api/property/property-api';
 import { GetReportsProperties } from '@/lib/api/report-api';
 import FilterSidebar from '@/components/ui/FilterSidebar';
 import Tooltip from '@/components/ui/Tooltip';
 import DeleteModal from '@/components/ui/DeleteModal';
-import { PropertyListItemResponse, Pagination as PaginationType } from '@/lib/@type';
+import { PropertyListItemResponse, ItemResponse, Pagination as PaginationType } from '@/lib/@type';
 import { Pagination } from '@/components/ui/Pagination';
 import { showToast } from 'nextjs-toast-notify';
 import { getImageUrl } from '@/lib/utils';
@@ -191,8 +191,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     e.preventDefault();
     setIsGenerating(true);
     try {
-      const yearNum = pdfParams.year ? parseInt(pdfParams.year) : undefined;
-      const monthNum = pdfParams.month ? parseInt(pdfParams.month) : undefined;
+      const yearNum = pdfParams.year ? Number.parseInt(pdfParams.year) : undefined;
+      const monthNum = pdfParams.month ? Number.parseInt(pdfParams.month) : undefined;
 
       const response = await GetReportsProperties({
         year: yearNum,
@@ -233,7 +233,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
       <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
       <div className="flex flex-wrap items-center gap-1.5 py-1">
-        <button
+        <button type='button'
           onClick={() => onChange('all')}
           className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
               ? 'bg-primary_color text-white font-medium shadow-md'
@@ -243,7 +243,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           Todos
         </button>
         {options.map((opt: any) => (
-          <button
+          <button type='button'
             key={opt.value}
             onClick={() => onChange(opt.value)}
             className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
@@ -448,13 +448,13 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         <td className='py-4 px-4 whitespace-nowrap'>
           <div className='flex items-center gap-2'>
             <Tooltip content="Ver detalle">
-              <Link href={`/property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Eye size={16} className='text-gray-600' /></button></Link>
+              <Link href={`/property/${property.property_id}`}><button type='button' className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Eye size={16} className='text-gray-600' /></button></Link>
             </Tooltip>
             <Tooltip content="Editar">
-              <Link href={`/property/edit-property/${property.property_id}`}><button className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Pencil size={16} className='text-gray-600' /></button></Link>
+              <Link href={`/property/edit-property/${property.property_id}`}><button type='button' className='p-1.5 bg-slate-200 rounded-md hover:bg-slate-300 transition-colors'><Pencil size={16} className='text-gray-600' /></button></Link>
             </Tooltip>
             <Tooltip content="Eliminar">
-              <button onClick={() => handleDeleteClick(property)} className='p-1.5 bg-red-500 rounded-md hover:bg-red-600 transition-colors'><Trash2 size={16} className='text-white' /></button>
+              <button type='button' onClick={() => handleDeleteClick(property)} className='p-1.5 bg-red-500 rounded-md hover:bg-red-600 transition-colors'><Trash2 size={16} className='text-white' /></button>
             </Tooltip>
           </div>
         </td>
@@ -481,7 +481,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     }
 
     return (
-      <div key={property.property_id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+      <Card key={property.property_id} className="overflow-hidden">
         {/* Image */}
         <div className="relative w-full h-48 bg-slate-100">
           {imageUrl && (
@@ -497,7 +497,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           )}
           {/* Actions Button */}
           <div className="absolute top-2 right-2">
-            <button 
+            <button type='button'
               onClick={() => toggleActionMenu(property.property_id)}
               className="p-2 bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white rounded-full shadow-md transition-colors"
             >
@@ -507,16 +507,16 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             {openActionMenu === property.property_id && (
               <div className="absolute right-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
                 <Link href={`/property/${property.property_id}`}>
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                  <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                     <Eye size={16} /> Ver detalle
                   </button>
                 </Link>
                 <Link href={`/property/edit-property/${property.property_id}`}>
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                  <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
                     <Pencil size={16} /> Editar
                   </button>
                 </Link>
-                <button 
+                <button type='button'
                   onClick={() => {
                     setOpenActionMenu(null);
                     handleDeleteClick(property);
@@ -530,8 +530,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4">
+        <CardContent className="p-4">
           {/* Title, MLS and Address */}
           <div className="mb-3">
             <p className="text-xs text-gray-500 font-medium mb-0.5">{property.number_mls || '-'}</p>
@@ -585,15 +584,16 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   };
 
   return (
     <>
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Propiedades', href: '/property', active: true }]} />
-      <div className='bg-white w-full max-h-max rounded-lg p-4 sm:p-5 mb-9 shadow-md'>
+      <Card className='w-full max-h-max mb-9'>
+        <CardContent className="p-4 sm:p-5">
         <div className='w-full h-full'>
           <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5'>
             <div>
@@ -706,7 +706,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             {/* Filtros Secundarios Desplegables */}
             <div className='hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
               <div className='flex flex-col'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
+                <label htmlFor='estado' className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
                 <Select value={selectedEstado} onValueChange={setSelectedEstado}>
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Todos los estados' />
@@ -720,7 +720,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 </Select>
               </div>
               <div className='flex flex-col'>
-                <label className="text-xs text-gray-500 mb-1 font-semibold">Ciudad</label>
+                <label htmlFor='city' className="text-xs text-gray-500 mb-1 font-semibold">Ciudad</label>
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Todas las ciudades' />
@@ -741,15 +741,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
           </div>
 
           <div className="md:hidden">
-            {isLoading || isPageLoading ? (
+            {(isLoading || isPageLoading) && (
               <div className="flex justify-center items-center py-10">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
               </div>
-            ) : filteredProperties.length > 0 ? (
+            )}
+            {!(isLoading || isPageLoading) && filteredProperties.length > 0 && (
               <div className="grid grid-cols-1 gap-4">
                 {filteredProperties.map((property) => renderMobileCard(property))}
               </div>
-            ) : (
+            )}
+            {!(isLoading || isPageLoading) && filteredProperties.length === 0 && (
               <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
                 No hay propiedades disponibles
               </div>
@@ -764,8 +766,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               disabled={isLoading || isPageLoading}
             />
           )}
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <FilterSidebar
         isOpen={isFilterOpen}
@@ -776,7 +779,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       >
         <div className="space-y-6 pt-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Estado</label>
+            <label htmlFor='estado' className="text-sm font-semibold text-gray-700">Estado</label>
             <Select value={selectedEstado} onValueChange={setSelectedEstado}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar estado" />
@@ -790,7 +793,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Ciudad</label>
+            <label htmlFor='ciudad' className="text-sm font-semibold text-gray-700">Ciudad</label>
             <Select value={selectedCity} onValueChange={setSelectedCity}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar ciudad" />
@@ -804,7 +807,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Operación</label>
+            <label htmlFor='operation' className="text-sm font-semibold text-gray-700">Operación</label>
             <Select value={selectedOperation} onValueChange={setSelectedOperation}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar operación" />
@@ -907,8 +910,9 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               <div className="grid grid-cols-2 gap-4">
                 {/* Año */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Año (opcional)</label>
+                  <label htmlFor='year' className="text-xs font-semibold text-gray-700">Año (opcional)</label>
                   <input
+                    id='year'
                     type="number"
                     min="2000"
                     max="2100"
@@ -921,8 +925,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
                 {/* Mes */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Mes (opcional)</label>
-                  <select
+                  <label htmlFor='mes' className="text-xs font-semibold text-gray-700">Mes (opcional)</label>
+                  <select id='mes' 
                     value={pdfParams.month}
                     onChange={(e) => setPdfParams(prev => ({ ...prev, month: e.target.value }))}
                     className="w-full h-[40px] px-3 border border-gray-200 rounded-lg focus:outline-none focus:border-red-500 text-sm transition-all bg-white"
@@ -951,8 +955,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Desde */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-700">Desde</label>
-                    <input
+                    <label htmlFor='date_from' className="text-xs font-semibold text-gray-700">Desde</label>
+                    <input id='date_from'
                       type="date"
                       value={pdfParams.date_from}
                       onChange={(e) => setPdfParams(prev => ({ ...prev, date_from: e.target.value }))}
@@ -962,8 +966,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
 
                   {/* Hasta */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-700">Hasta</label>
-                    <input
+                    <label htmlFor='date_to' className="text-xs font-semibold text-gray-700">Hasta</label>
+                    <input id='date_to' 
                       type="date"
                       value={pdfParams.date_to}
                       onChange={(e) => setPdfParams(prev => ({ ...prev, date_to: e.target.value }))}

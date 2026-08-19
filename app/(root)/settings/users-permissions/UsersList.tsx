@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, Pencil, Trash2, UserPlus, SlidersHorizontal, User, MoreVertical, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Breadcrumb from '@/components/ui/breadcrumb';
 import { Tag } from '@/components/ui/badges';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table } from '@/components/ui/table';
 import Search from '@/components/ui/Search';
 import FilterSidebar from '@/components/ui/FilterSidebar';
@@ -63,7 +64,7 @@ function UsersList() {
         <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
             <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
             <div className="flex flex-wrap items-center gap-1.5 py-1">
-                <button
+                <button type='button'
                     onClick={() => onChange('all')}
                     className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                         selectedValue === 'all'
@@ -74,7 +75,7 @@ function UsersList() {
                     Todos
                 </button>
                 {options.map((opt: any) => (
-                    <button
+                    <button type='button'
                         key={opt.value}
                         onClick={() => onChange(opt.value)}
                         className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
@@ -294,7 +295,8 @@ function UsersList() {
         const role = roleName || (user.is_superuser ? "SuperAdmin" : user.is_staff ? "Administrador" : "Usuario");
 
         return (
-            <div key={user.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 relative">
+            <Card key={user.id} className="relative">
+                <CardContent className="p-4">
                 {/* Header: Image, Info and Actions */}
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
@@ -379,7 +381,8 @@ function UsersList() {
                         <p>{user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</p>
                     </div>
                 </div>
-            </div>
+                </CardContent>
+            </Card>
         );
     };
 
@@ -396,7 +399,8 @@ function UsersList() {
                     { label: 'Usuarios', href: '/settings/users-permissions', active: true }
                 ]}
             />
-            <div className='bg-white w-full rounded-lg p-5 mb-9 shadow-md'>
+            <Card className='w-full mb-9'>
+                <CardContent>
                 <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-3'>
                     <div>
                         <h1 className='text-xl font-bold'>Listado de usuarios</h1>
@@ -414,7 +418,7 @@ function UsersList() {
                             </button>
                         )}
                         <Link href='/settings/users-permissions/add-user' className='w-full sm:w-auto'>
-                            <button className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm'>
+                            <button type='button' className='bg-primary_color text-white w-full sm:w-auto px-4 h-[40px] rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity font-medium shadow-md text-sm'>
                                 <UserPlus size={18} />
                                 <span>Agregar Usuario</span>
                             </button>
@@ -492,7 +496,7 @@ function UsersList() {
                             Mostrando {filteredUsers.length} de {totalCount} usuarios
                         </p>
                         <div className='flex items-center gap-2'>
-                            <button
+                            <button type='button'
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
                                 className='px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
@@ -502,7 +506,7 @@ function UsersList() {
                             <span className='text-sm text-gray-600'>
                                 Página {currentPage} de {totalPages}
                             </span>
-                            <button
+                            <button type='button'
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
                                 className='px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
@@ -512,7 +516,8 @@ function UsersList() {
                         </div>
                     </div>
                 )}
-            </div>
+                </CardContent>
+            </Card>
 
             <FilterSidebar
                 isOpen={isFilterOpen}

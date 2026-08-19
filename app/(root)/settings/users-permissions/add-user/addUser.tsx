@@ -9,7 +9,7 @@ import { AddInformationPersonal } from "./addInformationPersonal";
 import AddPassword from "./addPassword";
 import { UserForm, CreateUserRequest } from "@/lib/@type";
 import { CreateUser, UploadProfilePicture } from "@/lib/api/user-api";
-import { GetListRoles, GetRolePermissions } from "@/lib/api/permission-api";
+import { GetListRoles } from "@/lib/api/permission-api";
 
 // Función para formatear mensajes de error de Pydantic a español
 const formatErrorMessage = (msg: string, type?: string): string => {
@@ -28,11 +28,11 @@ const formatErrorMessage = (msg: string, type?: string): string => {
         return 'El texto es muy largo';
     }
     if (msgLower.includes('value error')) {
-        const match = msg.match(/Value error, \['(.*?)'\]/i);
-        if (match && match[1]) {
+        const match = /Value error, \['(.*?)'\]/i.exec(msg);
+        if (match?.[1]) {
             return match[1];
         }
-        return msg.replace(/Value error, /i, '').replace(/[\[\]']/g, '');
+        return msg.replace(/Value error, /i, '').replace(/[[\]']/g, '');
     }
     if (msgLower.includes('type_error')) {
         return 'Tipo de dato incorrecto';
@@ -67,11 +67,128 @@ interface AddUserProps {
     onAfterSave?: () => void;
 }
 
+const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+    });
+
+const buildFinalUserData = (user: UserForm, profilePictureBase64?: string): CreateUserRequest => ({
+    email: user.email || "",
+    name: user.name || "",
+    paternal_last_name: user.paternal_last_name || "",
+    maternal_last_name: user.maternal_last_name || "",
+    phone: user.phone || "",
+    address: {
+        street: user.street || user.calle || "",
+        ext_number: user.ext_number || user.numero_exterior || "",
+        int_number: user.int_number || user.numero_interior || "",
+        neighborhood: user.colonia || "",
+        city: user.ciudad || "",
+        state: user.estado || "",
+        postal_code: user.codigo_postal || ""
+    },
+    profile_picture: profilePictureBase64 || "",
+    internal_notes: user.notas_internas || user.internal_notes || "",
+    password: user.password || "",
+    password_confirm: user.password_confirm || "",
+    role_id: Number(user.role) || 0,
+    is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo',
+    is_staff: true,
+    is_superuser: false,
+    es_agente: user.es_agente === 'true' || user.es_agente === true,
+});
+
+const handleProfilePictureUpload = async (userId: number, image: File) => {
+    try {
+        const base64 = await fileToBase64(image);
+        await UploadProfilePicture(userId, base64);
+    } catch (imgError) {
+        console.error("Error al subir la foto de perfil:", imgError);
+        showToast.warning("Usuario guardado, pero hubo un detalle al subir la foto de perfil.", {
+            duration: 4000, position: "top-right", transition: "topBounce", icon: "", sound: false,
+        });
+    }
+};
+
+const processValidationErrorArray = (details: any[], setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>) => {
+    const serverErrors: Record<string, string> = {};
+    const fieldMapping: Record<string, string> = {
+        'email': 'email', 'name': 'name', 'paternal_last_name': 'paternal_last_name',
+        'maternal_last_name': 'maternal_last_name', 'password': 'password',
+        'password_confirm': 'password_confirm', 'street': 'street', 'ext_number': 'ext_number',
+        'int_number': 'int_number', 'role_id': 'role', 'is_active': 'is_active',
+        'is_staff': 'is_staff', 'is_superuser': 'is_superuser', 'es_agente': 'es_agente',
+        'phone': 'phone', 'address': 'address', 'internal_notes': 'notas_internas'
+    };
+
+    details.forEach((err: any) => {
+        const field = err.loc ? err.loc[err.loc.length - 1] : 'general';
+        const mappedField = fieldMapping[field] || field;
+        const message = formatErrorMessage(err.msg, err.type);
+
+        if (serverErrors[mappedField]) {
+            serverErrors[mappedField] += `, ${message}`;
+        } else {
+            serverErrors[mappedField] = message;
+        }
+    });
+
+    if (Object.keys(serverErrors).length > 0) {
+        setErrors(serverErrors);
+    }
+
+    const errorSummary = Object.values(serverErrors).join('\n');
+    showToast.error(errorSummary || "Error de validación en los datos ingresados", {
+        duration: 6000, position: "top-right", transition: "topBounce",
+    });
+};
+
+const handleValidationErrorString = (detail: string, setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>) => {
+    const message = formatErrorMessage(detail);
+    if (detail.toLowerCase().includes('email')) {
+        setErrors(prev => ({ ...prev, email: message }));
+    }
+    showToast.error(message);
+};
+
+const handleGenericError = (errorData: any, setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>) => {
+    const errorMsg = errorData?.message || errorData?.detail || "Error al crear usuario";
+    if (typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('email')) {
+        setErrors(prev => ({ ...prev, email: errorMsg }));
+    }
+    showToast.error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+};
+
+const handleApiError = (error: any, setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>) => {
+    console.error("Error completo al crear usuario:", error);
+
+    if (!error.response) {
+        showToast.error("Error de conexión al servidor");
+        return;
+    }
+
+    const errorData = error.response.data;
+
+    // Manejar errores de validación 422 de FastAPI/Pydantic
+    if (error.response.status === 422 && errorData.detail) {
+        if (Array.isArray(errorData.detail)) {
+            processValidationErrorArray(errorData.detail, setErrors);
+        } else if (typeof errorData.detail === 'string') {
+            handleValidationErrorString(errorData.detail, setErrors);
+        } else {
+            showToast.error("Error de validación en los datos ingresados");
+        }
+    } else {
+        handleGenericError(errorData, setErrors);
+    }
+};
+
 const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }: AddUserProps) => {
     const [user, setUser] = useState<UserForm>(initialData || initialUser);
     const [profileImage, setProfileImage] = useState<File | null>(null);
     const [roles, setRoles] = useState<any[]>([]);
-    const [isLoadingRoles, setIsLoadingRoles] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingEvent, setPendingEvent] = useState<React.FormEvent | null>(null);
@@ -81,66 +198,58 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
     useEffect(() => {
         const fetchRoles = async () => {
             try {
-                setIsLoadingRoles(true);
                 const res = await GetListRoles();
                 if (res.data) {
-                    const extracted = res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
+                    let extracted = [];
+                    if (res.data.items) extracted = res.data.items;
+                    else if (res.data.catalogItems) extracted = res.data.catalogItems;
+                    else if (Array.isArray(res.data)) extracted = res.data;
+                    else if (res.data.data && Array.isArray(res.data.data)) extracted = res.data.data;
+                    
                     setRoles(extracted);
                 }
             } catch (error) {
                 console.error("Error fetching roles in AddUser:", error);
-            } finally {
-                setIsLoadingRoles(false);
             }
         };
         fetchRoles();
     }, []);
 
-    const validateUserFields = (): boolean => {
-        const tempErrors: Record<string, string> = {};
-        if (!user.name?.trim()) {
-            tempErrors.name = "El campo es requerido";
-        }
-        if (!user.paternal_last_name?.trim()) {
-            tempErrors.paternal_last_name = "El campo es requerido";
-        }
+    const validateBasicInfo = (tempErrors: Record<string, string>) => {
+        if (!user.name?.trim()) tempErrors.name = "El campo es requerido";
+        if (!user.paternal_last_name?.trim()) tempErrors.paternal_last_name = "El campo es requerido";
+        if (!user.role) tempErrors.role = "El campo es requerido";
+
         if (!user.email?.trim()) {
             tempErrors.email = "El campo es requerido";
-        } else {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(user.email)) {
-                tempErrors.email = "Por favor ingrese un correo electrónico válido";
-            }
+        } else if (!/^[^\s@]+@([^\s@.]+\.)+[^\s@.]+$/.test(user.email)) {
+            tempErrors.email = "Por favor ingrese un correo electrónico válido";
         }
-        if (!user.role) {
-            tempErrors.role = "El campo es requerido";
+    };
+
+    const validatePasswords = (tempErrors: Record<string, string>) => {
+        const isNewUser = !isEdit;
+        const hasPassword = Boolean(user.password);
+
+        if (isNewUser && !hasPassword) {
+            tempErrors.password = "El campo es requerido";
+        } else if (hasPassword && user.password!.length < 8) {
+            tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
         }
 
-        if (!isEdit) {
-            if (!user.password) {
-                tempErrors.password = "El campo es requerido";
-            } else if (user.password.length < 8) {
-                tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
-            }
-
-            if (!user.password_confirm) {
-                tempErrors.password_confirm = "El campo es requerido";
-            } else if (user.password && user.password_confirm && user.password !== user.password_confirm) {
-                tempErrors.password_confirm = "Las contraseñas no coinciden";
-            }
-        } else {
-            // En modo edición: solo validamos nueva contraseña si fue ingresada
-            if (user.password) {
-                if (user.password.length < 8) {
-                    tempErrors.password = "La contraseña debe tener al menos 8 caracteres";
-                }
-                if (!user.password_confirm) {
-                    tempErrors.password_confirm = "El campo es requerido";
-                } else if (user.password !== user.password_confirm) {
-                    tempErrors.password_confirm = "Las contraseñas no coinciden";
-                }
-            }
+        const needsConfirm = isNewUser || hasPassword;
+        if (needsConfirm && !user.password_confirm) {
+            tempErrors.password_confirm = "El campo es requerido";
+        } else if (hasPassword && user.password !== user.password_confirm) {
+            tempErrors.password_confirm = "Las contraseñas no coinciden";
         }
+    };
+
+    const validateUserFields = (): boolean => {
+        const tempErrors: Record<string, string> = {};
+        
+        validateBasicInfo(tempErrors);
+        validatePasswords(tempErrors);
 
         if (Object.keys(tempErrors).length > 0) {
             setErrors(tempErrors);
@@ -173,75 +282,46 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
         setPendingEvent(null);
     };
 
+    const handleCustomSubmit = async (e: React.FormEvent, formData: UserForm) => {
+        if (!onSubmit) return;
+        const editedUserId = await onSubmit(e, formData);
+        if (editedUserId) {
+            if (profileImage) await handleProfilePictureUpload(editedUserId, profileImage);
+            onAfterSave?.();
+        }
+    };
+
+    const getProfileImageBase64 = async (): Promise<string | undefined> => {
+        if (!profileImage) return undefined;
+        try {
+            return await fileToBase64(profileImage);
+        } catch (err) {
+            console.error("Error al convertir imagen:", err);
+            return undefined;
+        }
+    };
+
+    const handleFallbackProfilePicture = async (newUserId: number | undefined, base64: string | undefined) => {
+        if (profileImage && newUserId && !Number.isNaN(newUserId) && base64) {
+            try {
+                await UploadProfilePicture(newUserId, base64);
+            } catch (imgError) {
+                console.error("Error en UploadProfilePicture:", imgError);
+            }
+        }
+    };
+
     const handleSaveUser = async (e: React.FormEvent, formData: UserForm) => {
         e.preventDefault();
         if (!validateUserFields()) return;
 
-        const fileToBase64 = (file: File): Promise<string> =>
-            new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
-            });
-
         if (onSubmit) {
-            const editedUserId = await onSubmit(e, formData);
-            if (editedUserId) {
-                if (profileImage) {
-                    try {
-                        const base64 = await fileToBase64(profileImage);
-                        await UploadProfilePicture(editedUserId, base64);
-                    } catch (imgError) {
-                        console.error("Error al subir la foto de perfil:", imgError);
-                        showToast.warning("Usuario guardado, pero hubo un detalle al subir la foto de perfil.", {
-                            duration: 4000, position: "top-right", transition: "topBounce", icon: "", sound: false,
-                        });
-                    }
-                }
-                onAfterSave?.();
-            }
+            await handleCustomSubmit(e, formData);
             return;
         }
 
-        // Convertir imagen a base64 si fue seleccionada
-        let profilePictureBase64: string | undefined = undefined;
-        if (profileImage) {
-            try {
-                profilePictureBase64 = await fileToBase64(profileImage);
-            } catch (err) {
-                console.error("Error al convertir imagen:", err);
-            }
-        }
-
-        // Construir el address según lo esperado por el backend
-        const address = {
-            street: user.street || user.calle || "",
-            ext_number: user.ext_number || user.numero_exterior || "",
-            int_number: user.int_number || user.numero_interior || "",
-            neighborhood: user.colonia || "",
-            city: user.ciudad || "",
-            state: user.estado || "",
-            postal_code: user.codigo_postal || ""
-        };
-
-        // Construir los datos finales según el esquema exacto del backend
-        const finalUserData: CreateUserRequest = {
-            email: user.email || "",
-            name: user.name || "",
-            paternal_last_name: user.paternal_last_name || "",
-            maternal_last_name: user.maternal_last_name || "",
-            phone: user.phone || "",
-            address: address,
-            profile_picture: profilePictureBase64 || "",
-            internal_notes: user.notas_internas || user.internal_notes || "",
-            password: user.password || "",
-            password_confirm: user.password_confirm || "",
-            role_id: Number(user.role) || 0,
-            is_active: user.is_active === 'true' || user.is_active === true || user.is_active === 'activo',
-            is_staff: true,
-            is_superuser: false,
-            es_agente: user.es_agente === 'true' || user.es_agente === true,
-        };
+        const profilePictureBase64 = await getProfileImageBase64();
+        const finalUserData = buildFinalUserData(user, profilePictureBase64);
 
         try {
             setIsSaving(true);
@@ -249,17 +329,11 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             const response = await CreateUser(finalUserData);
 
             const newUserId = response.data?.data
-                ? parseInt(response.data.data)
+                ? Number.parseInt(response.data.data)
                 : (response.data as any)?.id;
 
             // Subir foto por endpoint dedicado si no se guardó en el create
-            if (profileImage && newUserId && !isNaN(newUserId) && profilePictureBase64) {
-                try {
-                    await UploadProfilePicture(newUserId, profilePictureBase64);
-                } catch (imgError) {
-                    console.error("Error en UploadProfilePicture:", imgError);
-                }
-            }
+            await handleFallbackProfilePicture(newUserId, profilePictureBase64);
 
             showToast.success(response.data.message || "Usuario creado exitosamente", {
                 duration: 5000,
@@ -271,80 +345,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
 
             router.push("/settings/users-permissions");
         } catch (error: any) {
-            console.error("Error completo al crear usuario:", error);
-
-            if (error.response) {
-                const errorData = error.response.data;
-
-                // Manejar errores de validación 422 de FastAPI/Pydantic
-                if (error.response.status === 422 && errorData.detail) {
-                    const serverErrors: Record<string, string> = {};
-
-                    if (Array.isArray(errorData.detail)) {
-                        // FastAPI validation error array - mapear errores a campos
-                        const fieldMapping: Record<string, string> = {
-                            'email': 'email',
-                            'name': 'name',
-                            'paternal_last_name': 'paternal_last_name',
-                            'maternal_last_name': 'maternal_last_name',
-                            'password': 'password',
-                            'password_confirm': 'password_confirm',
-                            'street': 'street',
-                            'ext_number': 'ext_number',
-                            'int_number': 'int_number',
-                            'role_id': 'role',
-                            'is_active': 'is_active',
-                            'is_staff': 'is_staff',
-                            'is_superuser': 'is_superuser',
-                            'es_agente': 'es_agente',
-                            'phone': 'phone',
-                            'address': 'address',
-                            'internal_notes': 'notas_internas'
-                        };
-
-                        errorData.detail.forEach((err: any) => {
-                            const field = err.loc ? err.loc[err.loc.length - 1] : 'general';
-                            const mappedField = fieldMapping[field] || field;
-                            const message = formatErrorMessage(err.msg, err.type);
-
-                            if (serverErrors[mappedField]) {
-                                serverErrors[mappedField] += `, ${message}`;
-                            } else {
-                                serverErrors[mappedField] = message;
-                            }
-                        });
-
-                        // Mostrar errores en los campos correspondientes
-                        if (Object.keys(serverErrors).length > 0) {
-                            setErrors(serverErrors);
-                        }
-
-                        // Toast general con todos los errores
-                        const errorSummary = Object.values(serverErrors).join('\n');
-                        showToast.error(errorSummary || "Error de validación en los datos ingresados", {
-                            duration: 6000,
-                            position: "top-right",
-                            transition: "topBounce",
-                        });
-                    } else if (typeof errorData.detail === 'string') {
-                        const message = formatErrorMessage(errorData.detail);
-                        if (errorData.detail.toLowerCase().includes('email')) {
-                            setErrors(prev => ({ ...prev, email: message }));
-                        }
-                        showToast.error(message);
-                    } else {
-                        showToast.error("Error de validación en los datos ingresados");
-                    }
-                } else {
-                    const errorMsg = errorData?.message || errorData?.detail || "Error al crear usuario";
-                    if (typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('email')) {
-                        setErrors(prev => ({ ...prev, email: errorMsg }));
-                    }
-                    showToast.error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
-                }
-            } else {
-                showToast.error("Error de conexión al servidor");
-            }
+            handleApiError(error, setErrors);
         } finally {
             setIsSaving(false);
         }
@@ -362,7 +363,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
             />
 
             <div className="mb-3">
-                <button onClick={() => router.push('/settings/users-permissions')} className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                <button type="button" onClick={() => router.push('/settings/users-permissions')} className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
                     <ArrowLeft size={18} /><span className="text-sm">Volver</span>
                 </button>
             </div>
@@ -402,12 +403,15 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
                     style={{ animation: 'fadeIn 0.2s ease-out' }}
-                    onClick={() => setShowConfirmModal(false)}
                 >
+                    <div 
+                        className="absolute inset-0" 
+                        onClick={() => setShowConfirmModal(false)}
+                        aria-hidden="true"
+                    />
                     <div
-                        className="bg-white rounded-[5px] shadow-2xl max-w-md w-full"
+                        className="bg-white rounded-[5px] shadow-2xl max-w-md w-full relative z-10"
                         style={{ animation: 'scaleIn 0.2s ease-out' }}
-                        onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-gray-200">
@@ -417,7 +421,7 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
                                 </div>
                                 <h2 className="text-lg font-bold text-gray-900">¿Guardar cambios?</h2>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => setShowConfirmModal(false)}
                                 className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                             >
@@ -434,13 +438,13 @@ const AddUser = ({ initialData, isEdit = false, onSubmit, userId, onAfterSave }:
 
                         {/* Footer */}
                         <div className="border-t border-gray-200 p-4 flex gap-3">
-                            <button
+                            <button type="button"
                                 onClick={handleConfirmSave}
                                 className="flex-1 px-4 py-2 bg-primary_color text-white rounded-[5px] hover:opacity-90 transition-all font-medium flex items-center justify-center gap-2 text-sm shadow-md"
                             >
                                 <Save size={15} /> Sí, guardar cambios
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => setShowConfirmModal(false)}
                                 className="flex-1 px-4 py-2 bg-slate-100 text-gray-700 rounded-[5px] hover:bg-slate-200 transition-all font-medium text-sm shadow-md"
                             >

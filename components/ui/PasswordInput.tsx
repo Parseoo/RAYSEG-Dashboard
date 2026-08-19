@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 
 interface PasswordInputProps {
-  id: string;
-  name?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  label?: string;
-  required?: boolean;
-  disabled?: boolean;
-  className?: string;
-  showIcon?: boolean;
-  autoComplete?: string;
+  readonly id: string;
+  readonly name?: string;
+  readonly value: string;
+  readonly onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readonly placeholder?: string;
+  readonly label?: string;
+  readonly required?: boolean;
+  readonly disabled?: boolean;
+  readonly className?: string;
+  readonly showIcon?: boolean;
+  readonly autoComplete?: string;
 }
 
 export default function PasswordInput({

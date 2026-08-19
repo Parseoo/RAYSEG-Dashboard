@@ -9,6 +9,7 @@ import { Loader2, Plus } from 'lucide-react';
 import { showToast } from 'nextjs-toast-notify';
 import CatalogDetail from './CatalogDetail';
 import CatalogSearchSelect from './CatalogSearchSelect';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function CatalogsPage() {
   const [catalogs, setCatalogs] = useState<CatalogResponse[]>([]);
@@ -127,7 +128,8 @@ export default function CatalogsPage() {
         { label: 'Catálogos', href: '/catalogs', active: true }
       ]} />
       
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mt-4">
+      <Card className="mt-4">
+        <CardContent className="p-6">
         <div className='flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6'>
             <div className='flex flex-col gap-2'>
                 <div>
@@ -160,7 +162,8 @@ export default function CatalogsPage() {
             </button>
         </div>
 
-        <div className="w-full">
+        <Card className="w-full">
+            <CardContent className="p-6">
             {selectedCatalog ? (
               <CatalogDetail 
                   catalog={selectedCatalog} 
@@ -173,8 +176,10 @@ export default function CatalogsPage() {
                   Selecciona un catálogo para ver sus detalles.
               </div>
             )}
-        </div>
-      </div>
+            </CardContent>
+        </Card>
+        </CardContent>
+      </Card>
     </>
   );
 }

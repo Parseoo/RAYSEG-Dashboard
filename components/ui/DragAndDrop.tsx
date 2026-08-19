@@ -29,7 +29,7 @@ const defaultItems: Item[] = [
 ];
 
 // Componente de menú de 3 puntos para mobile
-function KebabMenu({ item, onEdit, onDelete }: { item: Item; onEdit?: (item: Item) => void; onDelete?: (item: Item) => void }) {
+function KebabMenu({ item, onEdit, onDelete }: Readonly<{ item: Item; onEdit?: (item: Item) => void; onDelete?: (item: Item) => void }>) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +104,7 @@ const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChang
 
         (async () => {
             const mod = await import("sortablejs");
-            Sortable = mod && mod.default ? mod.default : mod;
+            Sortable = mod?.default ?? mod;
 
             if (!isMounted || !containerRef.current) return;
 
@@ -180,21 +180,21 @@ const DragAndDrop: React.FC<DragAndDropProps> = ({ items = defaultItems, onChang
                                 <GripVertical size={16} className="text-gray-500" />
                             </span>
                             {Icon && (
-                                <a href="#" className="bg-blue-50 block p-2 rounded-sm shadow-xs hover:bg-neutral-secondary-medium shrink-0">
+                                <div className="bg-blue-50 block p-2 rounded-sm shadow-xs hover:bg-neutral-secondary-medium shrink-0">
                                     <Icon size={20} className="text-blue-500" />
-                                </a>
+                                </div>
                             )}
                             <div className="flex flex-col min-w-0 flex-1">
                                 <div className="text-sm font-medium truncate">{item.title}</div>
                                 {item.description ? <p className="text-xs text-gray-500 truncate">{item.description}</p> : null}
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                                <button
+                                <button type="button"
                                     onClick={() => onEdit?.(item)}
                                     className='p-1.5 bg-slate-200 rounded-md transition-colors hover:bg-slate-300'>
                                     <Pencil size={16} className='text-gray-600' />
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => onDelete?.(item)}
                                     className='p-1.5 bg-red-500 rounded-md transition-colors hover:bg-red-600'>
                                     <Trash2 size={16} className='text-white' />

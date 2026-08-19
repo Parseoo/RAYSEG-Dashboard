@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { GetPropertyById } from '@/lib/api/property/property-api';
 import { GetCatalogPropertyTypes, GetCatalogByName, GetCatalogAmenities, GetPropertyTerrainTypes } from '@/lib/api/catalog-api';
 import { PropertyListItemResponse, ItemResponse } from '@/lib/@type';
@@ -96,6 +96,33 @@ interface PropertyContextType {
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
 
+const safeCatalogByName = async (name: string, fallbackNames: string[] = []) => {
+  const names = [name, ...fallbackNames];
+  for (const n of names) {
+    try {
+      return await GetCatalogByName(n);
+    } catch {
+      // Ignorar error 404 y continuar con fallback
+    }
+  }
+  return null;
+};
+
+const extractItems = (res: { data?: { items?: ItemResponse[]; catalogItems?: ItemResponse[] }; catalogItems?: ItemResponse[] }) => {
+  if (!res) return [];
+  if (res.catalogItems) return res.catalogItems;
+  if (res.data?.catalogItems) return res.data.catalogItems;
+  if (res.data?.items) return res.data.items;
+  if (Array.isArray(res.data)) return res.data;
+  return [];
+};
+
+const defaultPublicationStatuses = [
+  { catalogItemID: 1, name: 'Borrador', description: 'Borrador' },
+  { catalogItemID: 2, name: 'Publicado', description: 'Publicado' },
+  { catalogItemID: 3, name: 'Archivado', description: 'Archivado' }
+] as ItemResponse[];
+
 export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<PropertyState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -113,18 +140,6 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const fetchCatalogs = useCallback(async () => {
     setCatalogsReady(false);
 
-    const safeCatalogByName = async (name: string, fallbackNames: string[] = []) => {
-      const names = [name, ...fallbackNames];
-      for (const n of names) {
-        try {
-          return await GetCatalogByName(n);
-        } catch {
-          // Ignorar error 404 y continuar con fallback
-        }
-      }
-      return null;
-    };
-
     const results = await Promise.allSettled([
       GetCatalogPropertyTypes(),
       GetCatalogAmenities(),
@@ -137,57 +152,26 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const [typeRes, amenitiesRes, operationRes, propertyStateRes, conservationStatusRes, publicationStatusRes, terrainTypeRes] = results;
 
-    const extractItems = (res: { data?: { items?: ItemResponse[]; catalogItems?: ItemResponse[] }; catalogItems?: ItemResponse[] } | any) => {
-      if (!res) return [];
-      if (res.catalogItems) return res.catalogItems;
-      if (res.data?.catalogItems) return res.data.catalogItems;
-      if (res.data?.items) return res.data.items;
-      if (Array.isArray(res.data)) return res.data;
+    const getItems = (res: PromiseSettledResult<any>, warnMessage?: string) => {
+      if (res.status === 'fulfilled' && res.value) {
+        return extractItems(res.value);
+      }
+      if (res.status === 'rejected' && warnMessage) {
+        console.warn(warnMessage, res.reason);
+      }
       return [];
     };
 
-    if (typeRes.status === 'fulfilled') {
-      setPropertyTypes(extractItems(typeRes.value));
-    } else {
-      console.warn('Error fetching property types:', typeRes.reason);
-    }
+    setPropertyTypes(getItems(typeRes, 'Error fetching property types:'));
+    setAmenitiesCatalog(getItems(amenitiesRes, 'Error fetching amenities:'));
+    setOperationCatalog(getItems(operationRes));
+    setPropertyStateCatalog(getItems(propertyStateRes));
+    setConservationStatusCatalog(getItems(conservationStatusRes));
 
-    if (amenitiesRes.status === 'fulfilled') {
-      setAmenitiesCatalog(extractItems(amenitiesRes.value));
-    } else {
-      console.warn('Error fetching amenities:', amenitiesRes.reason);
-    }
+    const publicationItems = getItems(publicationStatusRes);
+    setPublicationStatusCatalog(publicationItems.length > 0 ? publicationItems : defaultPublicationStatuses);
 
-    if (operationRes.status === 'fulfilled' && operationRes.value) {
-      setOperationCatalog(extractItems(operationRes.value));
-    }
-
-    if (propertyStateRes.status === 'fulfilled' && propertyStateRes.value) {
-      setPropertyStateCatalog(extractItems(propertyStateRes.value));
-    }
-
-    if (conservationStatusRes.status === 'fulfilled' && conservationStatusRes.value) {
-      setConservationStatusCatalog(extractItems(conservationStatusRes.value));
-    }
-
-    const defaultPublicationStatuses = [
-      { catalogItemID: 1, name: 'Borrador', description: 'Borrador' },
-      { catalogItemID: 2, name: 'Publicado', description: 'Publicado' },
-      { catalogItemID: 3, name: 'Archivado', description: 'Archivado' }
-    ] as ItemResponse[];
-
-    if (publicationStatusRes.status === 'fulfilled' && publicationStatusRes.value) {
-      const items = extractItems(publicationStatusRes.value);
-      setPublicationStatusCatalog(items.length > 0 ? items : defaultPublicationStatuses);
-    } else {
-      setPublicationStatusCatalog(defaultPublicationStatuses);
-    }
-
-    if (terrainTypeRes.status === 'fulfilled') {
-      setTerrainTypeCatalog(extractItems(terrainTypeRes.value));
-    } else {
-      console.warn('Error fetching terrain type:', terrainTypeRes.reason);
-    }
+    setTerrainTypeCatalog(getItems(terrainTypeRes, 'Error fetching terrain type:'));
 
     setCatalogsReady(true);
   }, []);
@@ -240,24 +224,42 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setPendingPropertyData(null);
   }, []);
 
+  const contextValue = useMemo(() => ({
+    state,
+    loading,
+    propertyTypes,
+    amenitiesCatalog,
+    operationCatalog,
+    propertyStateCatalog,
+    conservationStatusCatalog,
+    publicationStatusCatalog,
+    terrainTypeCatalog,
+    updateField,
+    fetchProperty,
+    resetState,
+    errors,
+    setErrors,
+    fetchCatalogs
+  }), [
+    state,
+    loading,
+    propertyTypes,
+    amenitiesCatalog,
+    operationCatalog,
+    propertyStateCatalog,
+    conservationStatusCatalog,
+    publicationStatusCatalog,
+    terrainTypeCatalog,
+    updateField,
+    fetchProperty,
+    resetState,
+    errors,
+    setErrors,
+    fetchCatalogs
+  ]);
+
   return (
-    <PropertyContext.Provider value={{
-      state,
-      loading,
-      propertyTypes,
-      amenitiesCatalog,
-      operationCatalog,
-      propertyStateCatalog,
-      conservationStatusCatalog,
-      publicationStatusCatalog,
-      terrainTypeCatalog,
-      updateField,
-      fetchProperty,
-      resetState,
-      errors,
-      setErrors,
-      fetchCatalogs
-    }}>
+    <PropertyContext.Provider value={contextValue}>
       {children}
     </PropertyContext.Provider>
   );

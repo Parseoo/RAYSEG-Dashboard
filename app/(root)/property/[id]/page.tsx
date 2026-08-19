@@ -31,6 +31,7 @@ import { GetPropertyById } from '@/lib/api/property/property-api';
 import { PropertyDetailResponse } from '@/lib/@type';
 import { showToast } from 'nextjs-toast-notify';
 import { getImageUrl } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
 
 import dynamic from 'next/dynamic';
 
@@ -38,6 +39,99 @@ const MapWithMarker = dynamic(
   () => import('@/components/MapLocation/MapWithMarker'),
   { ssr: false }
 );
+
+const getRawImagesList = (prop: any): any[] => {
+  if (!prop) return [];
+  if (Array.isArray(prop.images) && prop.images.length > 0) {
+    return prop.images;
+  }
+  if (prop.property_images) return prop.property_images;
+  if (prop.photos) return prop.photos;
+  if (prop.main_image) return [{ image: prop.main_image, is_main: true }];
+  return [];
+};
+
+const getPropertyMedia = (property: any) => {
+  const rawImagesList: any[] = getRawImagesList(property);
+  return (Array.isArray(rawImagesList) && rawImagesList.length > 0)
+    ? [...rawImagesList]
+      .sort((a: any, b: any) => (b?.is_main ? 1 : 0) - (a?.is_main ? 1 : 0))
+      .map((img: any) => {
+        const path = typeof img === 'string' ? img : (img?.image || img?.file || img?.url || img?.image_url || img?.src || '');
+        return {
+          url: getImageUrl(path),
+          isMain: Boolean(img?.is_main || img?.isMain || false)
+        };
+      })
+      .filter((img) => Boolean(img.url))
+    : [];
+};
+
+const getPlansMedia = (property: any) => {
+  return property && (property as any).plans && Array.isArray((property as any).plans)
+    ? (property as any).plans.map((p: any) => ({
+      url: getImageUrl(p.plan || p.file || p.url || p),
+      isMain: false,
+      isPlan: true
+    }))
+    : [];
+};
+
+const checkIsFeatured = (val: any): boolean => {
+  if (!val) return false;
+  if (val === true || val === 1) return true;
+  if (typeof val === 'string') {
+    const lower = val.trim().toLowerCase();
+    return lower === 'true' || lower === '1';
+  }
+  return false;
+};
+
+const formatConservationStatus = (raw: any): string => {
+  if (!raw) return '';
+  if (typeof raw === 'object' && raw !== null) {
+    return raw.name || raw.value || raw.key || '';
+  }
+  const str = String(raw).trim();
+  const lower = str.toLowerCase();
+  const translations: Record<string, string> = {
+    excellent: 'Excelente',
+    excelente: 'Excelente',
+    good: 'Bueno',
+    bueno: 'Bueno',
+    new: 'Nuevo',
+    nuevo: 'Nuevo',
+    regular: 'Regular',
+    remodelado: 'Remodelado',
+    renovated: 'Remodelado',
+    bad: 'Malo',
+    malo: 'Malo',
+    needs_renovation: 'Para remodelar',
+    para_remodelar: 'Para remodelar',
+  };
+  if (translations[lower]) return translations[lower];
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+const getAddressDetails = (property: any) => {
+  const addressObj = Array.isArray(property.address) ? (property.address as any)[0] || {} : property.address || {};
+  const streetPart = `${addressObj.street || ''} ${addressObj.exterior_number || addressObj.street_number || ''}`.trim();
+  const fullAddress = (property as any).full_address || [streetPart, addressObj.neighborhood, addressObj.city, addressObj.state, addressObj.postal_code].filter(Boolean).join(', ');
+  const locationObj = (property as any).location || addressObj;
+  const rawLat = locationObj?.latitude || addressObj?.latitude || (property as any).latitude;
+  const rawLng = locationObj?.longitude || addressObj?.longitude || (property as any).longitude;
+  const hasCoords = rawLat && rawLng && !Number.isNaN(Number.parseFloat(rawLat)) && !Number.isNaN(Number.parseFloat(rawLng)) && Number.parseFloat(rawLat) !== 0;
+
+  return { addressObj, fullAddress, rawLat, rawLng, hasCoords };
+};
+
+const getMlsDisplay = (number_mls: any) => {
+  const mlsClean = number_mls ? String(number_mls).trim() : '';
+  if (mlsClean) {
+    return mlsClean.toUpperCase().startsWith('MLS') ? mlsClean : `MLS-${mlsClean}`;
+  }
+  return null;
+};
 
 export default function PropertyDetailPage() {
   const params = useParams();
@@ -67,39 +161,8 @@ export default function PropertyDetailPage() {
     fetchProperty();
   }, [propertyId]);
 
-  const getRawImagesList = (prop: any): any[] => {
-    if (!prop) return [];
-    if (Array.isArray(prop.images) && prop.images.length > 0) {
-      return prop.images;
-    }
-    if (prop.property_images) return prop.property_images;
-    if (prop.photos) return prop.photos;
-    if (prop.main_image) return [{ image: prop.main_image, is_main: true }];
-    return [];
-  };
-
-  const rawImagesList: any[] = getRawImagesList(property);
-
-  const propertyMedia = (Array.isArray(rawImagesList) && rawImagesList.length > 0)
-    ? [...rawImagesList]
-      .sort((a: any, b: any) => (b?.is_main ? 1 : 0) - (a?.is_main ? 1 : 0))
-      .map((img: any) => {
-        const path = typeof img === 'string' ? img : (img?.image || img?.file || img?.url || img?.image_url || img?.src || '');
-        return {
-          url: getImageUrl(path),
-          isMain: Boolean(img?.is_main || img?.isMain || false)
-        };
-      })
-      .filter((img) => Boolean(img.url))
-    : [];
-
-  const plansMedia = property && (property as any).plans && Array.isArray((property as any).plans)
-    ? (property as any).plans.map((p: any) => ({
-      url: getImageUrl(p.plan || p.file || p.url || p),
-      isMain: false,
-      isPlan: true
-    }))
-    : [];
+  const propertyMedia = getPropertyMedia(property);
+  const plansMedia = getPlansMedia(property);
 
   const Calendar = (LucideIcons as any).Calendar || (LucideIcons as any).CalendarDays;
   const MapIcon = (LucideIcons as any).Map || (LucideIcons as any).MapPin;
@@ -127,18 +190,8 @@ export default function PropertyDetailPage() {
 
   if (!property) return <div className="p-10 text-center">No se encontró la propiedad</div>;
 
-  const addressObj = Array.isArray(property.address) ? (property.address as any)[0] || {} : property.address || {};
-  const fullAddress = (property as any).full_address || `${addressObj.street || ''} ${addressObj.exterior_number || addressObj.street_number || ''}, ${addressObj.neighborhood || ''}, ${addressObj.city || ''}, ${addressObj.state || ''}${addressObj.postal_code ? `, ${addressObj.postal_code}` : ''}`.replace(/^[\s,]+|[\s,]+$/g, '');
-  const locationObj = (property as any).location || addressObj;
-  const rawLat = locationObj?.latitude || addressObj?.latitude || (property as any).latitude;
-  const rawLng = locationObj?.longitude || addressObj?.longitude || (property as any).longitude;
-  const hasCoords = rawLat && rawLng && !Number.isNaN(Number.parseFloat(rawLat)) && !Number.isNaN(Number.parseFloat(rawLng)) && Number.parseFloat(rawLat) !== 0;
-
-  const mlsClean = property.number_mls ? String(property.number_mls).trim() : '';
-  let mlsDisplay: string | null = null;
-  if (mlsClean) {
-    mlsDisplay = mlsClean.toUpperCase().startsWith('MLS') ? mlsClean : `MLS-${mlsClean}`;
-  }
+  const { addressObj, fullAddress, rawLat, rawLng, hasCoords } = getAddressDetails(property);
+  const mlsDisplay = getMlsDisplay(property.number_mls);
 
   const operationTypeDisplay = typeof property.operation_type === 'object' && property.operation_type !== null
     ? (property.operation_type as any).name
@@ -147,42 +200,6 @@ export default function PropertyDetailPage() {
   const propertyStatusDisplay = typeof property.property_status === 'object' && property.property_status !== null
     ? (property.property_status as any).name
     : property.property_status;
-
-  const checkIsFeatured = (val: any): boolean => {
-    if (!val) return false;
-    if (val === true || val === 1) return true;
-    if (typeof val === 'string') {
-      const lower = val.trim().toLowerCase();
-      return lower === 'true' || lower === '1';
-    }
-    return false;
-  };
-
-  const formatConservationStatus = (raw: any): string => {
-    if (!raw) return '';
-    if (typeof raw === 'object' && raw !== null) {
-      return raw.name || raw.value || raw.key || '';
-    }
-    const str = String(raw).trim();
-    const lower = str.toLowerCase();
-    const translations: Record<string, string> = {
-      excellent: 'Excelente',
-      excelente: 'Excelente',
-      good: 'Bueno',
-      bueno: 'Bueno',
-      new: 'Nuevo',
-      nuevo: 'Nuevo',
-      regular: 'Regular',
-      remodelado: 'Remodelado',
-      renovated: 'Remodelado',
-      bad: 'Malo',
-      malo: 'Malo',
-      needs_renovation: 'Para remodelar',
-      para_remodelar: 'Para remodelar',
-    };
-    if (translations[lower]) return translations[lower];
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
 
   return (
     <>
@@ -278,7 +295,8 @@ export default function PropertyDetailPage() {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 p-5 sm:p-6 bg-slate-50/50'>
           <div className='lg:col-span-2 space-y-6'>
             {propertyMedia.length > 0 && (
-              <div className='bg-white p-4 sm:p-5 rounded-lg border border-gray-200 shadow-xs space-y-4'>
+              <Card className='space-y-4'>
+                <CardContent className="p-4 sm:p-5">
                 <div className='relative w-full aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs'>
                   <Image
                     src={activeMedia?.url || propertyMedia[0]?.url}
@@ -315,10 +333,12 @@ export default function PropertyDetailPage() {
                     );
                   })}
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
-            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+            <Card>
+              <CardContent>
               <h2 className='text-lg font-semibold text-gray-800 mb-4'>Información general</h2>
               <div className='divide-y divide-gray-100'>
                 <div className='grid grid-cols-1 sm:grid-cols-[200px_1fr] py-3 text-sm gap-1 sm:gap-4'>
@@ -354,10 +374,12 @@ export default function PropertyDetailPage() {
                   <span className='text-gray-800 font-normal'>{addressObj.postal_code || addressObj.zip_code || '—'}</span>
                 </div>
               </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {property.amenities && property.amenities.length > 0 && (
-              <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <Card>
+                <CardContent>
                 <h2 className='text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2'>
                   {Award && <Award size={18} className='text-blue-600' />}
                   Amenidades
@@ -381,17 +403,21 @@ export default function PropertyDetailPage() {
                     );
                   })}
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
-            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+            <Card>
+              <CardContent>
               <h2 className='text-lg font-semibold text-gray-800 mb-1'>Notas internas <span className='text-xs font-normal text-gray-400'>(solo administradores)</span></h2>
               <p className='text-sm text-gray-700 mt-4 font-normal'>{(property as any).note || 'Sin notas internas'}</p>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className='space-y-6'>
-            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+            <Card>
+              <CardContent>
               <h3 className='text-base font-semibold text-gray-800 mb-4'>Resumen de la propiedad</h3>
               <div className='grid grid-cols-2 gap-y-4 gap-x-3 mt-4'>
                 <div className='flex items-start gap-2'>
@@ -529,10 +555,12 @@ export default function PropertyDetailPage() {
                   </div>
                 )}
               </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {plansMedia.length > 0 && (
-              <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+              <Card>
+                <CardContent>
                 <h3 className='text-base font-semibold text-gray-800 mb-3'>Planos</h3>
                 <div className='relative w-full aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs mt-3'>
                   <Image
@@ -567,10 +595,12 @@ export default function PropertyDetailPage() {
                     })}
                   </div>
                 )}
-              </div>
+                </CardContent>
+              </Card>
             )}
 
-            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+            <Card>
+              <CardContent>
               <h3 className='text-base font-semibold text-gray-800 mb-3'>Ubicación en mapa</h3>
               <div className='w-full h-[300px] overflow-hidden rounded-lg border border-gray-200 mt-3 shadow-2xs'>
                 <MapWithMarker
@@ -582,9 +612,11 @@ export default function PropertyDetailPage() {
                   address={fullAddress}
                 />
               </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className='bg-white p-5 sm:p-6 rounded-lg border border-gray-200 shadow-xs'>
+            <Card>
+              <CardContent>
               <h3 className='text-base font-semibold text-gray-800 mb-3'>Información comercial</h3>
               <div className='divide-y divide-gray-100 mt-4'>
                 <div className='grid grid-cols-2 py-3 text-sm'>
@@ -606,7 +638,8 @@ export default function PropertyDetailPage() {
                   </span>
                 </div>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

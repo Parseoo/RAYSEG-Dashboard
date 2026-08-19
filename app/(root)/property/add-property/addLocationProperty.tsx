@@ -81,11 +81,19 @@ export const AddLocationProperty = () => {
         }
     }, [state.estado, estados]);
 
-    // Construir inputs con las opciones dinámicas
-    const inputs: InputFieldConfig[] = baseInputs.map(inp => ({
-        ...inp as InputFieldConfig,
-        options: inp.id === 'estado' ? estados : (inp.id === 'city' ? ciudades : [])
-    }));
+    const inputs: InputFieldConfig[] = baseInputs.map(inp => {
+        let options: any[] = [];
+        if (inp.id === 'estado') {
+            options = estados;
+        } else if (inp.id === 'city') {
+            options = ciudades;
+        }
+        
+        return {
+            ...inp as InputFieldConfig,
+            options
+        };
+    });
 
     const mappedInputs = inputs.map(input => ({
         ...input,

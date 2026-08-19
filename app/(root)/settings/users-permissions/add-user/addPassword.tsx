@@ -75,6 +75,7 @@ export const AddPassword = ({ user, setUser, errors, isEdit = false, userId }: A
                 showToast.error(data.message || "Error al generar la contraseña temporal");
             }
         } catch (error) {
+            console.error(error);
             showToast.error("Error al generar la contraseña temporal");
         } finally {
             setIsGenerating(false);

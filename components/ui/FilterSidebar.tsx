@@ -12,7 +12,7 @@ interface FilterSidebarProps {
   onApply?: () => void;
 }
 
-export default function FilterSidebar({ isOpen, onClose, title = "Filtros", children, onClear, onApply }: FilterSidebarProps) {
+export default function FilterSidebar({ isOpen, onClose, title = "Filtros", children, onClear, onApply }: Readonly<FilterSidebarProps>) {
   // Bloquear scroll del body cuando el sidebar está abierto
   useEffect(() => {
     if (isOpen) {
@@ -46,9 +46,11 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
   return (
     <>
       {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+      <button
+        type="button"
+        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity w-full h-full cursor-default border-none p-0"
         onClick={onClose}
+        aria-label="Close sidebar overlay"
       />
 
       {/* Sidebar */}
@@ -56,7 +58,7 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-          <button
+          <button type='button'
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
@@ -74,13 +76,13 @@ export default function FilterSidebar({ isOpen, onClose, title = "Filtros", chil
         {/* Footer */}
         <div className="border-t border-gray-200 p-5">
           <div className="flex gap-3">
-            <button
+            <button type='button'
               onClick={handleClear}
               className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-slate-50 transition-all font-medium"
             >
               Limpiar filtros
             </button>
-            <button
+            <button type='button'
               onClick={handleApply}
               className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-opacity font-medium shadow-md"
             >

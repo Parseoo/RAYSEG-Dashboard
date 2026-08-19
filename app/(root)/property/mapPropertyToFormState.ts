@@ -52,6 +52,19 @@ export function mapPropertyApiToFormState(
 
   console.log('Mapping property data, ambientes:', (data as any).ambientes);
 
+  let full_address = '';
+  if (address) {
+    const neighborhoodPart = address.neighborhood ? `, ${address.neighborhood}` : '';
+    full_address = `${address.street} ${address.exterior_number || address.street_number || ''}${neighborhoodPart}`;
+  }
+
+  let outdoor_spaces: number | null = null;
+  if ((data as any).outdoor_spaces !== undefined && (data as any).outdoor_spaces !== null) {
+    outdoor_spaces = Number((data as any).outdoor_spaces);
+  } else if ((data as any).ambientes) {
+    outdoor_spaces = Number((data as any).ambientes);
+  }
+
   return {
     number_mls: data.number_mls || '',
     title: data.title || '',
@@ -68,11 +81,9 @@ export function mapPropertyApiToFormState(
     terrain_type: (data.terrain_type as any)?.name ?? data.terrain_type ?? '',
     floors: data.floors ? Number(data.floors) : null,
     construction_year: data.construction_year ? Number(data.construction_year) : null,
-    outdoor_spaces: (data as any).outdoor_spaces !== undefined && (data as any).outdoor_spaces !== null ? Number((data as any).outdoor_spaces) : ((data as any).ambientes ? Number((data as any).ambientes) : null),
+    outdoor_spaces,
     conservation_status: resolveConservationStatus(data.conservation_status),
-    full_address: address
-      ? `${address.street} ${address.exterior_number || address.street_number || ''}${address.neighborhood ? ', ' + address.neighborhood : ''}`
-      : '',
+    full_address,
     street: address?.street || '',
     street_number: address?.exterior_number || address?.street_number || '',
     interior_number: address?.interior_number || '',

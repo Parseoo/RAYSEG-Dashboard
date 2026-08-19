@@ -1,14 +1,50 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Breadcrumb from "@/components/ui/breadcrumb";
 import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsGrouped } from "@/lib/api/permission-api";
 import AddPermissions from "../users-permissions/add-user/addPermissions";
 import { UserForm } from "@/lib/@type";
 import { Permission } from "@/lib/@type-permission";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Save, ShieldCheck } from "lucide-react";
 import { showToast } from "nextjs-toast-notify";
 import { InputField } from "@/components/ui/Input";
+
+const MODEL_TO_SECTION: Record<string, string> = {
+    property: 'propiedades',
+    client: 'clientes',
+    agent: 'agentes',
+    contract: 'contratos',
+    user: 'ajustes-usuarios',
+    lead: 'leads-contacto',
+    propertyimage: 'imagenes-propiedades'
+};
+
+const ACTION_TO_ID: Record<string, string> = {
+    view: 'ver-lista',
+    add: 'crear',
+    change: 'editar',
+    delete: 'eliminar'
+};
+
+const SECTION_TO_MODEL: Record<string, string> = {
+    'propiedades': 'property',
+    'clientes': 'client',
+    'agentes': 'agent',
+    'contratos': 'contract',
+    'ajustes-usuarios': 'user',
+    'leads-contacto': 'lead',
+    'imagenes-propiedades': 'propertyimage'
+};
+
+const ACTION_ID_TO_VERB: Record<string, string> = {
+    'ver-lista': 'view',
+    'ver-detalle': 'view',
+    'crear': 'add',
+    'editar': 'change',
+    'eliminar': 'delete'
+};
 
 const PermissionsPage = () => {
     const [roles, setRoles] = useState<any[]>([]);
@@ -37,10 +73,14 @@ const PermissionsPage = () => {
                     GetListRoles(),
                     GetListPermissionsGrouped()
                 ]);
-                
+
                 const extractData = (res: any) => {
                     if (!res?.data) return [];
-                    return res.data.items || res.data.catalogItems || (Array.isArray(res.data) ? res.data : (res.data.data && Array.isArray(res.data.data) ? res.data.data : []));
+                    if (res.data.items) return res.data.items;
+                    if (res.data.catalogItems) return res.data.catalogItems;
+                    if (Array.isArray(res.data)) return res.data;
+                    if (res.data.data && Array.isArray(res.data.data)) return res.data.data;
+                    return [];
                 };
 
                 setRoles(extractData(rolesRes));
@@ -81,8 +121,8 @@ const PermissionsPage = () => {
         try {
             const res = await GetRolePermissions(roleId);
             const rawData: any = res.data;
-            let perms = rawData.permissions || (rawData.data && rawData.data.permissions) || (Array.isArray(rawData) ? rawData : {});
-            
+            let perms = rawData.permissions || (rawData.data?.permissions) || (Array.isArray(rawData) ? rawData : {});
+
             if (Array.isArray(perms)) {
                 const uiPerms: Record<string, any> = {};
                 perms.forEach((p: Permission) => {
@@ -91,21 +131,12 @@ const PermissionsPage = () => {
                     const model = parts.slice(1).join('_');
 
                     if (model && action) {
-                        const sectionId = model === 'property' ? 'propiedades' :
-                                        model === 'client' ? 'clientes' :
-                                        model === 'agent' ? 'agentes' :
-                                        model === 'contract' ? 'contratos' :
-                                        model === 'user' ? 'ajustes-usuarios' :
-                                        model === 'lead' ? 'leads-contacto' :
-                                        model === 'propertyimage' ? 'imagenes-propiedades' : model;
+                        const sectionId = MODEL_TO_SECTION[model] || model;
 
                         uiPerms[sectionId] = true;
                         if (!uiPerms[`${sectionId}_actions`]) uiPerms[`${sectionId}_actions`] = [];
 
-                        const actionId = action === 'view' ? 'ver-lista' :
-                                        action === 'add' ? 'crear' :
-                                        action === 'change' ? 'editar' :
-                                        action === 'delete' ? 'eliminar' : action;
+                        const actionId = ACTION_TO_ID[action] || action;
 
                         if (!uiPerms[`${sectionId}_actions`].includes(actionId)) {
                             uiPerms[`${sectionId}_actions`].push(actionId);
@@ -138,19 +169,10 @@ const PermissionsPage = () => {
                     const sectionId = key.replace('_actions', '');
                     const actions = uiPerms[key] as string[];
 
-                    const model = sectionId === 'propiedades' ? 'property' :
-                                 sectionId === 'clientes' ? 'client' :
-                                 sectionId === 'agentes' ? 'agent' :
-                                 sectionId === 'contratos' ? 'contract' :
-                                 sectionId === 'ajustes-usuarios' ? 'user' :
-                                 sectionId === 'leads-contacto' ? 'lead' :
-                                 sectionId === 'imagenes-propiedades' ? 'propertyimage' : sectionId;
+                    const model = SECTION_TO_MODEL[sectionId] || sectionId;
 
                     actions.forEach(actionId => {
-                        const verb = actionId === 'ver-lista' || actionId === 'ver-detalle' ? 'view' :
-                                     actionId === 'crear' ? 'add' :
-                                     actionId === 'editar' ? 'change' :
-                                     actionId === 'eliminar' ? 'delete' : actionId;
+                        const verb = ACTION_ID_TO_VERB[actionId] || actionId;
 
                         const codename = `${verb}_${model}`;
                         const foundPerm = allSystemPermissions.find(p => p.codename === codename);
@@ -161,8 +183,8 @@ const PermissionsPage = () => {
                 }
             });
 
-            await AssignPermissionsToRole(selectedRoleId, { 
-                permission_ids: permissionIds 
+            await AssignPermissionsToRole(selectedRoleId, {
+                permission_ids: permissionIds
             });
             showToast.success("Permisos actualizados correctamente");
         } catch (error) {
@@ -188,64 +210,66 @@ const PermissionsPage = () => {
                 ]}
             />
 
-            <div className='bg-white w-full rounded-lg p-6 sm:p-8 shadow-xl border border-slate-200'>
-                <div className="w-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-100 pb-6">
-                        <div className="flex items-center gap-4">
-                            <div>
-                                <h1 className='font-extrabold text-2xl text-gray-900 mb-1'>Configuración de Permisos</h1>
-                                <p className='text-sm text-gray-500 max-w-2xl'>Define qué secciones estarán visibles y qué acciones específicas puede realizar cada rol.</p>
+            <Card className='w-full'>
+                <CardContent className="p-6 sm:p-8">
+                    <div className="w-full">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-100 pb-6">
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h1 className='font-extrabold text-2xl text-gray-900 mb-1'>Configuración de Permisos</h1>
+                                    <p className='text-sm text-gray-500 max-w-2xl'>Define qué secciones estarán visibles y qué acciones específicas puede realizar cada rol.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-end gap-3 w-full md:w-auto md:min-w-[300px]">
+                                <InputField
+                                    input={{
+                                        type: 'select',
+                                        id: 'role-select',
+                                        label: 'Seleccionar Rol',
+                                        placeholder: 'Elija un rol para configurar',
+                                        value: selectedRoleId,
+                                        onChange: (val: any) => handleRoleChange(val),
+                                        options: roleOptions,
+                                        className: "h-11"
+                                    }}
+                                    withBgWhite={true}
+                                />
+
+                                <button type="button"
+                                    onClick={handleSavePermissions}
+                                    disabled={!selectedRoleId || isSaving}
+                                    className="h-11 px-6 bg-primary_color text-white rounded-lg flex items-center gap-2 font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-md mb-[2px]"
+                                >
+                                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                    Guardar
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-end gap-3 w-full md:w-auto md:min-w-[300px]">
-                            <InputField 
-                                input={{
-                                    type: 'select',
-                                    id: 'role-select',
-                                    label: 'Seleccionar Rol',
-                                    placeholder: 'Elija un rol para configurar',
-                                    value: selectedRoleId,
-                                    onChange: (val: any) => handleRoleChange(val),
-                                    options: roleOptions,
-                                    className: "h-11"
-                                }}
-                                withBgWhite={true}
-                            />
-                            
-                            <button 
-                                onClick={handleSavePermissions}
-                                disabled={!selectedRoleId || isSaving}
-                                className="h-11 px-6 bg-primary_color text-white rounded-lg flex items-center gap-2 font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-md mb-[2px]"
-                            >
-                                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                                Guardar
-                            </button>
-                        </div>
+                        {selectedRoleId ? (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <AddPermissions
+                                    user={dummyUser}
+                                    setUser={setDummyUser as any}
+                                    isLoading={false}
+                                    withoutCard={true}
+                                    groupedPermissions={groupedPermissions}
+                                    isFetchingPermissions={isLoadingRoles}
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+                                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md mb-6">
+                                    <ShieldCheck className="text-slate-200" size={40} />
+                                </div>
+                                <h3 className="text-slate-900 font-bold text-xl mb-2">Comienza la configuración</h3>
+                                <p className="text-slate-400 text-sm max-w-sm text-center">Selecciona un rol del menú superior para visualizar y editar sus permisos por pantalla.</p>
+                            </div>
+                        )}
                     </div>
-
-                    {selectedRoleId ? (
-                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <AddPermissions
-                                user={dummyUser}
-                                setUser={setDummyUser as any}
-                                isLoading={false}
-                                withoutCard={true}
-                                groupedPermissions={groupedPermissions}
-                                isFetchingPermissions={isLoadingRoles}
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
-                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md mb-6">
-                                <ShieldCheck className="text-slate-200" size={40} />
-                            </div>
-                            <h3 className="text-slate-900 font-bold text-xl mb-2">Comienza la configuración</h3>
-                            <p className="text-slate-400 text-sm max-w-sm text-center">Selecciona un rol del menú superior para visualizar y editar sus permisos por pantalla.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };

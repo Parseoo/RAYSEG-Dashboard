@@ -78,9 +78,9 @@ const base = 'inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-x
 export const Tag: React.FC<TagProps> = ({ variant = 'gray', status, statusMap, statusType = 'default', className, children, ...props }) => {
   const map = {
     ...defaultStatusMap,
-    ...(statusType === 'property' ? propertyStatusMap : {}),
-    ...(statusType === 'publication' ? publicationStatusMap : {}),
-    ...(statusMap || {}),
+    ...(statusType === 'property' ? propertyStatusMap : undefined),
+    ...(statusType === 'publication' ? publicationStatusMap : undefined),
+    ...statusMap,
   };
   const v: Variant = (status ? (map[status] as Variant) : undefined) || variant;
 
@@ -96,7 +96,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: Variant;
 }
 
-export default function Badge({ label, variant = 'gray', className, ...props }: BadgeProps) {
+export default function Badge({ label, variant = 'gray', className, ...props }: Readonly<BadgeProps>) {
   // Use Tag but with tighter horizontal padding to match design
   return (
     <Tag variant={variant} className={"mr-2 px-1.5 py-1 " + (className || '')} {...props}>

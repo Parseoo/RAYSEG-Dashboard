@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,11 +20,11 @@ import {
 } from 'lucide-react';
 import { getUserImageUrl } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/breadcrumb';
-import { ViewPermissions } from '../add-user/viewPermissions';
 import { GetUsersById } from '@/lib/api/user-api';
 import { GetListRoles } from '@/lib/api/permission-api';
 import { UserResponse } from '@/lib/@type';
 import { Tag } from '@/components/ui/badges';
+import { Card, CardContent } from '@/components/ui/card';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string, icon: any }) => (
     <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
@@ -108,7 +108,7 @@ export default function UserDetailPage() {
         if (!dateString) return '-';
         try {
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
+            if (Number.isNaN(date.getTime())) return dateString;
             return date.toLocaleDateString('es-MX', {
                 day: 'numeric',
                 month: 'short',
@@ -133,7 +133,7 @@ export default function UserDetailPage() {
             <div className="flex flex-col items-center justify-center min-h-[450px] gap-4">
                 <div className="bg-red-50 p-6 rounded-lg border border-red-100 text-center max-w-md shadow-md">
                     <p className="text-red-600 font-medium mb-4 text-sm">{error || "Usuario no encontrado"}</p>
-                    <button
+                    <button type='button'
                         onClick={() => router.push('/settings/users-permissions')}
                         className="bg-primary_color text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-md"
                     >
@@ -145,7 +145,16 @@ export default function UserDetailPage() {
     }
 
     const fullName = `${userData.name || ''} ${userData.paternal_last_name || ''} ${userData.maternal_last_name || ''}`.trim() || 'Usuario';
-    const userRoleLabel = userData.role ? getRoleName(userData.role) : (userData.is_superuser ? 'SuperAdmin' : userData.is_staff ? 'Administrador' : 'Sin Rol');
+    
+    let userRoleLabel = 'Sin Rol';
+    if (userData.role) {
+        userRoleLabel = getRoleName(userData.role);
+    } else if (userData.is_superuser) {
+        userRoleLabel = 'SuperAdmin';
+    } else if (userData.is_staff) {
+        userRoleLabel = 'Administrador';
+    }
+
     const isActive = userData.is_active === true || (userData.is_active as any) === 1 || String(userData.is_active).toLowerCase() === 'true' || String(userData.is_active).toLowerCase() === 'activo';
 
     const estado = userData.address?.state || (userData as any).estado || '-';
@@ -170,7 +179,7 @@ export default function UserDetailPage() {
 
             {/* Barra superior de Navegación y Acciones */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <button
+                <button type='button'
                     onClick={() => router.push('/settings/users-permissions')}
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors w-fit"
                     title="Volver"
@@ -190,8 +199,9 @@ export default function UserDetailPage() {
             </div>
 
             {/* SECCIÓN 1: Tarjeta Perfil de Usuario */}
-            <div className="w-full bg-white rounded-lg p-5 sm:p-6 shadow-md border border-slate-200 mb-5 flex flex-col justify-between">
-                <div className="flex items-center gap-5">
+            <Card className="mb-5 flex flex-col justify-between">
+                <CardContent>
+                    <div className="flex items-center gap-5">
                     {/* Avatar con fondo slate y fallback visible */}
                     <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
                         {userData.profile_picture ? (
@@ -288,13 +298,15 @@ export default function UserDetailPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* SECCIÓN 2: Información Detallada y Dirección */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 {/* Tarjeta: Información personal */}
-                <div className="bg-white rounded-lg p-5 shadow-md border border-slate-200">
-                    <SectionHeader title="Información Personal" icon={User} />
+                <Card>
+                    <CardContent>
+                        <SectionHeader title="Información Personal" icon={User} />
 
                     <div className="space-y-4">
                         <div className="flex items-start gap-3">
@@ -318,11 +330,13 @@ export default function UserDetailPage() {
                             <InfoBlock label="Es Superusuario" value={userData.is_superuser ? 'Sí' : 'No'} />
                         </div>
                     </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 {/* Tarjeta: Ubicación / Dirección */}
-                <div className="bg-white rounded-lg p-5 shadow-md border border-slate-200">
-                    <SectionHeader title="Ubicación" icon={MapPin} />
+                <Card>
+                    <CardContent>
+                        <SectionHeader title="Ubicación" icon={MapPin} />
 
                     <div className="grid grid-cols-2 gap-y-4 gap-x-4">
                         <InfoBlock label="Estado" value={estado} />
@@ -333,15 +347,18 @@ export default function UserDetailPage() {
                         <InfoBlock label="Número Exterior" value={numExt} />
                         <InfoBlock label="Número Interior" value={numInt} />
                     </div>
-                </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* SECCIÓN 3: Notas Internas */}
             {userData.internal_notes && (
-                <div className="bg-white rounded-lg p-5 shadow-md border border-slate-200 mb-5">
-                    <SectionHeader title="Notas Internas" icon={FileText} />
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{userData.internal_notes}</p>
-                </div>
+                <Card className="mb-5">
+                    <CardContent>
+                        <SectionHeader title="Notas Internas" icon={FileText} />
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{userData.internal_notes}</p>
+                    </CardContent>
+                </Card>
             )}
 
             {/* SECCIÓN 4: Permisos por pantalla (Comentado temporalmente) */}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useState } from "react";
 import Image from "next/image";
 import { User } from "@/lib/@type";
 import { getUserImageUrl } from "@/lib/utils";
@@ -45,7 +44,7 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
         if (!dateString) return "-";
         try {
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
+            if (Number.isNaN(date.getTime())) return dateString;
             return date.toLocaleDateString("es-MX", {
                 day: "numeric",
                 month: "short",
