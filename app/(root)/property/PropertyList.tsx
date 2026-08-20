@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import Search from '@/components/ui/Search';
 import { Table } from '@/components/ui/table';
-import { operationProperty, statusProperty } from '@/components/SelectProperties.data';
+
 import { GetCatalogPropertyTypes, GetPropertyOperationTypes, GetCatalogByName } from '@/lib/api/catalog-api';
 import { resolveCatalogDisplayValue } from '@/lib/utils/catalog';
 import Breadcrumb from '@/components/ui/breadcrumb';
@@ -25,7 +25,45 @@ import { getImageUrl } from '@/lib/utils';
 
 const headers = ['Propiedad', 'Tipo', 'Operación', 'Precio', 'Estatus', 'Publicación web', 'Fecha de Creación', 'Destacada', 'Acciones'];
 
-function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) {
+const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
+  <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
+    <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
+    <div className="flex flex-wrap items-center gap-1.5 py-1">
+      <button type='button'
+        onClick={() => onChange('all')}
+        className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
+          ? 'bg-primary_color text-white font-medium shadow-md'
+          : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+          }`}
+      >
+        Todos
+      </button>
+      {options.map((opt: any) => (
+        <button type='button'
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
+            ? 'bg-primary_color text-white font-medium shadow-md'
+            : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
+            }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const extractItems = (res: any) => {
+  if (!res) return [];
+  const target = res?.value?.data || res?.value || res?.data || res;
+  if (target?.items && Array.isArray(target.items)) return target.items;
+  if (target?.catalogItems && Array.isArray(target.catalogItems)) return target.catalogItems;
+  if (Array.isArray(target)) return target;
+  return [];
+};
+
+function PropertyList({ data, isLoading }: Readonly<{ data: any[]; isLoading: boolean }>) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; item: PropertyListItemResponse | null }>({ isOpen: false, item: null });
   const [isDeleting, setIsDeleting] = useState(false);
@@ -48,8 +86,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const [propertyTypeOptions, setPropertyTypeOptions] = useState<{ label: string; value: string }[]>([]);
   const [operationCatalog, setOperationCatalog] = useState<ItemResponse[]>([]);
   const [propertyStateCatalog, setPropertyStateCatalog] = useState<ItemResponse[]>([]);
-  const [operationOptions, setOperationOptions] = useState<{ label: string; value: string }[]>(operationProperty);
-  const [availabilityOptions, setAvailabilityOptions] = useState<{ label: string; value: string }[]>(statusProperty);
+  const [operationOptions, setOperationOptions] = useState<{ label: string; value: string }[]>([]);
+  const [availabilityOptions, setAvailabilityOptions] = useState<{ label: string; value: string }[]>([]);
   const [estados, setEstados] = useState<{ label: string; value: string }[]>([]);
   const [selectedEstado, setSelectedEstado] = useState("all");
   const [citiesOptions, setCitiesOptions] = useState<{ label: string; value: string }[]>([]);
@@ -64,6 +102,58 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   const [openActionMenu, setOpenActionMenu] = useState<string | number | null>(null);
 
   useEffect(() => {
+    const processTypes = (res: any) => {
+      if (res.status !== 'fulfilled') return;
+      const items = extractItems(res);
+      if (items.length > 0) {
+        setPropertyTypeOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+      }
+    };
+
+    const processOperation = (res: any) => {
+      if (res.status !== 'fulfilled') return;
+      const items = extractItems(res);
+      setOperationCatalog(items);
+      if (items.length > 0) {
+        setOperationOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+      }
+    };
+
+    const processState = (res: any) => {
+      if (res.status !== 'fulfilled') return;
+      const items = extractItems(res);
+      setPropertyStateCatalog(items);
+      if (items.length > 0) {
+        setAvailabilityOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
+      }
+    };
+
+    const processEstados = (res: any) => {
+      console.log('estadosRes status:', res.status);
+      if (res.status !== 'fulfilled') {
+        console.error('Error fetching estados:', res.reason);
+        return;
+      }
+      
+      const rawData = res.value?.data || res.value;
+      let estadosData: any[] = [];
+      
+      if (rawData?.datos && Array.isArray(rawData.datos)) {
+        estadosData = rawData.datos;
+      } else if (Array.isArray(rawData)) {
+        estadosData = rawData;
+      } else if (rawData?.data && Array.isArray(rawData.data)) {
+        estadosData = rawData.data;
+      }
+
+      if (estadosData.length > 0) {
+        setEstados(estadosData.map((item: any) => ({
+          label: item.estado || item.nombre || item.name || String(item),
+          value: item.codigo_estado || item.clave || item.id || String(item)
+        })));
+      }
+    };
+
     const fetchCatalogs = async () => {
       const [typesRes, operationRes, estadosRes, propertyStateRes] = await Promise.allSettled([
         GetCatalogPropertyTypes(),
@@ -72,62 +162,12 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
         GetCatalogByName('property-type-status'),
       ]);
 
-      const extractItems = (res: any) => {
-        if (!res) return [];
-        const target = res?.value?.data || res?.value || res?.data || res;
-        if (target?.items && Array.isArray(target.items)) return target.items;
-        if (target?.catalogItems && Array.isArray(target.catalogItems)) return target.catalogItems;
-        if (Array.isArray(target)) return target;
-        return [];
-      };
-
-      if (typesRes.status === 'fulfilled') {
-        const items = extractItems(typesRes);
-        if (items.length > 0) {
-          setPropertyTypeOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
-        }
-      }
-
-      if (operationRes.status === 'fulfilled') {
-        const items = extractItems(operationRes);
-        setOperationCatalog(items);
-        if (items.length > 0) {
-          setOperationOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
-        }
-      }
-
-      if (propertyStateRes.status === 'fulfilled') {
-        const items = extractItems(propertyStateRes);
-        setPropertyStateCatalog(items);
-        if (items.length > 0) {
-          setAvailabilityOptions(items.map((item: any) => ({ label: item.name, value: item.name })));
-        }
-      }
-
-      console.log('estadosRes status:', estadosRes.status);
-      if (estadosRes.status === 'fulfilled') {
-        // La API externa devuelve: { data: { datos: [ { codigo_estado, estado } ] } }
-        const rawData: any = estadosRes.value?.data || estadosRes.value;
-        let estadosData: any[] = [];
-
-        if (rawData?.datos && Array.isArray(rawData.datos)) {
-          estadosData = rawData.datos;
-        } else if (Array.isArray(rawData)) {
-          estadosData = rawData;
-        } else if (rawData?.data && Array.isArray(rawData.data)) {
-          estadosData = rawData.data;
-        }
-
-        if (estadosData.length > 0) {
-          setEstados(estadosData.map((item: any) => ({
-            label: item.estado || item.nombre || item.name || String(item),
-            value: item.codigo_estado || item.clave || item.id || String(item)
-          })));
-        }
-      } else {
-        console.error('Error fetching estados:', estadosRes.reason);
-      }
+      processTypes(typesRes);
+      processOperation(operationRes);
+      processEstados(estadosRes);
+      processState(propertyStateRes);
     };
+
     fetchCatalogs();
   }, []);
 
@@ -229,34 +269,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     }
   };
 
-  const FilterPills = ({ label, options, selectedValue, onChange }: { label: string, options: any[], selectedValue: string, onChange: (val: string) => void }) => (
-    <div className="flex flex-col xl:flex-row xl:items-center gap-2 xl:gap-3 w-auto">
-      <span className="text-sm font-bold text-gray-500 whitespace-nowrap">{label}:</span>
-      <div className="flex flex-wrap items-center gap-1.5 py-1">
-        <button type='button'
-          onClick={() => onChange('all')}
-          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === 'all'
-              ? 'bg-primary_color text-white font-medium shadow-md'
-              : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-            }`}
-        >
-          Todos
-        </button>
-        {options.map((opt: any) => (
-          <button type='button'
-            key={opt.value}
-            onClick={() => onChange(opt.value)}
-            className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedValue === opt.value
-                ? 'bg-primary_color text-white font-medium shadow-md'
-                : 'bg-slate-100 text-gray-600 hover:bg-slate-200 active:scale-95'
-              }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+
 
   const fetchProperties = async (page: number) => {
     setIsPageLoading(true);
@@ -287,15 +300,15 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
     if (!address) return '-';
     const addr = Array.isArray(address) ? address[0] : address;
     if (!addr) return '-';
-    
+
     let streetPart = addr.street || '';
     if (addr.exterior_number && addr.exterior_number !== 'S/N') streetPart += ` ${addr.exterior_number}`;
     if (addr.interior_number) streetPart += ` Int. ${addr.interior_number}`;
-    
+
     const parts = [
-      streetPart.trim(), 
-      addr.neighborhood, 
-      addr.city, 
+      streetPart.trim(),
+      addr.neighborhood,
+      addr.city,
       addr.state
     ].filter(Boolean);
     return parts.join(', ') || '-';
@@ -307,8 +320,8 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
   };
 
   const formatPrice = (price: string) => {
-    const num = parseFloat(price);
-    if (isNaN(num)) return price ? `${price} MXN` : '-';
+    const num = Number.parseFloat(price);
+    if (Number.isNaN(num)) return price ? `${price} MXN` : '-';
     const formatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(num);
     return `${formatted} MXN`;
   };
@@ -372,6 +385,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       setProperties(prev => prev.filter(p => p.property_id !== deleteModal.item?.property_id));
       showToast.success("Propiedad eliminada correctamente");
     } catch (error) {
+      console.error("Error al eliminar la propiedad:", error);
       showToast.error("Error al eliminar la propiedad");
     } finally {
       setIsDeleting(false);
@@ -418,7 +432,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   fill
                   sizes="84px"
                   unoptimized={true}
-                  
+
                   className='object-cover'
                 />
               )}
@@ -491,7 +505,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
               fill
               sizes="(max-width: 768px) 100vw, 400px"
               unoptimized={true}
-              
+
               className='object-cover'
             />
           )}
@@ -503,7 +517,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             >
               <MoreVertical size={18} />
             </button>
-            
+
             {openActionMenu === property.property_id && (
               <div className="absolute right-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-slate-200 z-10 py-1">
                 <Link href={`/property/${property.property_id}`}>
@@ -594,178 +608,177 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Propiedades', href: '/property', active: true }]} />
       <Card className='w-full max-h-max mb-9'>
         <CardContent className="p-4 sm:p-5">
-        <div className='w-full h-full'>
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5'>
-            <div>
-              <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
-              <p className='text-xs sm:text-sm text-gray-500'>Listado principal de propiedades</p>
-            </div>
-            <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
-              {activeFiltersCount > 0 && (
+          <div className='w-full h-full'>
+            <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5'>
+              <div>
+                <h1 className='text-black font-[700] text-xl sm:text-2xl'>Propiedades</h1>
+                <p className='text-xs sm:text-sm text-gray-500'>Listado principal de propiedades</p>
+              </div>
+              <div className='flex items-center gap-3 w-full sm:w-auto justify-end'>
+                {activeFiltersCount > 0 && (
+                  <button
+                    type='button'
+                    onClick={handleClearFilters}
+                    className='hidden sm:flex h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors items-center justify-center relative border border-slate-200 shadow-sm gap-2 shrink-0 font-medium text-xs sm:text-sm'
+                  >
+                    <X className='w-4 h-4 sm:w-4.5 sm:h-4.5' />
+                    <span>Limpiar Filtros</span>
+                  </button>
+                )}
+                <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
+                  <button type="button" className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[170px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-xs sm:text-sm whitespace-nowrap">
+                    <Plus size={18} /> <span>Agregar Propiedad</span>
+                  </button>
+                </Link>
                 <button
                   type='button'
-                  onClick={handleClearFilters}
-                  className='hidden sm:flex h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors items-center justify-center relative border border-slate-200 shadow-sm gap-2 shrink-0 font-medium text-xs sm:text-sm'
+                  onClick={() => setIsPdfModalOpen(true)}
+                  className='flex-1 sm:flex-initial bg-red-50 text-red-600 border border-red-200 w-full sm:w-auto sm:min-w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:bg-red-100 transition-colors font-medium text-xs sm:text-sm whitespace-nowrap'
                 >
-                  <X className='w-4 h-4 sm:w-4.5 sm:h-4.5' />
-                  <span>Limpiar Filtros</span>
+                  <FileDown size={18} /> <span>Generar PDF</span>
                 </button>
-              )}
-              <Link href="/property/add-property" className='flex-1 sm:flex-initial'>
-                <button type="button" className="bg-primary_color text-white w-full sm:w-auto sm:min-w-[170px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-xs sm:text-sm whitespace-nowrap">
-                  <Plus size={18} /> <span>Agregar Propiedad</span>
-                </button>
-              </Link>
-              <button
-                type='button'
-                onClick={() => setIsPdfModalOpen(true)}
-                className='flex-1 sm:flex-initial bg-red-50 text-red-600 border border-red-200 w-full sm:w-auto sm:min-w-[140px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-3 sm:px-4 hover:bg-red-100 transition-colors font-medium text-xs sm:text-sm whitespace-nowrap'
-              >
-                <FileDown size={18} /> <span>Generar PDF</span>
-              </button>
+              </div>
             </div>
-          </div>
 
-          <div className="mb-6 space-y-5">
-            {/* Buscador, Botón Destacadas y Píldoras de Filtros */}
-            <div className='flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 lg:gap-6 w-full'>
-              <div className='flex items-center gap-2 w-full lg:w-fit lg:max-w-none'>
-                <div className='flex-1'>
-                  <Search
-                    title='Buscar propiedad por título, ID o ubicación'
-                    className='w-full lg:w-[450px]'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+            <div className="mb-6 space-y-5">
+              {/* Buscador, Botón Destacadas y Píldoras de Filtros */}
+              <div className='flex flex-col sm:flex-row sm:flex-wrap items-center gap-4 lg:gap-6 w-full'>
+                <div className='flex items-center gap-2 w-full lg:w-fit lg:max-w-none'>
+                  <div className='flex-1'>
+                    <Search
+                      title='Buscar propiedad por título, ID o ubicación'
+                      className='w-full lg:w-[450px]'
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => setIsFilterOpen(true)}
+                    className='sm:hidden h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm shrink-0'
+                    title="Filtros"
+                  >
+                    <SlidersHorizontal className='w-5 h-5 text-gray-600' />
+                    {activeFiltersCount > 0 && (
+                      <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
                 <button
-                  type='button'
-                  onClick={() => setIsFilterOpen(true)}
-                  className='sm:hidden h-[40px] px-3.5 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-lg transition-colors flex items-center justify-center relative border border-slate-200 shadow-sm shrink-0'
-                  title="Filtros"
-                >
-                  <SlidersHorizontal className='w-5 h-5 text-gray-600' />
-                  {activeFiltersCount > 0 && (
-                    <span className='absolute -top-2 -right-2 bg-primary_color text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm'>
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
-                className={`hidden sm:flex h-[40px] px-4 rounded-lg items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap self-start sm:self-auto ${
-                  isFeaturedOnly
+                  type="button"
+                  onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
+                  className={`hidden sm:flex h-[40px] px-4 rounded-lg items-center justify-center gap-2 font-medium text-xs sm:text-sm border transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap self-start sm:self-auto ${isFeaturedOnly
                     ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm'
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-                }`}
-                title="Filtrar sólo destacadas"
-              >
-                <Star size={18} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
-                <span>Destacadas</span>
-              </button>
-              <div className='hidden sm:block flex-auto lg:flex-none'>
-                <FilterPills
-                  label="Operación"
-                  options={operationOptions}
-                  selectedValue={selectedOperation}
-                  onChange={setSelectedOperation}
-                />
+                    }`}
+                  title="Filtrar sólo destacadas"
+                >
+                  <Star size={18} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
+                  <span>Destacadas</span>
+                </button>
+                <div className='hidden sm:block flex-auto lg:flex-none'>
+                  <FilterPills
+                    label="Operación"
+                    options={operationOptions}
+                    selectedValue={selectedOperation}
+                    onChange={setSelectedOperation}
+                  />
+                </div>
+                <div className='hidden sm:block flex-auto lg:flex-none'>
+                  <FilterPills
+                    label="Disponibilidad"
+                    options={availabilityOptions}
+                    selectedValue={selectedAvailability}
+                    onChange={setSelectedAvailability}
+                  />
+                </div>
+                <div className='hidden sm:block flex-auto lg:flex-none'>
+                  <FilterPills
+                    label="Tipo de propiedad"
+                    options={propertyTypeOptions}
+                    selectedValue={selectedType}
+                    onChange={setSelectedType}
+                  />
+                </div>
+                <div className='hidden sm:block flex-auto lg:flex-none'>
+                  <FilterPills
+                    label="Estatus"
+                    options={[
+                      { value: 'Borrador', label: 'Borrador' },
+                      { value: 'Publicado', label: 'Publicado' },
+                      { value: 'Archivado', label: 'Archivado' },
+                    ]}
+                    selectedValue={selectedStatusProperty}
+                    onChange={setSelectedStatusProperty}
+                  />
+                </div>
               </div>
-              <div className='hidden sm:block flex-auto lg:flex-none'>
-                <FilterPills
-                  label="Disponibilidad"
-                  options={availabilityOptions}
-                  selectedValue={selectedAvailability}
-                  onChange={setSelectedAvailability}
-                />
-              </div>
-              <div className='hidden sm:block flex-auto lg:flex-none'>
-                <FilterPills
-                  label="Tipo de propiedad"
-                  options={propertyTypeOptions}
-                  selectedValue={selectedType}
-                  onChange={setSelectedType}
-                />
-              </div>
-              <div className='hidden sm:block flex-auto lg:flex-none'>
-                <FilterPills
-                  label="Estatus"
-                  options={[
-                    { value: 'Borrador', label: 'Borrador' },
-                    { value: 'Publicado', label: 'Publicado' },
-                    { value: 'Archivado', label: 'Archivado' },
-                  ]}
-                  selectedValue={selectedStatusProperty}
-                  onChange={setSelectedStatusProperty}
-                />
+
+              {/* Filtros Secundarios Desplegables */}
+              <div className='hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
+                <div className='flex flex-col'>
+                  <label htmlFor='estado' className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
+                  <Select value={selectedEstado} onValueChange={setSelectedEstado}>
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Todos los estados' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los estados</SelectItem>
+                      {estados.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='flex flex-col'>
+                  <label htmlFor='city' className="text-xs text-gray-500 mb-1 font-semibold">Ciudad</label>
+                  <Select value={selectedCity} onValueChange={setSelectedCity}>
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Todas las ciudades' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      {citiesOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            {/* Filtros Secundarios Desplegables */}
-            <div className='hidden sm:grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
-              <div className='flex flex-col'>
-                <label htmlFor='estado' className="text-xs text-gray-500 mb-1 font-semibold">Estado</label>
-                <Select value={selectedEstado} onValueChange={setSelectedEstado}>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Todos los estados' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    {estados.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='flex flex-col'>
-                <label htmlFor='city' className="text-xs text-gray-500 mb-1 font-semibold">Ciudad</label>
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Todas las ciudades' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las ciudades</SelectItem>
-                    {citiesOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="hidden md:block">
+              <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} hidePagination={true} />
             </div>
-          </div>
 
-          <div className="hidden md:block">
-            <Table data={filteredProperties} headers={headers} renderRow={renderRow} isLoading={isLoading || isPageLoading} hidePagination={true} />
-          </div>
+            <div className="md:hidden">
+              {(isLoading || isPageLoading) && (
+                <div className="flex justify-center items-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
+                </div>
+              )}
+              {!(isLoading || isPageLoading) && filteredProperties.length > 0 && (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredProperties.map((property) => renderMobileCard(property))}
+                </div>
+              )}
+              {!(isLoading || isPageLoading) && filteredProperties.length === 0 && (
+                <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
+                  No hay propiedades disponibles
+                </div>
+              )}
+            </div>
 
-          <div className="md:hidden">
-            {(isLoading || isPageLoading) && (
-              <div className="flex justify-center items-center py-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary_color"></div>
-              </div>
+            {pagination.total_paginas > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.total_paginas}
+                onPageChange={setCurrentPage}
+                disabled={isLoading || isPageLoading}
+              />
             )}
-            {!(isLoading || isPageLoading) && filteredProperties.length > 0 && (
-              <div className="grid grid-cols-1 gap-4">
-                {filteredProperties.map((property) => renderMobileCard(property))}
-              </div>
-            )}
-            {!(isLoading || isPageLoading) && filteredProperties.length === 0 && (
-              <div className="text-center py-8 text-gray-500 bg-slate-50 rounded-lg border border-slate-100">
-                No hay propiedades disponibles
-              </div>
-            )}
-          </div>
-
-          {pagination.total_paginas > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={pagination.total_paginas}
-              onPageChange={setCurrentPage}
-              disabled={isLoading || isPageLoading}
-            />
-          )}
           </div>
         </CardContent>
       </Card>
@@ -821,7 +834,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Disponibilidad</label>
+            <label htmlFor='availability' className="text-sm font-semibold text-gray-700">Disponibilidad</label>
             <Select value={selectedAvailability} onValueChange={setSelectedAvailability}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar disponibilidad" />
@@ -835,7 +848,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Tipo de propiedad</label>
+            <label htmlFor='propertyType' className="text-sm font-semibold text-gray-700">Tipo de propiedad</label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar tipo" />
@@ -849,7 +862,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Estatus</label>
+            <label htmlFor='status' className="text-sm font-semibold text-gray-700">Estatus</label>
             <Select value={selectedStatusProperty} onValueChange={setSelectedStatusProperty}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar estatus" />
@@ -863,15 +876,15 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-700">Destacada</label>
+            <label htmlFor='featured' className="text-sm font-semibold text-gray-700">Destacada</label>
             <button
+              id='featured'
               type="button"
               onClick={() => setIsFeaturedOnly(!isFeaturedOnly)}
-              className={`px-3 py-1.5 text-xs rounded-md font-medium flex items-center justify-center gap-2 w-full transition-colors ${
-                isFeaturedOnly
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                  : 'bg-slate-100 text-gray-600 border border-slate-200 hover:bg-slate-200'
-              }`}
+              className={`px-3 py-1.5 text-xs rounded-md font-medium flex items-center justify-center gap-2 w-full transition-colors ${isFeaturedOnly
+                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                : 'bg-slate-100 text-gray-600 border border-slate-200 hover:bg-slate-200'
+                }`}
             >
               <Star size={16} fill={isFeaturedOnly ? "#eab308" : "none"} stroke="#eab308" />
               <span>{isFeaturedOnly ? "Solo destacadas" : "Todas"}</span>
@@ -887,8 +900,17 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
       />
 
       {isPdfModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all" onClick={() => setIsPdfModalOpen(false)}>
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all">
+          <button
+            type="button"
+            className="absolute inset-0 w-full h-full bg-black bg-opacity-50 backdrop-blur-sm cursor-default border-none"
+            onClick={() => setIsPdfModalOpen(false)}
+            aria-label="Cerrar modal"
+          />
+          <dialog 
+            className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden relative z-10" 
+            open
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-red-50/50">
               <div className="flex items-center gap-3">
@@ -926,7 +948,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 {/* Mes */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor='mes' className="text-xs font-semibold text-gray-700">Mes (opcional)</label>
-                  <select id='mes' 
+                  <select id='mes'
                     value={pdfParams.month}
                     onChange={(e) => setPdfParams(prev => ({ ...prev, month: e.target.value }))}
                     className="w-full h-[40px] px-3 border border-gray-200 rounded-lg focus:outline-none focus:border-red-500 text-sm transition-all bg-white"
@@ -967,7 +989,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                   {/* Hasta */}
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor='date_to' className="text-xs font-semibold text-gray-700">Hasta</label>
-                    <input id='date_to' 
+                    <input id='date_to'
                       type="date"
                       value={pdfParams.date_to}
                       onChange={(e) => setPdfParams(prev => ({ ...prev, date_to: e.target.value }))}
@@ -996,7 +1018,7 @@ function PropertyList({ data, isLoading }: { data: any[]; isLoading: boolean }) 
                 </button>
               </div>
             </form>
-          </div>
+          </dialog>
         </div>
       )}
     </>

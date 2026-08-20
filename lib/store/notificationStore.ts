@@ -47,48 +47,37 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         
         // If append=true (loadMore), keep existing filter states unless provided.
         // Otherwise, use the explicitly provided filters (clearing previous filters if undefined in params).
-        const currentCategory = append
-            ? (params?.category !== undefined ? params.category : state.categoryFilter)
-            : (params && 'category' in params ? params.category : undefined);
-            
-        const currentUnread = append
-            ? (params?.unread !== undefined ? params.unread : state.unreadFilter)
-            : (params && 'unread' in params ? params.unread : undefined);
+        const currentCategory = append ? (params?.category ?? state.categoryFilter) : params?.category;
+        const currentUnread = append ? (params?.unread ?? state.unreadFilter) : params?.unread;
 
-        if (append) {
-            set({ isLoadingMore: true, error: null });
-        } else {
-            set({ isLoading: true, error: null });
-        }
+        set(append ? { isLoadingMore: true, error: null } : { isLoading: true, error: null });
 
         try {
-            const queryParams: NotificationQueryParams = {
+            const response = await GetNotifications({
                 page: currentPage,
                 pageSize: currentPageSize,
                 category: currentCategory,
                 unread: currentUnread
-            };
+            });
 
-            const response = await GetNotifications(queryParams);
-            if (response && response.data) {
-                const items = response.data.items || [];
-                const totalUnread = response.data.unreadCount;
-                const newHasMore = items.length === currentPageSize;
-
-                set({
-                    notifications: append ? [...state.notifications, ...items] : items,
-                    unreadCount: totalUnread !== undefined ? totalUnread : state.unreadCount,
-                    page: currentPage,
-                    pageSize: currentPageSize,
-                    categoryFilter: currentCategory,
-                    unreadFilter: currentUnread,
-                    hasMore: newHasMore,
-                    isLoading: false,
-                    isLoadingMore: false
-                });
-            } else {
+            const data = response?.data;
+            if (!data) {
                 set({ isLoading: false, isLoadingMore: false });
+                return;
             }
+
+            const items = data.items || [];
+            set({
+                notifications: append ? [...state.notifications, ...items] : items,
+                unreadCount: data.unreadCount ?? state.unreadCount,
+                page: currentPage,
+                pageSize: currentPageSize,
+                categoryFilter: currentCategory,
+                unreadFilter: currentUnread,
+                hasMore: items.length === currentPageSize,
+                isLoading: false,
+                isLoadingMore: false
+            });
         } catch (error: any) {
             console.error('[NotificationStore] Error fetching notifications:', error);
             set({
@@ -102,7 +91,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     fetchUnreadCount: async () => {
         try {
             const response = await GetUnreadNotificationsCount();
-            if (response && response.data) {
+            if (response?.data) {
                 set({ unreadCount: response.data.count });
             }
         } catch (error) {
@@ -151,7 +140,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     },
 
     setNotifications: (notifications, unreadCount) => {
-        const count = unreadCount !== undefined ? unreadCount : notifications.filter(n => !n.isRead).length;
+        const count = unreadCount ?? notifications.filter(n => !n.isRead).length;
         set({ notifications, unreadCount: count });
     },
 

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const data = [
   { name: 'Redes sociales', value: 64, color: '#8884d8' },

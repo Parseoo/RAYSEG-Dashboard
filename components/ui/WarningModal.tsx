@@ -4,10 +4,10 @@ import React, { useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 
 interface WarningModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    message: string;
+    readonly isOpen: boolean;
+    readonly onClose: () => void;
+    readonly title: string;
+    readonly message: string;
 }
 
 export default function WarningModal({
@@ -34,11 +34,15 @@ export default function WarningModal({
         <>
             <div
                 className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in"
-                onClick={onClose}
             >
+                <button
+                    type="button"
+                    className="absolute inset-0 w-full h-full cursor-default"
+                    onClick={onClose}
+                    aria-label="Cerrar modal"
+                />
                 <div
-                    className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in"
-                    onClick={(e) => e.stopPropagation()}
+                    className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in relative z-10"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-5 border-b border-gray-200">
@@ -48,7 +52,7 @@ export default function WarningModal({
                             </div>
                             <h2 className="text-lg font-bold text-gray-900">{title}</h2>
                         </div>
-                        <button
+                        <button type='button'
                             onClick={onClose}
                             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                         >
@@ -65,7 +69,7 @@ export default function WarningModal({
 
                     {/* Footer */}
                     <div className="border-t border-gray-200 p-5 flex gap-3">
-                        <button
+                        <button type='button'
                             onClick={onClose}
                             className="flex-1 px-4 py-2.5 bg-primary_color text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-md"
                         >

@@ -9,8 +9,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ data, opt }) => {
   const { id, mainImage, title, price, location, square, amountBed } = data
   if (opt === 'horizontal') {
     return (
-      <>
-        <div className='flex w-auto h-auto items-center transition-all hover:scale-105' onClick={() => { router.push(`/property/${id}`) }}>
+        <button type='button'
+          className='flex w-auto h-auto items-center transition-all hover:scale-105 cursor-pointer text-left' 
+          onClick={() => { router.push(`/property/${id}`) }}
+        >
           <Image
             src={mainImage}
             alt={`${title} image`}
@@ -44,8 +46,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ data, opt }) => {
               </div>
             </div>
           </div>
-        </div>
-      </>
+        </button>
     )
   }
   return (

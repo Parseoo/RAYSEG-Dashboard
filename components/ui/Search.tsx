@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface SearchItem {
     title: string;
@@ -40,7 +40,7 @@ const Search: React.FC<SearchItem> = ({ title, className, value, mobileTitle, on
             />
             {/* Кнопка закрытия поиска на мобильных устройствах */}
             {isSearchOpen && (
-                <button
+                <button type='button'
                     className='absolute inset-y-0 right-0 pr-3 flex items-center lg:hidden'
                     onClick={() => setIsSearchOpen(false)}
                 >

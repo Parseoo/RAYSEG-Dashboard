@@ -2,16 +2,16 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store/userStore';
 import { useLogout } from '@/lib/api/auth/auth-query';
 import { getUserImageUrl } from '@/lib/utils';
 
 interface UserMenuProps {
-    isOpen: boolean;
-    onClose: () => void;
-    anchorRef?: React.RefObject<HTMLElement>;
+    readonly isOpen: boolean;
+    readonly onClose: () => void;
+    readonly anchorRef?: React.RefObject<HTMLElement>;
 }
 
 export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
@@ -88,7 +88,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
 
             {/* Menu items */}
             <div className="py-2">
-                <button onClick={() => handleNavigation('/settings/my-profile')} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-all text-left">
+                <button type='button' onClick={() => handleNavigation('/settings/my-profile')} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-all text-left">
                     <User className="w-5 h-5 text-gray-600" />
                     <span className="text-sm font-medium text-gray-700">Mi perfil</span>
                 </button>
@@ -99,7 +99,7 @@ export function UserMenu({ isOpen, onClose, anchorRef }: UserMenuProps) {
                 </button> */}
 
                 <div className="border-t border-gray-200 mt-2 pt-2">
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-all text-left">
+                    <button type='button' onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-all text-left">
                         <LogOut className="w-5 h-5 text-red-600" />
                         <span className="text-sm font-medium text-red-600">Cerrar sesión</span>
                     </button>

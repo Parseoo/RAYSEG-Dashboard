@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-{/* Define la interface de props para la tabla */}
 interface TableProps<T> {
     data: T[]
     headers: string[]
@@ -13,87 +12,118 @@ interface TableProps<T> {
     hidePagination?: boolean
 }
 
-// Mapper de valores para ordenación genérica
+const headerValueExtractors = [
+    {
+        match: (h: string) => ['cliente', 'agente', 'propiedad', 'nombre', 'usuario'].includes(h),
+        get: (item: any) => item.name || item.nombre || item.title || item.nombre_rol || ''
+    },
+    {
+        match: (h: string) => h === 'tipo',
+        get: (item: any) => (item.property_type && typeof item.property_type === 'object') ? item.property_type.name || '' : item.type || item.tipo || ''
+    },
+    {
+        match: (h: string) => h === 'operacion',
+        get: (item: any) => {
+            const op = item.operation_type || item.operation;
+            return typeof op === 'object' && op !== null ? op.name || '' : op || '';
+        }
+    },
+    {
+        match: (h: string) => ['precio', 'monto'].includes(h),
+        get: (item: any) => Number.parseFloat(String(item.price || item.precio || item.monto || 0).replace(/[^0-9.]/g, '')) || 0
+    },
+    {
+        match: (h: string) => ['estatus', 'estado'].includes(h),
+        get: (item: any) => item.property_status || item.status || item.estatus || item.property_status_label || ''
+    },
+    {
+        match: (h: string) => h === 'publicacion',
+        get: (item: any) => (item.property_post_status && typeof item.property_post_status === 'object') ? item.property_post_status.name || '' : item.status_publication || ''
+    },
+    {
+        match: (h: string) => ['mls', 'clave'].includes(h),
+        get: (item: any) => item.number_mls || item.clave || ''
+    },
+    {
+        match: (h: string) => h === 'telefono',
+        get: (item: any) => item.phone || item.telefono || item.number || ''
+    },
+    {
+        match: (h: string) => h === 'rfc',
+        get: (item: any) => item.rfc || ''
+    },
+    {
+        match: (h: string) => h === 'curp',
+        get: (item: any) => item.curp || ''
+    },
+    {
+        match: (h: string) => ['rol', 'rol/permisos'].includes(h),
+        get: (item: any) => item.type || item.role?.name || item.role || item.rol || ''
+    },
+    {
+        match: (h: string) => h === 'propiedades activas',
+        get: (item: any) => Number(item.propertiesActive || 0)
+    },
+    {
+        match: (h: string) => h === 'citas',
+        get: (item: any) => Number(item.dates || 0)
+    },
+    {
+        match: (h: string) => h === 'contacto',
+        get: (item: any) => item.email || item.contacto || ''
+    },
+    {
+        match: (h: string) => ['alta', 'inicio', 'fin', 'ultimo acceso'].includes(h),
+        get: (item: any) => item.high || item.created_at || item.updated_at || item.inicio || item.fin || ''
+    },
+    {
+        match: (h: string) => h === 'calle y numero',
+        get: (item: any) => `${item.street || ''} ${item.street_number || ''}`.trim()
+    },
+    {
+        match: (h: string) => h === 'colonia',
+        get: (item: any) => item.neighborhood || item.colonia || ''
+    },
+    {
+        match: (h: string) => h === 'ciudad',
+        get: (item: any) => item.city || item.ciudad || ''
+    },
+    {
+        match: (h: string) => h === 'cp',
+        get: (item: any) => item.postal_code || item.cp || ''
+    },
+    {
+        match: (h: string) => h === 'latitud',
+        get: (item: any) => Number(item.latitude || 0)
+    },
+    {
+        match: (h: string) => h === 'longitud',
+        get: (item: any) => Number(item.longitude || 0)
+    },
+    {
+        match: (h: string) => h === 'clientes',
+        get: (item: any) => Array.isArray(item.clients) ? item.clients.map((c: any) => c.name || c.nombre || '').join(', ') : item.clients || ''
+    },
+    {
+        match: (h: string) => h === 'responsable',
+        get: (item: any) => (item.responsable && typeof item.responsable === 'object') ? item.responsable.name || item.responsable.nombre || '' : item.responsable || ''
+    },
+    {
+        match: (h: string) => ['creado en', 'creado', 'fecha', 'fecha de creacion', 'fecha creacion'].includes(h),
+        get: (item: any) => item.created_at || item.createdAt || item.fecha || item.date || ''
+    },
+    {
+        match: (h: string) => ['publicacion web', 'web'].includes(h),
+        get: (item: any) => item.is_active || item.is_published || item.status || ''
+    }
+];
+
 const getValueByHeader = (item: any, header: string): any => {
     if (!item) return '';
     const h = header.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-    // 1. Mapeos manuales prioritarios y bien definidos:
-    if (h === 'cliente' || h === 'agente' || h === 'propiedad' || h === 'nombre' || h === 'usuario') {
-        return item.name || item.nombre || item.title || item.nombre_rol || '';
-    }
-    if (h === 'tipo') {
-        if (item.property_type && typeof item.property_type === 'object') {
-            return item.property_type.name || '';
-        }
-        return item.type || item.tipo || '';
-    }
-    if (h === 'operacion') {
-        const op = item.operation_type || item.operation;
-        if (typeof op === 'object' && op !== null) return op.name || '';
-        return op || '';
-    }
-    if (h === 'precio' || h === 'monto') {
-        return parseFloat(String(item.price || item.precio || item.monto || 0).replace(/[^0-9.]/g, '')) || 0;
-    }
-    if (h === 'estatus' || h === 'estado') {
-        return item.property_status || item.status || item.estatus || item.property_status_label || '';
-    }
-    if (h === 'publicacion') {
-        if (item.property_post_status && typeof item.property_post_status === 'object') {
-            return item.property_post_status.name || '';
-        }
-        return item.status_publication || '';
-    }
-    if (h === 'mls' || h === 'clave') {
-        return item.number_mls || item.clave || '';
-    }
-    if (h === 'telefono') {
-        return item.phone || item.telefono || item.number || '';
-    }
-    if (h === 'rfc') return item.rfc || '';
-    if (h === 'curp') return item.curp || '';
-    if (h === 'rol' || h === 'rol/permisos') {
-        return item.type || item.role?.name || item.role || item.rol || '';
-    }
-    if (h === 'propiedades activas') {
-        return Number(item.propertiesActive || 0);
-    }
-    if (h === 'citas') {
-        return Number(item.dates || 0);
-    }
-    if (h === 'contacto') {
-        return item.email || item.contacto || '';
-    }
-    if (h === 'alta' || h === 'inicio' || h === 'fin' || h === 'ultimo acceso') {
-        return item.high || item.created_at || item.updated_at || item.inicio || item.fin || '';
-    }
-    if (h === 'calle y numero') {
-        return `${item.street || ''} ${item.street_number || ''}`.trim();
-    }
-    if (h === 'colonia') return item.neighborhood || item.colonia || '';
-    if (h === 'ciudad') return item.city || item.ciudad || '';
-    if (h === 'cp') return item.postal_code || item.cp || '';
-    if (h === 'latitud') return Number(item.latitude || 0);
-    if (h === 'longitud') return Number(item.longitude || 0);
-    if (h === 'clientes') {
-        if (Array.isArray(item.clients)) {
-            return item.clients.map((c: any) => c.name || c.nombre || '').join(', ');
-        }
-        return item.clients || '';
-    }
-    if (h === 'responsable') {
-        if (item.responsable && typeof item.responsable === 'object') {
-            return item.responsable.name || item.responsable.nombre || '';
-        }
-        return item.responsable || '';
-    }
-    if (h === 'creado en' || h === 'creado' || h === 'fecha' || h === 'fecha de creacion' || h === 'fecha creacion') {
-        return item.created_at || item.createdAt || item.fecha || item.date || '';
-    }
-    if (h === 'publicacion web' || h === 'publicacion' || h === 'web') {
-        return item.is_active || item.is_published || item.status || '';
-    }
+    const extractor = headerValueExtractors.find(e => e.match(h));
+    if (extractor) return extractor.get(item);
 
     // 2. Búsqueda directa o anidada en keys del objeto
     const exactKey = Object.keys(item).find(k => k.toLowerCase() === h);
@@ -103,6 +133,56 @@ const getValueByHeader = (item: any, header: string): any => {
     }
 
     return '';
+};
+
+const isEmptyValue = (val: any) => val === '' || val === null || val === undefined;
+
+const parseDateValue = (strVal: string) => {
+    const date = new Date(strVal);
+    const isValid = date instanceof Date && !Number.isNaN(date.getTime()) && (strVal.includes('-') || strVal.includes('/') || strVal.includes('T'));
+    return isValid ? date.getTime() : null;
+};
+
+const compareNumbers = (a: number, b: number, dir: 'asc' | 'desc') => dir === 'asc' ? a - b : b - a;
+
+const compareBooleans = (a: boolean, b: boolean, dir: 'asc' | 'desc') => {
+    if (a === b) return 0;
+    const ascResult = a ? -1 : 1;
+    return dir === 'asc' ? ascResult : -ascResult;
+};
+
+const compareStrings = (a: string, b: string, dir: 'asc' | 'desc') => {
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const strA = normalize(a);
+    const strB = normalize(b);
+    if (strA < strB) return dir === 'asc' ? -1 : 1;
+    if (strA > strB) return dir === 'asc' ? 1 : -1;
+    return 0;
+};
+
+const compareValues = (valA: any, valB: any, sortDirection: 'asc' | 'desc') => {
+    if (isEmptyValue(valA)) return 1;
+    if (isEmptyValue(valB)) return -1;
+
+    if (typeof valA === 'number' && typeof valB === 'number') {
+        return compareNumbers(valA, valB, sortDirection);
+    }
+
+    if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+        return compareBooleans(valA, valB, sortDirection);
+    }
+
+    const strValA = String(valA);
+    const strValB = String(valB);
+    
+    const timeA = parseDateValue(strValA);
+    const timeB = parseDateValue(strValB);
+    
+    if (timeA !== null && timeB !== null) {
+        return compareNumbers(timeA, timeB, sortDirection);
+    }
+
+    return compareStrings(strValA, strValB, sortDirection);
 };
 
 export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination = false }: TableProps<T>) => {
@@ -132,42 +212,7 @@ export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination 
             const valA = getValueByHeader(a, sortHeader);
             const valB = getValueByHeader(b, sortHeader);
 
-            if (valA === '' || valA === null || valA === undefined) return 1;
-            if (valB === '' || valB === null || valB === undefined) return -1;
-
-            // Ordenación de números
-            if (typeof valA === 'number' && typeof valB === 'number') {
-                return sortDirection === 'asc' ? valA - valB : valB - valA;
-            }
-
-            // Ordenación de booleanos
-            if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-                return sortDirection === 'asc' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
-            }
-
-            // Ordenación de fechas - mejorada para detectar mejor formatos de fecha
-            const strValA = String(valA);
-            const strValB = String(valB);
-            
-            // Verificar si ambos valores son fechas válidas
-            const dateA = new Date(strValA);
-            const dateB = new Date(strValB);
-            const isValidDateA = dateA instanceof Date && !isNaN(dateA.getTime()) && (strValA.includes('-') || strValA.includes('/') || strValA.includes('T'));
-            const isValidDateB = dateB instanceof Date && !isNaN(dateB.getTime()) && (strValB.includes('-') || strValB.includes('/') || strValB.includes('T'));
-            
-            if (isValidDateA && isValidDateB) {
-                const timeA = dateA.getTime();
-                const timeB = dateB.getTime();
-                return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
-            }
-
-            // Ordenación de cadenas
-            const strA = strValA.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            const strB = strValB.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-            if (strA < strB) return sortDirection === 'asc' ? -1 : 1;
-            if (strA > strB) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
+            return compareValues(valA, valB, sortDirection);
         });
     }, [data, sortHeader, sortDirection]);
 
@@ -190,7 +235,7 @@ export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination 
 
                                 return (
                                     <th
-                                        key={index}
+                                        key={header}
                                         onClick={() => isSortable && handleSort(header)}
                                         className={`py-2 px-3 font-medium text-xs text-gray-700 select-none text-left whitespace-nowrap ${
                                             isSortable ? 'cursor-pointer hover:bg-slate-200 transition-colors' : ''
@@ -262,20 +307,20 @@ export const Table = <T,>({ data, headers, renderRow, isLoading, hidePagination 
                             </Select>
                         </div>
                         <div className='flex items-center gap-2 justify-center sm:justify-start'>
-                            <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}
+                            <button type='button' onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1}
                                 className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
                                 <ChevronLeft size={16} className='text-gray-700' />
                             </button>
                             {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                                 const pageNum = i + 1
                                 return (
-                                    <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
+                                    <button type='button' key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-md text-sm font-medium transition-colors 
                                     ${currentPage === pageNum ? 'bg-primary_color text-white' : 'bg-transparent text-gray-700 hover:bg-gray-100'}`}>
                                         {pageNum}
                                     </button>
                                 )
                             })}
-                            <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}
+                            <button type='button' onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages}
                                 className='p-2 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'>
                                 <ChevronRight size={16} className='text-gray-700' />
                             </button>

@@ -8,7 +8,7 @@ interface TooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export default function Tooltip({ children, content, position = 'top' }: TooltipProps) {
+export default function Tooltip({ children, content, position = 'top' }: Readonly<TooltipProps>) {
   const [isVisible, setIsVisible] = useState(false);
 
   const handleMouseEnter = () => {
