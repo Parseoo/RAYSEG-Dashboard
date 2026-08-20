@@ -97,7 +97,6 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export default function Badge({ label, variant = 'gray', className, ...props }: Readonly<BadgeProps>) {
-  // Use Tag but with tighter horizontal padding to match design
   return (
     <Tag variant={variant} className={"mr-2 px-1.5 py-1 " + (className || '')} {...props}>
       {label}

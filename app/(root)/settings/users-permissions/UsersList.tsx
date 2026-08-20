@@ -322,7 +322,7 @@ function UsersList() {
                     
                     {/* Actions Dropdown */}
                     <div className="relative">
-                        <button 
+                        <button type='button'
                             onClick={() => toggleActionMenu(user.id)}
                             className="p-1.5 text-gray-500 hover:bg-slate-100 rounded-md transition-colors"
                         >

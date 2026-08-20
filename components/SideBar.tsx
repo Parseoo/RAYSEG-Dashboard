@@ -1,6 +1,6 @@
 "use client"
 
-import { agents, home, property_list, clients } from '@/lib/link';
+import { home, property_list, clients } from '@/lib/link';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -11,7 +11,6 @@ import WarningModal from './ui/WarningModal';
 import {
   ChartColumn,
   Building2,
-  CircleUserRound,
   Users,
   Settings,
   ChevronDown,
@@ -23,10 +22,8 @@ import {
   PanelBottom,
   FileKey,
   X,
-  FileText,
   UserCog,
   Shield,
-  Key,
   Library,
 } from 'lucide-react';
 
@@ -144,7 +141,7 @@ const CollapsedSubmenu = ({
     <>
       <div className="flex flex-col items-center">
         <Tooltip label={item.label} show={!isOpen}>
-          <div
+          <button type='button'
             className={cn(
               'flex items-center justify-center w-10 h-10 rounded-lg transition-all cursor-pointer',
               isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
@@ -157,7 +154,7 @@ const CollapsedSubmenu = ({
                 isItemActive && 'brightness-0 invert'
               )}
             />
-          </div>
+          </button>
         </Tooltip>
 
         {/* Dropdown submenu (below the icon) */}
@@ -330,9 +327,10 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
           <li key={item.label} className='mb-1'>
             <div className='flex flex-col'>
               {hasChildren ? (
-                <div
+                <button
+                  type="button"
                   className={cn(
-                    'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer',
+                    'group flex items-center px-5 py-2 gap-1 rounded-lg transition-all cursor-pointer w-full text-left',
                     isItemActive ? 'bg-property_purple text-white' : 'hover:bg-gray-100'
                   )}
                   onClick={() => toggleMenu(item.label)}
@@ -351,7 +349,7 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
                       <ChevronRight className='w-4 h-4' />
                     )}
                   </span>
-                </div>
+                </button>
               ) : (
                 <Link
                   href={item.href!}
@@ -457,15 +455,17 @@ export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
   return (
     <>
       {/* Overlay */}
-      <div
-        className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
+      <button
+        type="button"
+        className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden border-none p-0 m-0 w-full outline-none cursor-default'
         onClick={onClose}
+        aria-label='Cerrar menú'
       />
       {/* Sidebar */}
       <nav className='fixed left-0 top-0 h-screen w-[280px] bg-white z-50 shadow-xl lg:hidden flex flex-col'>
         <div className='flex items-center justify-between p-4 border-b flex-shrink-0'>
           <h2 className='text-lg font-semibold'>Menú</h2>
-          <button
+          <button type='button'
             onClick={onClose}
             className='p-2 rounded-lg hover:bg-gray-100 transition-colors'
           >

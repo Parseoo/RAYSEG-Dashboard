@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { X, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface ItemDetail {

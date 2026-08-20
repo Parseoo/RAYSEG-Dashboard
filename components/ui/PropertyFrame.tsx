@@ -20,7 +20,8 @@ interface PropertyFrameProps {
 const CustomArrow: React.FC<any> = (props) => {
     const { className, style, onClick, direction } = props;
     return (
-        <div
+        <button
+            type="button"
             className={`${className} before:content-['']`}
             style={{ 
                 ...style, 
@@ -39,7 +40,7 @@ const CustomArrow: React.FC<any> = (props) => {
             <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-4 h-4'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d={direction === 'next' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
             </svg>
-        </div>
+        </button>
     );
 }
 
