@@ -1,7 +1,6 @@
 "use client"
 
 import { DynamicInputs } from '@/components/ui/Input';
-import React from 'react';
 import { inputsFooterSection, inputsSocialMedia, inputsTextFooter } from '../inputConfig';
 
 interface AddFooterProps {

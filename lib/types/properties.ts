@@ -1,6 +1,6 @@
 import { CatalogItem } from './catalogs';
 
-export interface propertyListItem {
+export interface PropertyListItem {
   id: number;
   square: number;
   amountBed: number;
@@ -124,7 +124,7 @@ export interface PropertyListResponse {
   };
 }
 
-export interface createPropertyForm {
+export interface CreatePropertyForm {
   number_mls: string;
   title: string;
   description: string;

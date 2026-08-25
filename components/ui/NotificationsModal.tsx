@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, Bell, Home, UserPlus, ShieldCheck, ImageIcon, Users, DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tag } from './badges';
 import { useNotificationStore } from '@/lib/store/notificationStore';
-import { NotificationCategory, NotificationItem } from '@/lib/types/notifications';
+import { NotificationItem } from '@/lib/types/notifications';
 
 type FilterType = 'all' | 'unread' | (string & {});
 
@@ -161,7 +161,7 @@ export function NotificationsModal({ isOpen, onClose }: Readonly<NotificationsMo
     }, [notifications, filter]);
 
     const loadFilteredNotifications = useCallback((selectedFilter: FilterType) => {
-        let category: NotificationCategory | undefined = undefined;
+        let category: string | undefined = undefined;
         let unread: boolean | undefined = undefined;
 
         if (selectedFilter === 'unread') {

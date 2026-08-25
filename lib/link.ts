@@ -1,5 +1,3 @@
-import { permission } from "process"
-
 export const home = "/"
 export const property_list = "/property"
 export const clients = "/clients"

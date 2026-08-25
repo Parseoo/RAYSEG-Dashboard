@@ -1,5 +1,7 @@
 import { ItemResponse } from '@/lib/@type';
 
+export type RawCatalogValue = string | number | undefined | null;
+
 function normalize(value: string) {
   return value.trim().toLowerCase();
 }
@@ -8,7 +10,7 @@ function findCatalogItem(raw: string, catalog: ItemResponse[]): ItemResponse | u
   const normalized = normalize(raw);
   return catalog.find(
     (item) =>
-      String(item.id) === normalized ||
+      String((item as any).id) === normalized ||
       String(item.catalogItemID) === normalized ||
       normalize(item.name ?? '') === normalized ||
       normalize(item.value ?? '') === normalized ||
@@ -18,7 +20,7 @@ function findCatalogItem(raw: string, catalog: ItemResponse[]): ItemResponse | u
 
 /** Etiqueta para selects/UI: prioriza `name` del ítem de catálogo */
 export function resolveCatalogDisplayValue(
-  raw: string | number | undefined | null,
+  raw: RawCatalogValue,
   catalog: ItemResponse[]
 ): string {
   if (raw === undefined || raw === null) return '';
@@ -31,7 +33,7 @@ export function resolveCatalogDisplayValue(
 
 /** Valor para enviar al API: prioriza `value` o `key` del catálogo */
 export function resolveCatalogApiValue(
-  raw: string | number | undefined | null,
+  raw: RawCatalogValue,
   catalog: ItemResponse[]
 ): string {
   if (raw === undefined || raw === null) return '';
@@ -45,7 +47,7 @@ export function resolveCatalogApiValue(
 
 /** Valor para enviar al API: devuelve el catalogItemID como número */
 export function resolveCatalogItemId(
-  raw: string | number | undefined | null,
+  raw: RawCatalogValue,
   catalog: ItemResponse[]
 ): number | null {
   if (raw === undefined || raw === null) return null;

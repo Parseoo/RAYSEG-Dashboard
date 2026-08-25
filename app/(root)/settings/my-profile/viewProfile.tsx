@@ -84,9 +84,7 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
                             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                                 {fullName}
                             </h1>
-                            <span className="text-xs text-gray-400 font-mono font-medium">
-                                #{user?.id || '5'}
-                            </span>
+
                         </div>
 
                         {/* Badges de Rol y Estado */}

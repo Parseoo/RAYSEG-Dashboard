@@ -84,16 +84,7 @@ export const PersonalInformation = ({ user }: PersonalInformationProps) => {
                     <span className="text-gray-900 font-semibold text-sm sm:text-right">{state || "-"}</span>
                 </div>
 
-                {/* ID de usuario */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-gray-100 gap-1">
-                    <span className="text-gray-500 font-medium text-sm flex items-center gap-2">
-                        <Hash size={15} className="text-gray-400" />
-                        ID de Usuario
-                    </span>
-                    <span className="text-gray-900 font-semibold text-sm sm:text-right font-mono">
-                        #{user?.id || "-"}
-                    </span>
-                </div>
+
 
                 {/* Rol */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 border-gray-100 gap-1">
