@@ -1,6 +1,6 @@
 "use client";
 import { create } from 'zustand';
-import { NotificationCategory, NotificationItem, NotificationQueryParams } from '@/lib/types/notifications';
+import { NotificationItem, NotificationQueryParams } from '@/lib/types/notifications';
 import { GetNotifications, GetUnreadNotificationsCount, MarkAllNotificationsAsRead, MarkNotificationAsRead } from '@/lib/api/config-api';
 
 interface NotificationState {
@@ -12,13 +12,13 @@ interface NotificationState {
     page: number;
     pageSize: number;
     hasMore: boolean;
-    categoryFilter?: NotificationCategory;
+    categoryFilter?: string;
     unreadFilter?: boolean;
 
     fetchNotifications: (params?: NotificationQueryParams, append?: boolean) => Promise<void>;
     fetchUnreadCount: () => Promise<void>;
     loadMore: () => Promise<void>;
-    setFilterCategory: (category?: NotificationCategory) => Promise<void>;
+    setFilterCategory: (category?: string) => Promise<void>;
     setFilterUnread: (unread?: boolean) => Promise<void>;
     resetFilters: () => Promise<void>;
     setNotifications: (notifications: NotificationItem[], unreadCount?: number) => void;
@@ -106,7 +106,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         await state.fetchNotifications({ page: nextPage }, true);
     },
 
-    setFilterCategory: async (category?: NotificationCategory) => {
+    setFilterCategory: async (category?: string) => {
         const state = get();
         set({ categoryFilter: category, page: 1 });
         await state.fetchNotifications({

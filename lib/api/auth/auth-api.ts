@@ -1,4 +1,4 @@
-import { LoginForm, ResetPasswordForm, LoginResponse, AuthUserResponse } from "@/lib/@type";
+import { LoginForm, LoginResponse, AuthUserResponse } from "@/lib/@type";
 import { httpClient } from "@/lib/api/fetch-client";
 import { useUserStore } from "@/lib/store/userStore";
 
@@ -59,82 +59,80 @@ httpClient.addRequestInterceptor((config) => {
   return config;
 });
 
+const handleSessionExpired = () => {
+  if (typeof window !== 'undefined') {
+    const store = useUserStore.getState();
+    store.setSessionExpired(true);
+    store.logout();
+    clearAuthHeader();
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('refresh_token');
+    // The Layout component will detect the state change and handle the redirect
+  }
+};
+
+const retryOriginalRequest = (originalRequest: any, token: string) => {
+  return httpClient.request(originalRequest.url, {
+    ...originalRequest,
+    headers: {
+      ...originalRequest.headers,
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+const refreshAccessToken = async (originalRequest: any, refreshToken: string) => {
+  try {
+    const response = await RefreshTokenApi(refreshToken);
+    // Backend returns { access, refresh } directly (TokenResponseSchema)
+    const newAccessToken = response.data.access;
+    const newRefreshToken = response.data.refresh;
+
+    if (typeof window !== 'undefined' && newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken);
+    }
+
+    setAuthHeader(newAccessToken);
+    useUserStore.getState().setToken(newAccessToken);
+    processQueue(null, newAccessToken);
+
+    return retryOriginalRequest(originalRequest, newAccessToken);
+  } catch (refreshError) {
+    processQueue(refreshError, null);
+    handleSessionExpired();
+    throw refreshError;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
 httpClient.addResponseInterceptor(
   (response) => response,
   async (error) => {
     const originalRequest = error?.config;
 
-    if (error?.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          return httpClient.request(originalRequest.url, {
-            ...originalRequest,
-            headers: {
-              ...originalRequest.headers,
-              Authorization: `Bearer ${token}`,
-            },
-          });
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken =
-        typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
-
-      if (!refreshToken) {
-        isRefreshing = false;
-        if (typeof window !== 'undefined') {
-          const store = useUserStore.getState();
-          store.setSessionExpired(true);
-          store.logout();
-          clearAuthHeader();
-          // The Layout component will detect the state change and handle the redirect
-        }
-        return Promise.reject(error);
-      }
-
-      try {
-        const response = await RefreshTokenApi(refreshToken);
-        // Backend returns { access, refresh } directly (TokenResponseSchema)
-        const newAccessToken = response.data.access;
-        const newRefreshToken = response.data.refresh;
-
-        if (typeof window !== 'undefined') {
-          if (newRefreshToken) localStorage.setItem('refresh_token', newRefreshToken);
-        }
-
-        setAuthHeader(newAccessToken);
-        useUserStore.getState().setToken(newAccessToken);
-        processQueue(null, newAccessToken);
-
-        return httpClient.request(originalRequest.url, {
-          ...originalRequest,
-          headers: {
-            ...originalRequest.headers,
-            Authorization: `Bearer ${newAccessToken}`,
-          },
-        });
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        if (typeof window !== 'undefined') {
-          const store = useUserStore.getState();
-          store.setSessionExpired(true);
-          store.logout();
-          clearAuthHeader();
-          localStorage.removeItem('jwtToken');
-          localStorage.removeItem('refresh_token');
-          // The Layout component will detect the state change and handle the redirect
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+    if (error?.response?.status !== 401 || !originalRequest || originalRequest._retry) {
+      throw error;
     }
 
-    return Promise.reject(error);
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then((token) => retryOriginalRequest(originalRequest, token as string));
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    const refreshToken =
+      typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+
+    if (!refreshToken) {
+      isRefreshing = false;
+      handleSessionExpired();
+      throw error;
+    }
+
+    return refreshAccessToken(originalRequest, refreshToken);
   }
 );

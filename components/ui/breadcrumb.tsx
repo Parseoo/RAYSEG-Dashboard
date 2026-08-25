@@ -48,7 +48,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items = [], className = '' }) =
                             )}
 
                             {isActive || !item.href || item.href === '#' ? (
-                                <span className={`inline-flex items-center font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[200px] sm:max-w-none ${isFirst ? 'gap-1.5' : ''}`}>
+                                <span className={`inline-flex items-center font-semibold text-gray-800 dark:text-gray-200 ${isFirst ? 'gap-1.5' : ''}`}>
                                     {isFirst && (
                                         <svg
                                             className='w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-primary_color'
@@ -73,7 +73,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items = [], className = '' }) =
                             ) : (
                                 <Link
                                     href={item.href}
-                                    className={`inline-flex items-center font-medium text-gray-500 hover:text-primary_color transition-colors duration-150 truncate max-w-[160px] sm:max-w-none ${isFirst ? 'gap-1.5' : ''}`}
+                                    className={`inline-flex items-center font-medium text-gray-500 hover:text-primary_color transition-colors duration-150 ${isFirst ? 'gap-1.5' : ''}`}
                                 >
                                     {isFirst && (
                                         <svg
