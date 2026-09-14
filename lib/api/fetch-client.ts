@@ -104,8 +104,8 @@ class FetchClient {
         };
         error.config = config; // importante para retry
 
-        // Solo loguear errores que no sean 404 o 401 (son esperados en algunos casos como credenciales incorrectas)
-        if (response.status !== 404 && response.status !== 401) {
+        // Solo loguear errores que no sean 404, 401 o 403 (son esperados en algunos casos como credenciales o permisos incorrectos)
+        if (response.status !== 404 && response.status !== 401 && response.status !== 403) {
           console.error(`[FetchClient] Request failed: ${config.method || 'GET'} ${config.url} - Status: ${response.status}`);
         }
 

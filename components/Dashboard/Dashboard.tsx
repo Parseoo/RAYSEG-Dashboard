@@ -7,6 +7,8 @@ import PropertyReferrals from './PropertyReferrals';
 
 
 
+import { RequirePermission } from '@/lib/hooks/usePermissions';
+
 export const Dashboard = () => {
   return (
     <div className='px-1 sm:px-0'>
@@ -16,7 +18,9 @@ export const Dashboard = () => {
           <TotalRevenue />
           <PropertyReferrals />
         </div> 
-        <PropertyList />
+        <RequirePermission codename="view_property">
+          <PropertyList />
+        </RequirePermission>
     </div>
   )
 }

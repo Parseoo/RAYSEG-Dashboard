@@ -67,11 +67,13 @@ export interface UserState {
   user: User | null;
   isLogin: boolean;
   token: string | null;
+  permissions: string[];
   _hasHydrated: boolean;
   isSessionExpired?: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
   setToken: (token: string) => void;
+  setPermissions: (permissions: string[]) => void;
   setHasHydrated: (state: boolean) => void;
   setSessionExpired: (state: boolean) => void;
 }

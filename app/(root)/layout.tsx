@@ -43,6 +43,25 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isExpired = token ? isTokenExpired(token) : false;
   const isAuthenticated = isLogin && !isExpired;
 
+  // Fetch permissions if authenticated
+  useEffect(() => {
+    async function fetchPermissions() {
+      if (isAuthenticated) {
+        try {
+          const { GetUserPermissionCurrent } = await import('@/lib/api/permission-api');
+          const response = await GetUserPermissionCurrent();
+          if (response.data && Array.isArray(response.data)) {
+            const codenames = response.data.map((p: any) => p.codename);
+            useUserStore.getState().setPermissions(codenames);
+          }
+        } catch (error) {
+          console.error("Error fetching user permissions:", error);
+        }
+      }
+    }
+    fetchPermissions();
+  }, [isAuthenticated]);
+
   if (!_hasHydrated) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-200">

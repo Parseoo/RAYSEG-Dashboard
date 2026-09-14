@@ -25,11 +25,15 @@ import {
   UserCog,
   Shield,
   Library,
+  Key,
 } from 'lucide-react';
+
+import { usePermissions } from '@/lib/hooks/usePermissions';
 
 type MenuItemBase = {
   icon: React.ComponentType<{ className?: string }>
   label: string
+  permissions?: string[]
 }
 
 type MenuItemLink = MenuItemBase & {
@@ -46,16 +50,16 @@ type MenuItemGroup = MenuItemBase & {
 
 type MenuItem = MenuItemLink | MenuItemGroup
 
-
 export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
-  { href: property_list, path: '/property', icon: Building2, label: 'Propiedades' },
-  { href: clients, path: '/clients', icon: Users, label: 'Clientes' },
+  { href: property_list, path: '/property', icon: Building2, label: 'Propiedades', permissions: ['view_property'] },
+  { href: clients, path: '/clients', icon: Users, label: 'Clientes', permissions: ['view_client'] },
 
   {
     icon: LayoutTemplate,
     label: 'Contenido Web',
     path: '/content-web',
+    permissions: ['view_webcontent', 'view_homecontent', 'view_servicescontent', 'view_aboutuscontent', 'view_locationcontent', 'view_footercontent', 'view_legalpagecontent'],
     children: [
       { href: '/content-web/home', path: '/content-web/home', icon: Home, label: 'Home' },
       { href: '/content-web/services', path: '/content-web/services', icon: Briefcase, label: 'Servicios' },
@@ -69,10 +73,11 @@ export const menuItems: MenuItem[] = [
     icon: Settings,
     label: 'Configuración',
     path: '/settings',
+    permissions: ['view_user', 'view_role', 'view_permission', 'view_catalog'],
     children: [
-      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: UserCog, label: 'Usuarios' },
-      { href: '/settings/roles', path: '/settings/roles', icon: Shield, label: 'Roles' },
-      //{ href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos' },
+      { href: '/settings/users-permissions', path: '/settings/users-permissions', icon: UserCog, label: 'Usuarios', permissions: ['view_user'] },
+      { href: '/settings/roles', path: '/settings/roles', icon: Shield, label: 'Roles', permissions: ['view_role'] },
+      { href: '/settings/permissions', path: '/settings/permissions', icon: Key, label: 'Permisos', permissions: ['view_permission'] },
       { href: '/catalogs', path: '/catalogs', icon: Library, label: 'Catálogos' },
     ]
   },
@@ -207,19 +212,41 @@ const CollapsedSubmenu = ({
 };
 
 
-// Componente para renderizar el menú (reutilizable)
 const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => void; collapsed?: boolean }) => {
   const path = usePathname()
+  const { user } = useUserStore();
+  const { hasAnyPermission } = usePermissions();
+
+  const filteredMenuItems = React.useMemo(() => {
+    return menuItems
+      .filter(item => !item.permissions || hasAnyPermission(item.permissions))
+      .map(item => {
+        if ('children' in item && item.children) {
+          return {
+            ...item,
+            children: item.children.filter(child => !child.permissions || hasAnyPermission(child.permissions))
+          };
+        }
+        return item;
+      })
+      .filter(item => {
+        if ('children' in item && item.children) {
+          return item.children.length > 0;
+        }
+        return true;
+      });
+  }, [hasAnyPermission]);
+
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    menuItems.forEach(item => {
+    filteredMenuItems.forEach(item => {
       if ('children' in item && item.children) {
         initial[item.label] = true;
       }
     });
     return initial;
   });
-  const { user } = useUserStore();
+  
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
 
@@ -233,7 +260,7 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
   };
 
   useEffect(() => {
-    menuItems.forEach(item => {
+    filteredMenuItems.forEach(item => {
       if ('children' in item && item.children) {
         const isChildActive = item.children.some(child => child.path === path);
 
@@ -245,14 +272,14 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
         }
       }
     });
-  }, [path]);
+  }, [path, filteredMenuItems]);
 
   const isActive = (itemPath?: string) => {
     if (!itemPath) return false;
     if (path === itemPath) return true;
     // Verificar si la ruta actual empieza con el path del item (para subrutas)
     if (path.startsWith(itemPath) && itemPath !== '/') return true;
-    const item = menuItems.find(m => 'path' in m && m.path === itemPath) as MenuItemGroup | undefined;
+    const item = filteredMenuItems.find(m => 'path' in m && m.path === itemPath) as MenuItemGroup | undefined;
     if (item && 'children' in item && item.children) {
       return item.children.some(child => path === child.path || path.startsWith(child.path + '/'));
     }
@@ -265,7 +292,7 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
   if (collapsed) {
     return (
       <ul className='flex flex-col items-center gap-1 pt-2 pb-8'>
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const hasChildren = 'children' in item && item.children && item.children.length > 0;
           const itemPath = 'path' in item ? item.path : undefined;
           const isItemActive = isActive(itemPath);
@@ -315,7 +342,7 @@ const MenuContent = ({ onLinkClick, collapsed = false }: { onLinkClick?: () => v
   // ──────────────────────────────────────────────────────
   return (
     <ul className='mr-auto ml-auto max-w-[220px] w-full pb-8'>
-      {menuItems.map((item) => {
+      {filteredMenuItems.map((item) => {
         const hasChildren = 'children' in item && item.children && item.children.length > 0;
         const itemPath = 'path' in item ? item.path : undefined;
         const isItemActive = isActive(itemPath);

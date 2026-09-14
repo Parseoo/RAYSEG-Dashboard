@@ -65,7 +65,16 @@ export const useLogout = () => {
         : null;
 
       if (refreshToken) {
-        await LogoutApi(refreshToken);
+        try {
+          await LogoutApi(refreshToken);
+        } catch (error: any) {
+          // Ignore 401 Unauthorized errors during logout, as it means the session is already dead.
+          if (error?.response?.status === 401) {
+            console.log("Token already invalid on server, proceeding with local logout");
+            return;
+          }
+          throw error;
+        }
       }
     },
     onSuccess: () => {

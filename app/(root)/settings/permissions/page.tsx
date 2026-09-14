@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumb from "@/components/ui/breadcrumb";
-import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsGrouped } from "@/lib/api/permission-api";
+import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsByModule } from "@/lib/api/permission-api";
 import AddPermissions from "../users-permissions/add-user/addPermissions";
 import { UserForm } from "@/lib/@type";
 import { Permission } from "@/lib/@type-permission";
@@ -11,47 +11,13 @@ import { Loader2, Save, ShieldCheck } from "lucide-react";
 import { showToast } from "nextjs-toast-notify";
 import { InputField } from "@/components/ui/Input";
 
-const MODEL_TO_SECTION: Record<string, string> = {
-    property: 'propiedades',
-    client: 'clientes',
-    agent: 'agentes',
-    contract: 'contratos',
-    user: 'ajustes-usuarios',
-    lead: 'leads-contacto',
-    propertyimage: 'imagenes-propiedades'
-};
-
-const ACTION_TO_ID: Record<string, string> = {
-    view: 'ver-lista',
-    add: 'crear',
-    change: 'editar',
-    delete: 'eliminar'
-};
-
-const SECTION_TO_MODEL: Record<string, string> = {
-    'propiedades': 'property',
-    'clientes': 'client',
-    'agentes': 'agent',
-    'contratos': 'contract',
-    'ajustes-usuarios': 'user',
-    'leads-contacto': 'lead',
-    'imagenes-propiedades': 'propertyimage'
-};
-
-const ACTION_ID_TO_VERB: Record<string, string> = {
-    'ver-lista': 'view',
-    'ver-detalle': 'view',
-    'crear': 'add',
-    'editar': 'change',
-    'eliminar': 'delete'
-};
-
 const PermissionsPage = () => {
     const [roles, setRoles] = useState<any[]>([]);
     const [selectedRoleId, setSelectedRoleId] = useState<string>("");
     const [isLoadingRoles, setIsLoadingRoles] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [allSystemPermissions, setAllSystemPermissions] = useState<Permission[]>([]);
+    const [codenameToModule, setCodenameToModule] = useState<Record<string, string>>({});
     const [groupedPermissions, setGroupedPermissions] = useState<Record<string, any> | undefined>(undefined);
     const [dummyUser, setDummyUser] = useState<UserForm>({
         email: "",
@@ -71,7 +37,7 @@ const PermissionsPage = () => {
                 setIsLoadingRoles(true);
                 const [rolesRes, permsRes] = await Promise.all([
                     GetListRoles(),
-                    GetListPermissionsGrouped()
+                    GetListPermissionsByModule()
                 ]);
 
                 const extractData = (res: any) => {
@@ -85,21 +51,27 @@ const PermissionsPage = () => {
 
                 setRoles(extractData(rolesRes));
                 const groupedData = permsRes.data || {};
+                
+                const moduleMapping: Record<string, string> = {};
                 const allPermsFlat: Permission[] = [];
-                Object.keys(groupedData).forEach(key => {
-                    const group = groupedData[key];
+                
+                Object.keys(groupedData).forEach(moduleName => {
+                    const group = groupedData[moduleName];
                     const permissionsList = Array.isArray(group) ? group : (group.permissions || []);
                     permissionsList.forEach((p: any) => {
+                        moduleMapping[p.codename] = moduleName;
                         allPermsFlat.push({
                             id: p.id,
                             name: p.name,
                             codename: p.codename,
-                            model: p.model || key,
+                            model: p.model || moduleName,
                             is_system_role: false
                         });
                     });
                 });
+                
                 setAllSystemPermissions(allPermsFlat);
+                setCodenameToModule(moduleMapping);
                 setGroupedPermissions(groupedData);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -126,17 +98,13 @@ const PermissionsPage = () => {
             if (Array.isArray(perms)) {
                 const uiPerms: Record<string, any> = {};
                 perms.forEach((p: Permission) => {
-                    const parts = p.codename.split('_');
-                    const action = parts[0];
-                    const model = parts.slice(1).join('_');
+                    const sectionId = codenameToModule[p.codename]; // Resolve module dynamically
 
-                    if (model && action) {
-                        const sectionId = MODEL_TO_SECTION[model] || model;
-
+                    if (sectionId) {
                         uiPerms[sectionId] = true;
                         if (!uiPerms[`${sectionId}_actions`]) uiPerms[`${sectionId}_actions`] = [];
 
-                        const actionId = ACTION_TO_ID[action] || action;
+                        const actionId = String(p.id);
 
                         if (!uiPerms[`${sectionId}_actions`].includes(actionId)) {
                             uiPerms[`${sectionId}_actions`].push(actionId);
@@ -166,19 +134,9 @@ const PermissionsPage = () => {
 
             Object.keys(uiPerms).forEach(key => {
                 if (key.endsWith('_actions') && Array.isArray(uiPerms[key])) {
-                    const sectionId = key.replace('_actions', '');
                     const actions = uiPerms[key] as string[];
-
-                    const model = SECTION_TO_MODEL[sectionId] || sectionId;
-
                     actions.forEach(actionId => {
-                        const verb = ACTION_ID_TO_VERB[actionId] || actionId;
-
-                        const codename = `${verb}_${model}`;
-                        const foundPerm = allSystemPermissions.find(p => p.codename === codename);
-                        if (foundPerm) {
-                            permissionIds.push(foundPerm.id);
-                        }
+                        permissionIds.push(Number(actionId));
                     });
                 }
             });
