@@ -5,6 +5,7 @@ import { showToast } from 'nextjs-toast-notify';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SlidersHorizontal, Eye, Pencil, Trash2, UserPlus, User, MoreVertical, X } from 'lucide-react';
+import { RequirePermission } from '@/lib/hooks/usePermissions';
 import { GetCatalogByName } from '@/lib/api/catalog-api';
 import Search from '../../../components/ui/Search';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -324,21 +325,25 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
               </button>
             </Link>
           </Tooltip>
-          <Tooltip content="Editar">
-            <Link href={`/clients/edit-client/${row.id}`}>
-              <button type='button' className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
-                <Pencil size={16} className='text-gray-600' />
+          <RequirePermission codename="change_client">
+            <Tooltip content="Editar">
+              <Link href={`/clients/edit-client/${row.id}`}>
+                <button type='button' className='p-1.5 bg-slate-200 rounded-md transition-all hover:bg-slate-300'>
+                  <Pencil size={16} className='text-gray-600' />
+                </button>
+              </Link>
+            </Tooltip>
+          </RequirePermission>
+          <RequirePermission codename="delete_client">
+            <Tooltip content="Eliminar">
+              <button type='button'
+                onClick={() => handleDeleteClick(row)}
+                className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
+              >
+                <Trash2 size={16} className='text-white' />
               </button>
-            </Link>
-          </Tooltip>
-          <Tooltip content="Eliminar">
-            <button type='button'
-              onClick={() => handleDeleteClick(row)}
-              className='p-1.5 bg-red-500 rounded-md transition-all hover:bg-red-600'
-            >
-              <Trash2 size={16} className='text-white' />
-            </button>
-          </Tooltip>
+            </Tooltip>
+          </RequirePermission>
         </div>
       </td>
     </tr>
@@ -390,20 +395,24 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
                   <Eye size={16} /> Ver
                 </button>
               </Link>
-              <Link href={`/clients/edit-client/${row.id}`}>
-                <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
-                  <Pencil size={16} /> Editar
+              <RequirePermission codename="change_client">
+                <Link href={`/clients/edit-client/${row.id}`}>
+                  <button type='button' className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 flex items-center gap-2">
+                    <Pencil size={16} /> Editar
+                  </button>
+                </Link>
+              </RequirePermission>
+              <RequirePermission codename="delete_client">
+                <button type='button'
+                  onClick={() => {
+                    setOpenActionMenu(null);
+                    handleDeleteClick(row);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 size={16} /> Eliminar
                 </button>
-              </Link>
-              <button type='button'
-                onClick={() => {
-                  setOpenActionMenu(null);
-                  handleDeleteClick(row);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-              >
-                <Trash2 size={16} /> Eliminar
-              </button>
+              </RequirePermission>
             </div>
           )}
         </div>
@@ -469,12 +478,14 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
                   <span className='text-sm text-gray-600'>Limpiar Filtros</span>
                 </button>
               )}
-              <Link href='/clients/add-client' className='w-full sm:w-auto'>
-                <button type='button'
-                  className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
-                  <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Cliente</span><span className='sm:hidden'>Agregar</span>
-                </button>
-              </Link>
+              <RequirePermission codename="add_client">
+                <Link href='/clients/add-client' className='w-full sm:w-auto'>
+                  <button type='button'
+                    className='bg-primary_color text-white w-full sm:w-[200px] h-[40px] rounded-lg flex items-center justify-center gap-2 px-4 hover:opacity-90 transition-opacity font-medium shadow-md text-sm sm:text-base'>
+                    <UserPlus size={18} className='sm:w-5 sm:h-5' /> <span className='hidden sm:inline'>Agregar Cliente</span><span className='sm:hidden'>Agregar</span>
+                  </button>
+                </Link>
+              </RequirePermission>
             </div>
           </div>
 

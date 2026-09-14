@@ -20,8 +20,10 @@ function Info() {
       try {
         const response = await GetPropertyClients();
         setStats(response.data);
-      } catch (error) {
-        console.error('Error fetching property stats:', error);
+      } catch (error: any) {
+        if (error?.response?.status !== 403) {
+          console.error('Error fetching property stats:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -29,21 +31,21 @@ function Info() {
     fetchStats();
   }, []);
 
-  const active = stats ? [
-    { name: 'Active', title: 'Propiedades Activas', totalProperties: stats.total_active, occupiedProperties: 0, color: "#475BE8" },
-  ] : [];
+  const active = [
+    { name: 'Active', title: 'Propiedades Activas', totalProperties: stats?.total_active || 0, occupiedProperties: 0, color: "#475BE8" },
+  ];
 
-  const sold = stats ? [
-    { name: 'Sold', title: 'Propiedades Vendidas', totalProperties: stats.total_sold, occupiedProperties: 0, color: "#FD8539" },
-  ] : [];
+  const sold = [
+    { name: 'Sold', title: 'Propiedades Vendidas', totalProperties: stats?.total_sold || 0, occupiedProperties: 0, color: "#FD8539" },
+  ];
 
-  const rented = stats ? [
-    { name: 'Rented', title: 'Propiedades Rentadas', totalProperties: stats.total_rented, occupiedProperties: 0, color: "#2ED480" },
-  ] : [];
+  const rented = [
+    { name: 'Rented', title: 'Propiedades Rentadas', totalProperties: stats?.total_rented || 0, occupiedProperties: 0, color: "#2ED480" },
+  ];
 
-  const total = stats ? [
-    { name: 'Total', title: 'Total de Propiedades', totalProperties: stats.total, occupiedProperties: 0, color: "#FE6D8E" },
-  ] : [];
+  const total = [
+    { name: 'Total', title: 'Total de Propiedades', totalProperties: stats?.total || 0, occupiedProperties: 0, color: "#FE6D8E" },
+  ];
 
   if (loading) {
     return (

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ChevronDown, X, Check, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import { UserForm } from '@/lib/@type';
-import { GetListPermissionsGrouped } from '@/lib/api/permission-api';
+import { GetListPermissionsByModule } from '@/lib/api/permission-api';
 import { Permission } from '@/lib/@type-permission';
 
 interface PermissionSection {
@@ -80,7 +80,7 @@ const SECTION_METADATA: Record<string, { title: string, description: string, gro
     'webcontent_legal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
     'webcontent_privacidad': { title: 'Contenido Web - Aviso de Privacidad', description: 'Gestión del aviso de privacidad.', group: 'PERMISOS EN CONTENIDO WEB', order: 16 },
     'webcontent_terminos': { title: 'Contenido Web - Términos y Condiciones', description: 'Gestión de términos y condiciones.', group: 'PERMISOS EN CONTENIDO WEB', order: 17 },
-    'ajustes-usuarios': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'ajustes-usuarios': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
     'mi-perfil': { title: 'Mi Perfil', description: 'Gestión de datos personales y configuración de cuenta.', group: 'CONFIGURACIÓN', order: 21 },
     // Underscore versions from API
     'property': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
@@ -89,7 +89,7 @@ const SECTION_METADATA: Record<string, { title: string, description: string, gro
     'contract': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
     'lead': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
     'propertyimage': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
-    'user': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'user': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
     // Plural forms from API
     'clients': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
     'properties': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
@@ -97,7 +97,7 @@ const SECTION_METADATA: Record<string, { title: string, description: string, gro
     'contracts': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
     'leads': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
     'propertyimages': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
-    'users': { title: 'Usuarios y Permisos', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'users': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
     'reports': { title: 'Reportes / Dashboard', description: 'Visualización de estadísticas, métricas y reportes del sistema.', group: 'ANÁLISIS Y CONTROL', order: 2 },
 };
 
@@ -160,11 +160,11 @@ const MultiSelectPermissions = ({
 
     return (
         <div className='relative w-full' ref={dropdownRef}>
-            <button
-                type='button'
+            <div
+                role='button'
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                disabled={disabled}
-                className={`w-full min-h-[42px] px-3 py-2 border border-slate-200 rounded-lg bg-white text-left text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all flex items-center justify-between ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'hover:border-slate-300'}`}
+                aria-disabled={disabled}
+                className={`w-full min-h-[42px] px-3 py-2 border border-slate-200 rounded-lg bg-white text-left text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all flex items-center justify-between ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'hover:border-slate-300 cursor-pointer'}`}
             >
                 <div className='flex flex-wrap gap-1.5 flex-1'>
                     {selectedOptions.length > 0 ? (
@@ -191,7 +191,7 @@ const MultiSelectPermissions = ({
                     size={16}
                     className={`text-slate-400 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`}
                 />
-            </button>
+            </div>
 
             {isOpen && (
                 <div className='absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in duration-150'>
@@ -308,44 +308,7 @@ function buildPermissionSections(groupedData: Record<string, any>): PermissionSe
 
         const actions: { id: string; label: string; codename: string }[] = [];
         permissionsList.forEach((p: any) => {
-            const parts = p.codename.split('_');
-            const action = parts[0];
-
-            let label = p.name || p.codename;
-            if (action === 'view') label = 'Ver lista / detalle';
-            else if (action === 'add') label = 'Crear';
-            else if (action === 'change') label = 'Editar';
-            else if (action === 'delete') label = 'Eliminar';
-            else if (action === 'export') label = 'Exportar';
-            else if (action === 'upload') label = 'Subir';
-            else if (action === 'assign') label = 'Asignar';
-            else if (action === 'list') label = 'Ver lista';
-            else if (action === 'retrieve') label = 'Ver detalle';
-            else if (action === 'create') label = 'Crear';
-            else if (action === 'update') label = 'Actualizar';
-            else if (action === 'partial_update') label = 'Editar parcialmente';
-            else if (action === 'destroy') label = 'Eliminar';
-            else if (action === 'read') label = 'Leer';
-            else if (action === 'write') label = 'Escribir';
-
-            const actionId = action === 'view' || action === 'list' || action === 'retrieve' ? 'ver-lista' :
-                            action === 'add' || action === 'create' ? 'crear' :
-                            action === 'change' || action === 'update' || action === 'partial_update' ? 'editar' :
-                            action === 'delete' || action === 'destroy' ? 'eliminar' :
-                            action === 'export' ? 'exportar' :
-                            action === 'upload' ? 'subir' :
-                            action === 'assign' ? 'asignar' :
-                            action === 'read' ? 'leer' :
-                            action === 'write' ? 'escribir' : action;
-
-            actions.push({ id: actionId, label, codename: p.codename });
-        });
-
-        const seen = new Set<string>();
-        const uniqueActions = actions.filter(a => {
-            if (seen.has(a.id)) return false;
-            seen.add(a.id);
-            return true;
+            actions.push({ id: String(p.id), label: p.name || p.codename, codename: p.codename });
         });
 
         return {
@@ -353,7 +316,7 @@ function buildPermissionSections(groupedData: Record<string, any>): PermissionSe
             title: metadata.title,
             description: metadata.description,
             group: metadata.group,
-            actions: uniqueActions,
+            actions: actions,
             order: metadata.order || 99
         };
     });
@@ -393,7 +356,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
         const fetchAllPermissions = async () => {
             try {
                 setIsFetchingPermissions(true);
-                const res = await GetListPermissionsGrouped();
+                const res = await GetListPermissionsByModule();
                 const groupedData = res.data || {};
 
                 const allPerms: Permission[] = [];

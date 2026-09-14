@@ -10,17 +10,21 @@ export const useUserStore = create<UserState>()(
         user: null,
         isLogin: false,
         token: null,
+        permissions: [],
         _hasHydrated: false,
         isSessionExpired: false,
         login: (user: User, token: string) => set({ user, token, isLogin: true, isSessionExpired: false }),
         logout: () => {
-          set({ user: null, isLogin: false, token: null });
+          set({ user: null, isLogin: false, token: null, permissions: [] });
           if (typeof window !== 'undefined') {
             localStorage.removeItem('refresh_token');
           }
         },
         setToken: (token: string) => {
           set({ token });
+        },
+        setPermissions: (permissions: string[]) => {
+          set({ permissions });
         },
         setHasHydrated: (state) => {
           set({
@@ -34,7 +38,8 @@ export const useUserStore = create<UserState>()(
         partialize: (state) => ({
           user: state.user,
           isLogin: state.isLogin,
-          token: state.token
+          token: state.token,
+          permissions: state.permissions
         }),
         onRehydrateStorage: () => {
           return (state, error) => {
