@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Breadcrumb from "@/components/ui/breadcrumb";
-import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsByModule } from "@/lib/api/permission-api";
+import { GetListRoles, GetRolePermissions, AssignPermissionsToRole, GetListPermissionsByModule, GetUserPermissionCurrent } from "@/lib/api/permission-api";
 import AddPermissions from "../users-permissions/add-user/addPermissions";
 import { UserForm } from "@/lib/@type";
+import { useUserStore } from "@/lib/store/userStore";
 import { Permission } from "@/lib/@type-permission";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Save, ShieldCheck } from "lucide-react";
+import { Loader2, Save, ShieldCheck, Lock, X, Plus } from "lucide-react";
 import { showToast } from "nextjs-toast-notify";
 import { InputField } from "@/components/ui/Input";
 
@@ -30,6 +31,8 @@ const PermissionsPage = () => {
         is_active: true,
         permissions: {}
     });
+
+    const { user } = useUserStore();
 
     useEffect(() => {
         const fetchRolesAndPermissions = async () => {
@@ -73,6 +76,36 @@ const PermissionsPage = () => {
                 setAllSystemPermissions(allPermsFlat);
                 setCodenameToModule(moduleMapping);
                 setGroupedPermissions(groupedData);
+
+                // Cargar permisos del usuario actual si existen
+                try {
+                    const currentPermsRes = await GetUserPermissionCurrent();
+                    const rawData: any = currentPermsRes.data;
+                    let perms = rawData.permissions || (rawData.data?.permissions) || (Array.isArray(rawData) ? rawData : {});
+                    
+                    if (Array.isArray(perms) && perms.length > 0) {
+                        const uiPerms: Record<string, any> = {};
+                        perms.forEach((p: Permission) => {
+                            const sectionId = moduleMapping[p.codename]; 
+                            if (sectionId) {
+                                uiPerms[sectionId] = true;
+                                if (!uiPerms[`${sectionId}_actions`]) uiPerms[`${sectionId}_actions`] = [];
+                                const actionId = String(p.id);
+                                if (!uiPerms[`${sectionId}_actions`].includes(actionId)) {
+                                    uiPerms[`${sectionId}_actions`].push(actionId);
+                                }
+                            }
+                        });
+                        
+                        const currentUserRoleId = typeof user?.role === 'object' ? String((user?.role as any)?.id) : String(user?.role || "");
+                        
+                        setDummyUser(prev => ({ ...prev, role: "current_user", permissions: uiPerms }));
+                        setSelectedRoleId("current_user");
+                    }
+                } catch (e) {
+                    console.error("Error fetching current user permissions", e);
+                }
+
             } catch (error) {
                 console.error("Error fetching initial data:", error);
                 showToast.error("Error al cargar datos iniciales");
@@ -81,7 +114,7 @@ const PermissionsPage = () => {
             }
         };
         fetchRolesAndPermissions();
-    }, []);
+    }, [user]);
 
     const handleRoleChange = async (roleId: string) => {
         setSelectedRoleId(roleId);
@@ -158,6 +191,42 @@ const PermissionsPage = () => {
         value: String(role.id)
     }));
 
+    const fetchCurrentUserPermissions = async () => {
+        try {
+            const currentPermsRes = await GetUserPermissionCurrent();
+            const rawData: any = currentPermsRes.data;
+            let perms = rawData.permissions || (rawData.data?.permissions) || (Array.isArray(rawData) ? rawData : {});
+            
+            if (Array.isArray(perms) && perms.length > 0) {
+                const uiPerms: Record<string, any> = {};
+                perms.forEach((p: Permission) => {
+                    const sectionId = codenameToModule[p.codename]; 
+                    if (sectionId) {
+                        uiPerms[sectionId] = true;
+                        if (!uiPerms[`${sectionId}_actions`]) uiPerms[`${sectionId}_actions`] = [];
+                        const actionId = String(p.id);
+                        if (!uiPerms[`${sectionId}_actions`].includes(actionId)) {
+                            uiPerms[`${sectionId}_actions`].push(actionId);
+                        }
+                    }
+                });
+                setDummyUser(prev => ({ ...prev, role: "current_user", permissions: uiPerms }));
+            }
+        } catch (e) {
+            console.error("Error fetching current user permissions", e);
+        }
+    };
+
+    const handleTabChange = async (tab: "current_user" | "role") => {
+        if (tab === "current_user") {
+            setSelectedRoleId("current_user");
+            await fetchCurrentUserPermissions();
+        } else {
+            setSelectedRoleId("");
+            setDummyUser(prev => ({ ...prev, permissions: {} }));
+        }
+    };
+
     return (
         <div className="space-y-6 pb-20">
             <Breadcrumb
@@ -171,37 +240,80 @@ const PermissionsPage = () => {
             <Card className='w-full'>
                 <CardContent className="p-6 sm:p-8">
                     <div className="w-full">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-100 pb-6">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 border-b border-slate-100 pb-6">
+                            <div className="flex flex-col gap-4">
                                 <div>
                                     <h1 className='font-extrabold text-2xl text-gray-900 mb-1'>Configuración de Permisos</h1>
                                     <p className='text-sm text-gray-500 max-w-2xl'>Define qué secciones estarán visibles y qué acciones específicas puede realizar cada rol.</p>
                                 </div>
+                                <div className="flex bg-slate-100 p-1 rounded-lg w-fit">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("current_user")}
+                                        className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${selectedRoleId === "current_user" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                    >
+                                        Mis permisos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("role")}
+                                        className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${selectedRoleId !== "current_user" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                    >
+                                        Permisos por rol
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="flex items-end gap-3 w-full md:w-auto md:min-w-[300px]">
-                                <InputField
-                                    input={{
-                                        type: 'select',
-                                        id: 'role-select',
-                                        label: 'Seleccionar Rol',
-                                        placeholder: 'Elija un rol para configurar',
-                                        value: selectedRoleId,
-                                        onChange: (val: any) => handleRoleChange(val),
-                                        options: roleOptions,
-                                        className: "h-11"
-                                    }}
-                                    withBgWhite={true}
-                                />
+                            {selectedRoleId !== "current_user" && (
+                                <div className="flex items-end gap-3 w-full md:w-auto">
+                                    <div className="flex flex-col md:flex-row md:items-end gap-3 w-full">
+                                        <InputField
+                                            input={{
+                                                type: 'select',
+                                                id: 'role-select',
+                                                label: 'Seleccionar Rol',
+                                                placeholder: 'Elija un rol para configurar',
+                                                value: selectedRoleId,
+                                                onChange: (val: any) => handleRoleChange(val),
+                                                options: roleOptions,
+                                                className: "h-11 min-w-[250px]"
+                                            }}
+                                            withBgWhite={true}
+                                        />
+                                    </div>
 
-                                <button type="button"
-                                    onClick={handleSavePermissions}
-                                    disabled={!selectedRoleId || isSaving}
-                                    className="h-11 px-6 bg-primary_color text-white rounded-lg flex items-center gap-2 font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-md mb-[2px]"
-                                >
-                                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                                    Guardar
-                                </button>
+                                    <button type="button"
+                                        onClick={handleSavePermissions}
+                                        disabled={!selectedRoleId || isSaving}
+                                        className="h-11 px-6 bg-primary_color text-white rounded-lg flex items-center gap-2 font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-md mb-[2px] shrink-0"
+                                    >
+                                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                        Guardar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 mb-8 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <span className="font-semibold text-slate-800">Cómo leer los tags:</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm cursor-default">
+                                    Ejemplo
+                                    <div className="flex items-center justify-center rounded-full bg-black/5 p-0.5">
+                                        <X size={10} strokeWidth={3} />
+                                    </div>
+                                </span>
+                                <span>= otorgado, clic en <X size={12} className="inline mx-0.5" strokeWidth={3} /> para quitar</span>
+                            </div>
+                            <div className="hidden sm:block text-slate-300 mx-2">|</div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-dashed bg-transparent text-slate-500 border-slate-400 cursor-default">
+                                    Ejemplo
+                                    <div className="flex items-center justify-center rounded-full p-0.5">
+                                        <Plus size={12} strokeWidth={2.5} />
+                                    </div>
+                                </span>
+                                <span>= disponible, clic en <Plus size={12} className="inline mx-0.5" strokeWidth={3} /> para otorgar</span>
                             </div>
                         </div>
 
