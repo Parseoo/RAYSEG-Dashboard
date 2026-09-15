@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { ChevronDown, X, Check, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronDown, X, Loader2, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import { UserForm } from '@/lib/@type';
 import { GetListPermissionsByModule } from '@/lib/api/permission-api';
@@ -16,61 +16,15 @@ interface PermissionSection {
 }
 
 const SECTION_METADATA: Record<string, { title: string, description: string, group?: string, order?: number }> = {
-    'settings': {
-        title: 'Configuración',
-        description: 'Gestión de Settings y configuración general del sistema.',
-        group: 'CONFIGURACIÓN',
-        order: 1
-    },
-    'reportes': {
-        title: 'Reportes / Dashboard',
-        description: 'Visualización de estadísticas, métricas y reportes del sistema.',
-        group: 'ANÁLISIS Y CONTROL',
-        order: 2
-    },
-    'propiedades': {
-        title: 'Propiedades',
-        description: 'Listado, creación y gestión de inmuebles.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 3
-    },
-    'imagenes-propiedades': {
-        title: 'Imágenes de propiedades',
-        description: 'Carga, cambio y eliminación de fotos.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 4
-    },
-    'clientes': {
-        title: 'Clientes',
-        description: 'Gestión de clientes, contactos y preferencias.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 5
-    },
-    'agentes': {
-        title: 'Agentes',
-        description: 'Gestión de agentes inmobiliarios y sus datos.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 6
-    },
-    'contratos': {
-        title: 'Contratos',
-        description: 'Gestión de contratos de arrendamiento y venta.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 7
-    },
-    'leads-contacto': {
-        title: 'Leads / Contacto',
-        description: 'Mensajes recibidos desde la web.',
-        group: 'GESTIÓN INMOBILIARIA',
-        order: 8
-    },
-    'contenido-web-home': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
-    'contenido-web-servicios': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
-    'contenido-web-localizacion': { title: 'Contenido Web - Localización', description: 'Gestión de ubicaciones y zonas de cobertura.', group: 'PERMISOS EN CONTENIDO WEB', order: 12 },
-    'contenido-web-sobre-nosotros': { title: 'Contenido Web - Sobre Nosotros', description: 'Edición de la sección "Sobre Nosotros".', group: 'PERMISOS EN CONTENIDO WEB', order: 13 },
-    'contenido-web-footer': { title: 'Contenido Web - Footer', description: 'Edición del pie de página y enlaces.', group: 'PERMISOS EN CONTENIDO WEB', order: 14 },
-    'contenido-web-legal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
-    // API keys for WebContent (underscore format)
+    'property': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
+    'client': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
+    'agent': { title: 'Agentes', description: 'Gestión de agentes inmobiliarios y sus datos.', group: 'GESTIÓN INMOBILIARIA', order: 6 },
+    'contract': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
+    'lead': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
+    'propertyimage': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
+    'user': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
+    'reports': { title: 'Reportes / Dashboard', description: 'Visualización de estadísticas, métricas y reportes del sistema.', group: 'ANÁLISIS Y CONTROL', order: 2 },
+    'settings': { title: 'Configuración', description: 'Gestión de Settings y configuración general del sistema.', group: 'CONFIGURACIÓN', order: 1 },
     'webcontent': { title: 'Contenido Web', description: 'Gestión de contenido de la página web.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
     'webcontent_home': { title: 'Contenido Web - Home', description: 'Edición del contenido de la página principal.', group: 'PERMISOS EN CONTENIDO WEB', order: 10 },
     'webcontent_servicios': { title: 'Contenido Web - Servicios', description: 'Gestión de servicios mostrados en la web.', group: 'PERMISOS EN CONTENIDO WEB', order: 11 },
@@ -80,34 +34,15 @@ const SECTION_METADATA: Record<string, { title: string, description: string, gro
     'webcontent_legal': { title: 'Contenido Web - Páginas Legales', description: 'Gestión de términos, condiciones y avisos legales.', group: 'PERMISOS EN CONTENIDO WEB', order: 15 },
     'webcontent_privacidad': { title: 'Contenido Web - Aviso de Privacidad', description: 'Gestión del aviso de privacidad.', group: 'PERMISOS EN CONTENIDO WEB', order: 16 },
     'webcontent_terminos': { title: 'Contenido Web - Términos y Condiciones', description: 'Gestión de términos y condiciones.', group: 'PERMISOS EN CONTENIDO WEB', order: 17 },
-    'ajustes-usuarios': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
-    'mi-perfil': { title: 'Mi Perfil', description: 'Gestión de datos personales y configuración de cuenta.', group: 'CONFIGURACIÓN', order: 21 },
-    // Underscore versions from API
-    'property': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
-    'client': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
-    'agent': { title: 'Agentes', description: 'Gestión de agentes inmobiliarios y sus datos.', group: 'GESTIÓN INMOBILIARIA', order: 6 },
-    'contract': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
-    'lead': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
-    'propertyimage': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
-    'user': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
-    // Plural forms from API
-    'clients': { title: 'Clientes', description: 'Gestión de clientes, contactos y preferencias.', group: 'GESTIÓN INMOBILIARIA', order: 5 },
-    'properties': { title: 'Propiedades', description: 'Listado, creación y gestión de inmuebles.', group: 'GESTIÓN INMOBILIARIA', order: 3 },
-    'agents': { title: 'Agentes', description: 'Gestión de agentes inmobiliarios y sus datos.', group: 'GESTIÓN INMOBILIARIA', order: 6 },
-    'contracts': { title: 'Contratos', description: 'Gestión de contratos de arrendamiento y venta.', group: 'GESTIÓN INMOBILIARIA', order: 7 },
-    'leads': { title: 'Leads / Contacto', description: 'Mensajes recibidos desde la web.', group: 'GESTIÓN INMOBILIARIA', order: 8 },
-    'propertyimages': { title: 'Imágenes de propiedades', description: 'Carga, cambio y eliminación de fotos.', group: 'GESTIÓN INMOBILIARIA', order: 4 },
-    'users': { title: 'Usuarios', description: 'Configuración del sistema y gestión de otros usuarios.', group: 'CONFIGURACIÓN', order: 20 },
-    'reports': { title: 'Reportes / Dashboard', description: 'Visualización de estadísticas, métricas y reportes del sistema.', group: 'ANÁLISIS Y CONTROL', order: 2 },
 };
 
 const getTagColor = (label: string) => {
     const l = label.toLowerCase();
     if (l.includes('ver') || l.includes('visualizar') || l.includes('detalle') || l.includes('perfil') || l.includes('dashboard') || l.includes('lista') || l.includes('reportes') || l.includes('contenido')) 
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
-    if (l.includes('crear') || l.includes('subir') || l.includes('agregar') || l.includes('exportar') || l.includes('nuevo')) 
         return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
-    if (l.includes('editar') || l.includes('cambiar') || l.includes('configurar') || l.includes('responder') || l.includes('asignar') || l.includes('gestionar')) 
+    if (l.includes('crear') || l.includes('subir') || l.includes('agregar') || l.includes('exportar') || l.includes('nuevo')) 
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+    if (l.includes('editar') || l.includes('cambiar') || l.includes('configurar') || l.includes('responder') || l.includes('asignar') || l.includes('gestionar') || l.includes('actualizar')) 
         return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
     if (l.includes('eliminar') || l.includes('borrar') || l.includes('quitar')) 
         return 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100';
@@ -130,20 +65,8 @@ const MultiSelectPermissions = ({
     onChange: (values: string[]) => void;
     disabled?: boolean;
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     const toggleOption = (id: string) => {
+        if (disabled) return;
         if (selectedValues.includes(id)) {
             onChange(selectedValues.filter(v => v !== id));
         } else {
@@ -151,76 +74,54 @@ const MultiSelectPermissions = ({
         }
     };
 
-    const removeOption = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        onChange(selectedValues.filter(v => v !== id));
-    };
-
-    const selectedOptions = options.filter(opt => selectedValues.includes(opt.id));
-
     return (
-        <div className='relative w-full' ref={dropdownRef}>
-            <div
-                role='button'
-                onClick={() => !disabled && setIsOpen(!isOpen)}
-                aria-disabled={disabled}
-                className={`w-full min-h-[42px] px-3 py-2 border border-slate-200 rounded-lg bg-white text-left text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all flex items-center justify-between ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-60' : 'hover:border-slate-300 cursor-pointer'}`}
-            >
-                <div className='flex flex-wrap gap-1.5 flex-1'>
-                    {selectedOptions.length > 0 ? (
-                        selectedOptions.map((option) => (
-                            <span
-                                key={option.id}
-                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border transition-colors ${getTagColor(option.label)}`}
-                            >
-                                {option.label}
-                                <button
-                                    type='button'
-                                    onClick={(e) => removeOption(option.id, e)}
-                                    className='rounded-full p-0.5 transition-colors brightness-95'
-                                >
-                                    <X size={10} />
-                                </button>
-                            </span>
-                        ))
-                    ) : (
-                        <span className='text-slate-400'>Seleccionar permisos...</span>
-                    )}
-                </div>
-                <ChevronDown
-                    size={16}
-                    className={`text-slate-400 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`}
-                />
-            </div>
-
-            {isOpen && (
-                <div className='absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in duration-150'>
-                    <div className='p-1.5 space-y-0.5'>
-                        {options.map((option) => {
-                            const isSelected = selectedValues.includes(option.id);
-                            return (
-                                <div
-                                    key={option.id}
-                                    onClick={() => toggleOption(option.id)}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${isSelected
-                                        ? 'bg-blue-50 text-blue-700'
-                                        : 'hover:bg-slate-50 text-slate-700'
-                                    }`}
-                                >
-                                    <div className={`flex items-center justify-center w-5 h-5 rounded border transition-colors ${isSelected
-                                        ? 'bg-blue-600 border-blue-600'
-                                        : 'border-slate-300'
-                                    }`}>
-                                        {isSelected && <Check size={12} className='text-white font-bold' />}
-                                    </div>
-                                    <div className='flex-1'>
-                                        <div className='text-sm font-medium'>{option.label}</div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+        <div className='flex flex-wrap gap-2.5 w-full'>
+            {[...options]
+                .sort((a, b) => {
+                    const aSelected = selectedValues.includes(a.id);
+                    const bSelected = selectedValues.includes(b.id);
+                    if (aSelected && !bSelected) return -1;
+                    if (!aSelected && bSelected) return 1;
+                    return a.label.localeCompare(b.label);
+                })
+                .map((option) => {
+                const isSelected = selectedValues.includes(option.id);
+                const colorClasses = getTagColor(option.label);
+                
+                if (isSelected) {
+                    return (
+                        <button
+                            key={option.id}
+                            type='button'
+                            onClick={() => toggleOption(option.id)}
+                            disabled={disabled}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border border-solid transition-all duration-200 shadow-sm ${colorClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:brightness-95 hover:-translate-y-0.5'}`}
+                        >
+                            {option.label}
+                            <div className="flex items-center justify-center rounded-full bg-black/5 p-0.5 ml-1">
+                                <X size={12} strokeWidth={3} />
+                            </div>
+                        </button>
+                    );
+                } else {
+                    return (
+                        <button
+                            key={option.id}
+                            type='button'
+                            onClick={() => toggleOption(option.id)}
+                            disabled={disabled}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-dashed bg-transparent transition-all duration-200 text-slate-500 border-slate-300 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-400 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-solid hover:-translate-y-0.5'}`}
+                        >
+                            {option.label}
+                            <div className="flex items-center justify-center rounded-full p-0.5 ml-1">
+                                <Plus size={14} strokeWidth={2.5} />
+                            </div>
+                        </button>
+                    );
+                }
+            })}
+            {options.length === 0 && (
+                <span className='text-sm text-slate-400 italic'>No hay acciones disponibles</span>
             )}
         </div>
     );
@@ -248,7 +149,7 @@ function PermissionCard({
 
             <div className="space-y-6">
                 <div>
-                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de gestión</p>
+                    <p className="text-[10px] font-bold text-primary_color uppercase tracking-widest mb-3">Acciones de gestión</p>
                     <MultiSelectPermissions
                         options={section.actions}
                         selectedValues={selectedActions.filter(a => section.actions.some(sa => sa.id === a))}
@@ -258,7 +159,7 @@ function PermissionCard({
 
                 {section.subActions && (
                     <div className="pt-5 border-t border-slate-100">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de publicación / web</p>
+                        <p className="text-[10px] font-bold text-primary_color uppercase tracking-widest mb-3">Acciones de publicación / web</p>
                         <MultiSelectPermissions
                             options={section.subActions}
                             selectedValues={selectedActions.filter(a => section.subActions?.some(sa => sa.id === a))}
@@ -404,22 +305,17 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
     }, [user.permissions, setUser, sections]);
 
     const toggleSection = (id: string, enabled: boolean) => {
-        const section = sections.find(s => s.id === id);
-        const newActions = enabled && section
-            ? [
-                ...section.actions.map(a => a.id),
-                ...(section.subActions?.map(a => a.id) || [])
-              ]
-            : [];
-
-        setUser((prev: UserForm) => ({
-            ...prev,
-            permissions: {
-                ...(prev.permissions || {}),
-                [id]: enabled,
-                [`${id}_actions`]: newActions
-            }
-        }));
+        setUser((prev: UserForm) => {
+            const currentActions = (prev.permissions?.[`${id}_actions`] as string[]) || [];
+            return {
+                ...prev,
+                permissions: {
+                    ...(prev.permissions || {}),
+                    [id]: enabled,
+                    [`${id}_actions`]: enabled ? currentActions : []
+                }
+            };
+        });
     };
 
     const handleActionsChange = (sectionId: string, actions: string[]) => {
@@ -444,7 +340,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
 
                 {isFetchingPermissions ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
-                        <Loader2 className="animate-spin text-blue-600" size={40} />
+                        <Loader2 className="animate-spin text-primary_color" size={40} />
                         <p className="text-slate-500 font-medium">Cargando permisos del sistema...</p>
                     </div>
                 ) : (
@@ -462,7 +358,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
                                     <div
                                         className={`flex items-center justify-between px-5 py-4 cursor-pointer transition-all ${
                                             isEnabled
-                                            ? 'bg-blue-50 border-b border-blue-100'
+                                            ? 'bg-primary_color/5 border-b border-primary_color/20'
                                             : 'bg-slate-50 hover:bg-slate-100'
                                         }`}
                                         onClick={() => toggleSection(section.id, !isEnabled)}
@@ -478,7 +374,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
                                                 />
                                             </span>
                                             <div>
-                                                <h3 className={`text-sm font-bold ${isEnabled ? 'text-blue-700' : 'text-slate-600'}`}>
+                                                <h3 className={`text-sm font-bold ${isEnabled ? 'text-primary_color' : 'text-slate-600'}`}>
                                                     {section.title}
                                                 </h3>
                                                 <p className='text-xs text-slate-400'>{section.description}</p>
@@ -493,7 +389,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
                                     {/* Permissions Panel - Only show when enabled */}
                                     {isEnabled && (
                                         <div className='p-5 bg-slate-50 border-t border-slate-100'>
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de gestión</p>
+                                            <p className="text-[10px] font-bold text-primary_color uppercase tracking-widest mb-3">Acciones de gestión</p>
                                             <MultiSelectPermissions
                                                 options={section.actions}
                                                 selectedValues={selectedActions.filter(a => section.actions.some(sa => sa.id === a))}
@@ -502,7 +398,7 @@ function AddPermissions({ user, setUser, isLoading, withoutCard = false, grouped
 
                                             {section.subActions && (
                                                 <div className='mt-4 pt-4 border-t border-slate-200'>
-                                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Acciones de publicación / web</p>
+                                                    <p className="text-[10px] font-bold text-primary_color uppercase tracking-widest mb-3">Acciones de publicación / web</p>
                                                     <MultiSelectPermissions
                                                         options={section.subActions}
                                                         selectedValues={selectedActions.filter(a => section.subActions?.some(sa => sa.id === a))}
