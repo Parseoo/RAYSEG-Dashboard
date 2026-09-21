@@ -123,14 +123,23 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
       try {
         const { GetAllUsers } = await import('@/lib/api/user-api');
 
-        // Helper to fetch catalog safely (ignora errores 404)
+        // Helper to fetch catalog safely (ignora errores de red, 403 o 404)
         const safeCatalog = async (name: string) => {
           try {
             return await GetCatalogByName(name);
           } catch (e: unknown) {
-            const err = e as { response?: { status?: number } };
-            if (err?.response?.status === 404) return null;
-            throw e;
+            console.warn(`Ignored error fetching catalog ${name}:`, e);
+            return null;
+          }
+        };
+
+        // Helper to fetch users safely (ignora errores 403 si no tiene permiso)
+        const safeGetAllUsers = async () => {
+          try {
+            return await GetAllUsers({ perPage: 100 });
+          } catch (e: unknown) {
+            console.warn("Ignored error fetching users for filter (likely 403):", e);
+            return null;
           }
         };
 
@@ -140,7 +149,7 @@ function ClientsList({ data: initialData, isLoading: initialLoading }: { readonl
           safeCatalog('client-origin'),
           safeCatalog('operation-type'),
           safeCatalog('primary_interest'),
-          GetAllUsers({ perPage: 100 })
+          safeGetAllUsers()
         ]);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
