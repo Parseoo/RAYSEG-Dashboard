@@ -50,9 +50,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         try {
           const { GetUserPermissionCurrent } = await import('@/lib/api/permission-api');
           const response = await GetUserPermissionCurrent();
-          if (response.data && Array.isArray(response.data)) {
-            const codenames = response.data.map((p: any) => p.codename);
-            useUserStore.getState().setPermissions(codenames);
+          
+          if (response.data) {
+            const rawData: any = response.data;
+            // Extraer el arreglo de permisos sin importar si viene envuelto en 'permissions' o 'data.permissions'
+            let perms = rawData.permissions || (rawData.data?.permissions) || (Array.isArray(rawData) ? rawData : []);
+            
+            console.log("🔥 PERMISOS RECIBIDOS DEL BACKEND:", perms);
+            
+            if (Array.isArray(perms)) {
+              const codenames = perms.map((p: any) => p.codename);
+              useUserStore.getState().setPermissions(codenames);
+            }
           }
         } catch (error) {
           console.error("Error fetching user permissions:", error);

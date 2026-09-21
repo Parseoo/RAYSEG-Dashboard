@@ -52,8 +52,8 @@ type MenuItem = MenuItemLink | MenuItemGroup
 
 export const menuItems: MenuItem[] = [
   { href: home, path: '/', icon: ChartColumn, label: 'Reportes' },
-  { href: property_list, path: '/property', icon: Building2, label: 'Propiedades', permissions: ['view_property'] },
-  { href: clients, path: '/clients', icon: Users, label: 'Clientes', permissions: ['view_client'] },
+  { href: property_list, path: '/property', icon: Building2, label: 'Propiedades', permissions: ['view_property', 'view_properties', 'add_property', 'change_property', 'delete_property'] },
+  { href: clients, path: '/clients', icon: Users, label: 'Clientes', permissions: ['view_client', 'view_cliente', 'view_clientes', 'add_client', 'change_client', 'delete_client'] },
 
   {
     icon: LayoutTemplate,
